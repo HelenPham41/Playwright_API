@@ -99,7 +99,7 @@ export class OrderService {
 
     console.log("selectedSkuCodes = " + selectedSkuCodes);
 
-    console.log("Cart is empty = ", skuCodes.length === 0);
+    console.log("Cart is empty = "+ (skuCodes.length === 0));
 
     return {
       response,

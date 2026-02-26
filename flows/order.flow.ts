@@ -160,11 +160,8 @@ export class OrderFlow {
       "Checkout PASS:",
       checkoutResult.response.status()
     );
+    console.log("ORDER_ID=" + checkoutResult.orderId);
 
-    console.log(
-      "OrderId =",
-      checkoutResult.orderId
-    );
     console.log("===== ORDER FLOW END =====");
 
     /**

@@ -33,7 +33,7 @@ export class OrderFlow {
       .toContain(checkCartResponse.status());
 
     console.log(
-      "Check Cart PASS:",
+      "Check Cart PASS:" +
       checkCartResponse.status()
     );
 
@@ -48,14 +48,14 @@ export class OrderFlow {
       .toContain(cartResult.response.status());
 
     console.log(
-      "Get Cart Info PASS:",
+      "Get Cart Info PASS:" +
       cartResult.response.status()
     );
 
     console.log("===== EXTRACTED DATA =====");
 
-    console.log("CartNo =", cartResult.cartNo);
-    console.log("skuCodes =", cartResult.skuCodes);
+    console.log("CartNo ="+ cartResult.cartNo);
+    console.log("skuCodes ="+ cartResult.skuCodes);
 
 
     const cartNo =
@@ -85,7 +85,7 @@ export class OrderFlow {
         .toContain(removeCartResponse.status());
 
       console.log(
-        "Remove Cart PASS:",
+        "Remove Cart PASS:"+
         removeCartResponse.status()
       );
 
@@ -113,12 +113,12 @@ export class OrderFlow {
       );
 
     console.log(
-      "Add Cart PASS:",
+      "Add Cart PASS:"+
       addCartResult.response.status()
     );
 
     console.log(
-      "New CartNo =",
+      "New CartNo ="+
       addCartResult.cartNo
     );
 
@@ -140,7 +140,7 @@ export class OrderFlow {
       .toContain(updateCartResponse.status());
 
     console.log(
-      "Update Cart PASS:",
+      "Update Cart PASS:"+
       updateCartResponse.status()
     );
 
@@ -157,7 +157,7 @@ export class OrderFlow {
       );
 
     console.log(
-      "Checkout PASS:",
+      "Checkout PASS:"+
       checkoutResult.response.status()
     );
     console.log("ORDER_ID=" + checkoutResult.orderId);

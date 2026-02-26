@@ -6,7 +6,7 @@ test('Run Order Flow N times', async () => {
   const RUN_TIMES =
     Number(process.env.RUN_TIMES || 1);
 
-  console.log("RUN_TIMES =", RUN_TIMES);
+  console.log("RUN_TIMES = "+ RUN_TIMES);
 
   const context =
     await request.newContext();

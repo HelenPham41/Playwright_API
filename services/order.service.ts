@@ -93,13 +93,13 @@ export class OrderService {
 
     console.log("\n===== EXTRACTED DATA =====");
 
-    console.log("CartNo =", cartNo);
+    console.log("CartNo = " + cartNo);
 
-    console.log("skuCodes =", skuCodes);
+    console.log("skuCodes = " + skuCodes);
 
-    console.log("selectedSkuCodes =", selectedSkuCodes);
+    console.log("selectedSkuCodes = " + selectedSkuCodes);
 
-    console.log("Cart is empty =", skuCodes.length === 0);
+    console.log("Cart is empty = ", skuCodes.length === 0);
 
     return {
       response,
@@ -154,7 +154,7 @@ export class OrderService {
 
     console.log("\n===== REMOVE CART RESPONSE =====");
 
-    console.log("Status:", response.status());
+    console.log("Status: " + response.status());
 
     return response;
 
@@ -222,7 +222,7 @@ export class OrderService {
 
     console.log("===== ADD CART RESPONSE =====");
 
-    console.log("Status:", response.status());
+    console.log("Status: " + response.status());
 
     const text = await response.text();
 
@@ -240,7 +240,7 @@ export class OrderService {
       console.log("Cannot parse AddCart JSON");
 
     }
-    console.log("New CartNo =", cartNoNew);
+    console.log("New CartNo = " + cartNoNew);
     return {
       response,
       cartNo: cartNoNew

@@ -1,15 +1,15 @@
-
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
 
- testDir:'./tests',
+  workers: 1,   // ⭐ VERY IMPORTANT
 
- timeout:120000,
+  reporter: [
+    ['list']
+  ],
 
- reporter:[
- ['list'],
- ['html']
- ]
+  use: {
+    trace: 'off'
+  }
 
 });

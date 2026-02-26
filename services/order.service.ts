@@ -247,5 +247,123 @@ export class OrderService {
     };
 
   }
+  async updateCart(
+    token: string,
+    cartNo: string
+  ) {
+    const client = await createClient(
+      config.hostWeb,
+      token
+    );
 
+    const response = await client.put(
+      '/backend/marketplace/order/v2/cart',
+      {
+        data: {
+
+          customerName: "[Tech] Hanh Pham",
+          customerPhone: "0559948786",
+          customerEmail: "hanh.pham@buymed.com",
+          customerShippingAddress: "72 Le Thanh Ton",
+
+          customerDistrictCode: "765",
+          customerProvinceCode: "79",
+          customerWardCode: "26947",
+
+          customerAddressCode: "YFFPHGG3",
+          customerRegionCode: "107TQTAR1Y7G",
+
+          customerWardName: "Phường 03",
+          customerDistrictName: "Quận Bình Thạnh",
+          customerProvinceName: "Thành phố Hồ Chí Minh",
+
+          paymentMethod: "PAYMENT_METHOD_BANK",
+
+          deliveryMethod: "DELIVERY_PLATFORM_NORMAL",
+
+          cartNo: cartNo,
+
+          ordersCount: 151,
+
+          invoice: {
+            code: "RHGARL8C",
+            invoiceRequest: true,
+            companyName: "Công Ty TNHH CIRCA PHARMACY",
+            companyAddress:
+              "207 Lê Đại Hành, Phường 13, Q11, TP. HCM",
+            taxCode: "0317045088",
+            isSaveInvoiceInfo: false,
+            isUseCustom: false,
+            email: "lam.nguyen@buymed.com",
+            isValidated: true,
+            customerTaxGOVStatus: "DIFF_INFO",
+            isDefault: true
+          },
+
+          isRefuseSplitOrder: false,
+          acceptAdvancePolicies: false,
+
+          source: "thuocsi-web"
+
+        }
+      }
+    );
+    return response;
+  }
+
+  /**
+  * Checkout Cart
+  */
+  async checkout(token: string) {
+
+    const client = await createClient(
+      config.hostWeb,
+      token
+    );
+
+    const response = await client.put(
+      '/backend/marketplace/order/v2/cart/checkout',
+      {
+        data: {
+          customerName: "[Tech] Hanh Pham",
+          customerPhone: "0559948786",
+          customerEmail: "hanh.pham@buymed.com",
+
+          customerShippingAddress: "72 Le Thanh Ton",
+          customerDistrictCode: "765",
+          customerProvinceCode: "79",
+          customerWardCode: "26947",
+
+          customerAddressCode: "YFFPHGG3",
+          customerRegionCode: "107TQTAR1Y7G",
+
+          customerWardName: "Phường 03",
+          customerDistrictName: "Quận Bình Thạnh",
+          customerProvinceName: "Thành phố Hồ Chí Minh",
+
+          paymentMethods: [
+            {
+              cardList: "MOMO",
+              code: "MOMO",
+              customerTags: [
+                "13384",
+                "TESTCREDIT"
+              ],
+              description: "<p></p>"
+            }
+          ]
+        }
+      }
+    );
+
+    const body = await response.json();
+
+    const orderId =
+      body?.data?.[0]?.orderId ?? null;
+
+    return {
+      response,
+      orderId
+    };
+  }
 }

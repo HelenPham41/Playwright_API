@@ -20,7 +20,6 @@ export class OrderFlow {
      * Step 1 — Login
      */
     const tokenWeb = await this.authService.login();
-
     console.log("Login success");
 
 
@@ -57,22 +56,20 @@ export class OrderFlow {
 
     console.log("CartNo =", cartResult.cartNo);
     console.log("skuCodes =", cartResult.skuCodes);
-    console.log("selectedSkuCodes =", cartResult.selectedSkuCodes);
 
 
     const cartNo =
       cartResult?.cartNo ?? null;
 
     const selectedSkuCodes =
-      Array.isArray(cartResult?.selectedSkuCodes)
-        ? cartResult.selectedSkuCodes
+      Array.isArray(cartResult?.skuCodes)
+        ? cartResult.skuCodes
         : [];
 
 
     /**
      * Step 4 — Remove Cart
      */
-
     if (cartNo && selectedSkuCodes.length > 0) {
 
       console.log("Cart NOT empty → Removing cart...");
@@ -104,11 +101,10 @@ export class OrderFlow {
     /**
      * Step 5 — Add Cart
      */
-
     const addCartResult =
       await this.orderService.addCart(
         tokenWeb,
-        cartNo   // FIXED
+        cartNo ?? ""
       );
 
     expect([200, 201])
@@ -127,16 +123,59 @@ export class OrderFlow {
     );
 
 
-    console.log("===== ORDER FLOW END =====");
+    /**
+     * Step 6 — Update Cart
+     */
 
+    const finalCartNo =
+      addCartResult.cartNo ?? cartNo ?? "";
+
+    const updateCartResponse =
+      await this.orderService.updateCart(
+        tokenWeb,
+        finalCartNo
+      );
+
+    expect([200])
+      .toContain(updateCartResponse.status());
+
+    console.log(
+      "Update Cart PASS:",
+      updateCartResponse.status()
+    );
+
+    /**
+   * Step 7 — Checkout
+   */
+
+    const checkoutResult =
+      await this.orderService.checkout(tokenWeb);
+
+    expect([200, 201])
+      .toContain(
+        checkoutResult.response.status()
+      );
+
+    console.log(
+      "Checkout PASS:",
+      checkoutResult.response.status()
+    );
+
+    console.log(
+      "OrderId =",
+      checkoutResult.orderId
+    );
+    console.log("===== ORDER FLOW END =====");
 
     /**
      * Return result
      */
-
     return {
 
       tokenWeb,
+
+      orderId:
+        checkoutResult.orderId,
 
       cartNo:
         addCartResult.cartNo ?? cartNo,
@@ -151,6 +190,5 @@ export class OrderFlow {
           ? await cartResult.response.json()
           : null
     };
-
   }
 }

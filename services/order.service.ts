@@ -14,7 +14,8 @@ export class OrderService {
 
     const client = await createClient(
       config.hostWeb,
-      token
+      token,
+      'bearer'
     );
 
     const response = await client.put(
@@ -38,7 +39,8 @@ export class OrderService {
 
     const client = await createClient(
       config.hostWeb,
-      token
+      token,
+      'bearer'
     );
 
     const response = await client.get(
@@ -135,7 +137,8 @@ export class OrderService {
 
     const client = await createClient(
       config.hostWeb,
-      token
+      token,
+      'bearer'
     );
 
     const payload = {
@@ -170,7 +173,8 @@ export class OrderService {
 
     const client = await createClient(
       config.hostWeb,
-      token
+      token,
+      'bearer'
     );
 
     const payload = {
@@ -253,7 +257,8 @@ export class OrderService {
   ) {
     const client = await createClient(
       config.hostWeb,
-      token
+      token,
+      'bearer'
     );
 
     const response = await client.put(
@@ -318,7 +323,8 @@ export class OrderService {
 
     const client = await createClient(
       config.hostWeb,
-      token
+      token,
+      'bearer'
     );
 
     const response = await client.put(

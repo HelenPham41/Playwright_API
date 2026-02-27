@@ -1,5 +1,6 @@
 import { createClient } from "../clients/apiClient";
 import config from "../configs";
+import { APIResponse } from '@playwright/test';
 
 export class PickService {
 

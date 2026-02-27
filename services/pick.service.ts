@@ -276,9 +276,9 @@ export class PickService {
         return response;
     }
     /**
- * Get Zone and Location
- * GET /backend/warehouse/picking/v1/pick-ticket-item
- */
+    * Get Zone and Location
+    * GET /backend/warehouse/picking/v1/pick-ticket-item
+    */
     async getZoneAndLocation(
         basicToken: string,
         so: string
@@ -312,6 +312,7 @@ export class PickService {
             );
 
             console.log("Status:", response.status());
+            console.log("Body:", await response.text());
 
             if (response.status() === 200) {
                 json = await response.json();

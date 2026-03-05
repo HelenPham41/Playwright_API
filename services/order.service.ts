@@ -179,15 +179,15 @@ export class OrderService {
 
     const payload = {
 
-      sku: "MEDX.8G6Q72AX",
+      sku: "MEDX.Y4XP61PG",
 
       type: "NORMAL",
 
-      isDeal: null,
+      isDeal: false,
 
-      name: "Bông tẩy trang tròn mịn calla Bông Bạch Tuyết (g/120mll)",
+      name: "Tinh dầu đuổi muỗi và côn trùng, khử khuẩn Thảo Nguyên hương sả chanh – Nhà Thuốc Helios",
 
-      price: 2198700,
+      price: 1084400,
 
       quantity: 2,
 
@@ -199,7 +199,7 @@ export class OrderService {
 
       sellerCode: "MEDX",
 
-      productId: 2431139,
+      productId: 2431073,
 
       eventSource: "product-detail",
 
@@ -210,7 +210,7 @@ export class OrderService {
       recommendSKUs: "",
 
       metadata: {
-        price_display: "2198700"
+        price_display: "1084400"
       },
 
       source: "thuocsi-web"

@@ -4,6 +4,7 @@ import { PickService } from "../services/pick.service";
 export class PickFlow {
 
     private pickService = new PickService();
+    private otlCode!: string;
 
     async run(
         basicToken: string,
@@ -14,7 +15,7 @@ export class PickFlow {
         console.log("========= PICK FLOW =========");
         console.log("==============================");
 
-
+        const warehouseCode = await this.pickService.getWarehouseCode();
         /**
          * Step 1 - Get Order Info
          */
@@ -95,7 +96,6 @@ export class PickFlow {
         expect(skuInfo.quantity)
             .toBeGreaterThan(0);
 
-
         /**
          * Step 6 - Check Pick Ticket
          */
@@ -163,26 +163,140 @@ export class PickFlow {
         const zone =
             zoneAndLocationResponse.zone;
 
-        const locationCode =
+        const locationItemCode =
             zoneAndLocationResponse.locationCode;
 
         console.log("Zone:", zone);
-        console.log("Location:", locationCode);
+        console.log("Location Item Code:", locationItemCode);
 
         // ✅ Validate Data
         expect(zone).toBeTruthy();
-        expect(locationCode).toBeTruthy();
+        expect(locationItemCode).toBeTruthy();
 
+        /**
+        * Step 9: Check in Pick
+        */
+        console.log('Step 9: Check in Pick');
+
+        const checkInPickResponse =
+            await this.pickService.checkInPick(
+                basicToken,
+                zone,
+            );
+
+        // ✅ Check Status Code
+        expect([200])
+            .toContain(checkInPickResponse.status());
+
+        console.log('✅ Check in Pick Success');
+
+        /**
+        * Step 10: Assign Pick Staff
+        */
+        const subTicketId =
+            await this.pickService.assignPickStaff(
+                basicToken,
+                skuInfo.ticketId,
+                so
+            );
+
+        expect(subTicketId).toBeTruthy();
+
+        console.log('subTicketId:', subTicketId);
+        /**
+        * Step 11: Get OTL
+        * GET /warehouse/inventory/v1/location
+        */
+        const result = await this.pickService.getOTL(basicToken);
+
+        const otlCode = result.firstOTL;
+
+        console.log("Step 11 - OTL Code:", otlCode);
+
+        // ✅ Check Status Code
+        expect([200]).toContain(result.response.status());
+
+        /**
+        * Step 12: Use Basket
+        * POST /warehouse/picking/v1/sub-pick-ticket/basket/use
+        */
+        const useBasketResponse = await this.pickService.useBasket(
+            basicToken,
+            Number(subTicketId),
+            otlCode
+        );
+
+        expect(useBasketResponse.status()).toBe(200);
+
+        console.log("Step 12 - Use Basket success");
+
+        /**
+        * Step 13: Check Pick Items
+        */
+        const checkPickItemsResult = await this.pickService.checkPickItems(
+            basicToken,
+            subTicketId,
+            locationItemCode,
+            so
+        );
+
+        // validate response
+        if (!checkPickItemsResult.response) {
+            throw new Error("Check Pick Items response is null");
+        }
+
+        expect([200]).toContain(checkPickItemsResult.response.status());
+
+        console.log("Step 13 - Check Pick Items done");
+
+        /**
+        * Step 14: Complete Pick
+        */
+
+        const completePickResult = await this.pickService.completePick(
+            basicToken,
+            Number(subTicketId),
+        );
+
+        expect([200]).toContain(completePickResult.status());
+
+        console.log("Step 14 - Complete Pick success");
+
+        /**
+        * Step 15: Complete Pick for SO
+        */
+
+        const completePickSOResult = await this.pickService.completePickForSO(
+            basicToken,
+            so,
+        );
+
+        expect([200]).toContain(completePickSOResult.status());
+
+        console.log("Step 15 - Complete Pick for SO success");
+
+        /**
+        * Step 16: Checkout Pick
+        */
+
+        const checkoutPickResult = await this.pickService.checkoutPick(
+            basicToken,
+            zone,
+        );
+
+        expect([200]).toContain(checkoutPickResult.status());
+
+        console.log("Step 16 - Checkout Pick success");
         console.log("\n========= PICK FLOW DONE =========\n");
-
 
         return {
             orderInfo,
             confirmResult,
             so,
-            skuInfo
+            skuInfo,
+            zone,
+            subTicketId,
+            otlCode
         };
-
     }
-
 }

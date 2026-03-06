@@ -69,7 +69,6 @@ export class QcFlow {
             so,
             ticketId,
             location,
-            skuList
         );
 
         console.log(`

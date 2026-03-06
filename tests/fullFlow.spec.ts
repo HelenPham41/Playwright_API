@@ -6,6 +6,7 @@ import { PickFlow } from '../flows/pick.flow';
 // import { PackFlow } from '../flows/pack.flow';
 
 import config from '../configs';
+import { QcFlow } from '../flows/qc.flow';
 
 test('Run Full Flow N times', async () => {
 
@@ -46,24 +47,27 @@ test('Run Full Flow N times', async () => {
     console.log("Order Created:", orderId);
 
 
-    // 2️⃣ PICK FLOW
-    const pickFlow =
-      new PickFlow();
+    /// 2️⃣ PICK FLOW
+    const pickFlow = new PickFlow();
 
-    await pickFlow.run(
+    const pickResult = await pickFlow.run(
       basicToken,
       orderId
     );
+    // Map PickFlow result to QCFlow format
+    const qcInput = {
+      so: pickResult.so,
+      ticketId: pickResult.skuInfo.ticketId,
+      skuList: pickResult.skuInfo.skuList
+    };
 
+    // 3️⃣ QC FLOW
+    const qcFlow = new QcFlow();
 
-    // // 3️⃣ QC FLOW
-    // const qcFlow =
-    //   new QCFlow();
-
-    // await qcFlow.run(
-    //   basicToken,
-    //   orderId
-    // );
+    await qcFlow.run(
+      basicToken,
+      qcInput
+    );
 
 
     // // 4️⃣ PACK FLOW

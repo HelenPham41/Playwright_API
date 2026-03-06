@@ -28,7 +28,10 @@ export class PickFlow {
 
         console.log("OrderId: " + orderId);
         console.log("Price: " + orderInfo.price);
+        expect([200])
+            .toContain(orderInfo.response.status());
 
+        console.log("\nStep 1: Get Order Info success");
 
         /**
          * Step 2 - Confirm Order

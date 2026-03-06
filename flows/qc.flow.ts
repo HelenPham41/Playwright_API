@@ -1,13 +1,119 @@
+import { expect } from '@playwright/test';
+import { QcService } from "../services/qc.service";
 
-import config from "../configs/stg.env";
-import { createClient } from "../clients/apiClient";
+export class QcFlow {
 
-export async function qcFlow(orderId:string){
+    private qcService = new QcService();
 
- const client=await createClient(config.hostPick);
+    async run(
+        basicToken: string,
+        pickResult: {
+            so: string
+            ticketId: string
+            skuList: { sku: string, quantity: number }[]
+        }
+    ) {
 
- await client.post("/qc/start",{data:{orderId}});
+        console.log("\n==============================");
+        console.log("========== QC FLOW ==========");
+        console.log("==============================");
 
- await client.post("/qc/complete",{data:{orderId}});
+        // Get values from PickFlow result
+        const { so, ticketId, skuList } = pickResult;
+
+        const location = await this.qcService.getLocation();
+        const zoneCode = await this.qcService.getZoneCode();
+
+        console.log("SO from PickFlow:", so);
+        console.log("Location:", location);
+        console.log("Zone Code:", zoneCode);;
+
+        /**
+         * Step 1 - Check In QC Zone
+         */
+        console.log("\nStep 1: Check In QC Zone");
+
+        const checkIn = await this.qcService.checkInQcZone(
+            location,
+            zoneCode
+        );
+
+        console.log("Status:", checkIn.response.status());
+
+        expect([200]).toContain(checkIn.response.status());
+
+        console.log("Step 1: Check In QC Zone success");
+
+        /**
+         * Step 2 - Pick Ticket
+         */
+        console.log("\nStep 2: Pick Ticket");
+
+        const ticket = await this.qcService.pickTicket(
+            so,
+            location
+        );
+
+        expect([200])
+            .toContain(ticket.response.status());
+        console.log("\nStep 2: Pick Ticket success");
+
+
+        /**
+        * Step 3 - Get QR and Scan QR Loop
+        */
+        console.log("\nStep 3: Get QR and Scan QR Loop");
+
+        const result = await this.qcService.processSkuQrLoop(
+            basicToken,
+            so,
+            ticketId,
+            location,
+            skuList
+        );
+
+        console.log(`
+                    Step 3: Get QR and Scan QR Loop
+                    Total SKU: ${result.total}
+                    Scanned: ${result.scanned}
+                    Skipped: ${result.skipped}
+                    `);
+        /**
+        * Step 4 - Done QC move to Pack
+        */
+        console.log("\nStep 4: Done QC -> Move to Pack");
+
+        const qcResult = await this.qcService.doneQcMoveToPack(
+            basicToken,
+            ticketId,
+            so,
+            location
+        );
+
+        console.log(
+            `Step 4 Result: ${qcResult.status} (HTTP ${qcResult.httpStatus})`
+        );
+
+        /**
+        * Step 5 - Checkout QC
+        */
+        console.log("\nStep 5: Checkout QC");
+
+        const checkout = await this.qcService.checkoutQc(
+            basicToken,
+            location,
+            zoneCode
+        );
+
+        expect([200])
+            .toContain(checkout.status());
+
+        console.log("\nStep 5: Checkout QC success");
+
+        console.log("\n==============================");
+        console.log("======= QC FLOW DONE ========");
+        console.log("==============================");
+
+    }
 
 }

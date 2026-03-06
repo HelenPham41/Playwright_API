@@ -1,6 +1,7 @@
 import { createClient } from "../clients/apiClient";
 import config from "../configs";
 import { APIResponse, request } from '@playwright/test';
+import { PickService } from "./pick.service";
 
 export class QcService {
 
@@ -51,7 +52,7 @@ export class QcService {
 
         return response;
     }
-    
+
     /**
     * Pick Ticket
     * GET /backend/warehouse/picking/v1/pick-ticket
@@ -100,15 +101,14 @@ export class QcService {
     }
 
     /**
-    * Process SKU QR Loop
-    * GET QR code info and then call Scan QR API in loop with retry mechanism
-    */
+ * Process SKU QR Loop
+ * GET QR code info and then call Scan QR API in loop with retry mechanism
+ */
     async processSkuQrLoop(
         basicToken: string,
         so: string,
         ticketId: string,
         location: string,
-        skuList: any[]
     ) {
 
         const internalClient = await createClient(
@@ -123,6 +123,22 @@ export class QcService {
             "basic"
         );
 
+        const pickService = new PickService();
+
+        const orderSkuData = await pickService.getOrderSku(basicToken, so);
+
+        const skuCodes = orderSkuData.get_sku_codes || [];
+
+        console.log("SKU list for next request:", skuCodes);
+
+        const skuList = skuCodes as {
+            sku: string,
+            sellerCodeLength: number,
+            seller: string,
+            product_id: string,
+            reservedQuantity: number
+        }[];
+
         let maxFail = 2;
         let failCount = 0;
 
@@ -134,6 +150,7 @@ export class QcService {
             const item = skuList[index];
 
             console.log(`\n▶ Processing SKU ${index + 1}/${skuList.length}`);
+            console.log("Item:", item);
 
             /**
              * Generate QR
@@ -141,7 +158,7 @@ export class QcService {
             const sellerLength = item.sellerCodeLength || 0;
             const random = Math.floor(Math.random() * 10);
 
-            let qr;
+            let qr: string;
 
             if (sellerLength < 10) {
                 qr =
@@ -153,7 +170,12 @@ export class QcService {
                     `L01AE06010130V018R06PO8998U21T101770212989C01AI01${random}`;
             }
 
-            console.log(`Generated QR: ${qr}`);
+            console.log("Generated QR:", qr);
+
+            console.log(
+                "Request URL:",
+                `${config.hostInternal}/backend/operation/qr/v1/qrcode?code=${qr}&warehouseCode=${location}`
+            );
 
             /**
              * GET QR CODE API
@@ -172,12 +194,12 @@ export class QcService {
                     }
                 );
 
-            } catch (error: any) {
+            } catch (error) {
 
                 console.error("❌ Get QR request failed");
-
                 skipped++;
                 continue;
+
             }
 
             /**
@@ -192,11 +214,9 @@ export class QcService {
             }
 
             /**
-             * IMPORTANT
-             * Playwright APIResponse must use json()
+             * Parse QR response
              */
             const qrJson = await qrResponse.json();
-
             const qrData = qrJson?.data?.[0];
 
             if (!qrData) {
@@ -211,6 +231,7 @@ export class QcService {
              * Build scan request body
              */
             const scanBody = {
+
                 ticketId: ticketId,
                 so: so,
                 scannedQuantity: item.reservedQuantity,
@@ -257,18 +278,23 @@ export class QcService {
                 scanned++;
                 failCount = 0;
 
-            } catch (err) {
+            } catch (error) {
 
                 failCount++;
 
                 console.error(`❌ Scan failed (${failCount}/${maxFail})`);
 
                 if (failCount >= maxFail) {
+
                     console.error("🛑 Max scan failures reached");
+
                     break;
                 }
 
-                index--; // retry same SKU
+                /**
+                 * Retry same SKU
+                 */
+                index--;
             }
 
             /**
@@ -276,6 +302,12 @@ export class QcService {
              */
             await new Promise(r => setTimeout(r, 2000));
         }
+
+        console.log("\n========= QR LOOP SUMMARY =========");
+        console.log("Total:", skuList.length);
+        console.log("Scanned:", scanned);
+        console.log("Skipped:", skipped);
+        console.log("===================================\n");
 
         return {
             total: skuList.length,

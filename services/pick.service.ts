@@ -1,6 +1,7 @@
 import { createClient } from "../clients/apiClient";
 import config from "../configs";
 import { APIResponse, request } from '@playwright/test';
+import { extractSkuCodes } from "../utils/sku.util";
 
 export class PickService {
 
@@ -125,8 +126,9 @@ export class PickService {
             "SO not found after retry for orderId: " + orderId
         );
     }
+
     /**
-    * Get Order SKU
+     * Get Order SKU
      * GET /warehouse/core/v1/sale-orders
      */
     async getOrderSku(
@@ -141,11 +143,11 @@ export class PickService {
         );
 
         const wareHouseCode = await this.getWarehouseCode();
-
         const url = "/warehouse/core/v1/sale-orders";
 
         let jsonData: any;
         let firstOrder: any;
+        let get_sku_codes: any[] = [];
 
         for (let i = 1; i <= 6; i++) {
 
@@ -160,24 +162,29 @@ export class PickService {
                 }
             });
 
-            console.log("Status:", response.status());
+            const status = response.status();
+            console.log("Status:", status);
 
             const text = await response.text();
 
-            if (response.status() !== 200) {
+            if (status !== 200) {
                 console.log("❌ API returned error");
                 console.log(text);
+                await new Promise(r => setTimeout(r, 3000));
+                continue;
             }
 
+            // Ensure JSON response
             if (!text.startsWith("{")) {
-
                 console.log("\n❌ Response is NOT JSON");
                 console.log(text.substring(0, 300));
-
                 throw new Error("Get Order SKU returned HTML instead of JSON");
             }
 
             jsonData = JSON.parse(text);
+
+            // Same as JMeter vars.put("get_sku_codes")
+            get_sku_codes = extractSkuCodes(jsonData);
 
             firstOrder = jsonData?.data?.[0];
 
@@ -205,15 +212,13 @@ export class PickService {
 
         const skuList: any[] = [];
 
-        for (const line of firstOrder.orderLines) {
-            if (line.pickItems?.length) {
-                for (const item of line.pickItems) {
-                    skuList.push({
-                        sku: item.sku,
-                        quantity: item.quantity,
-                        saleOrderCode: line.saleOrderCode
-                    });
-                }
+        for (const line of firstOrder.orderLines ?? []) {
+            for (const item of line.pickItems ?? []) {
+                skuList.push({
+                    sku: item.sku,
+                    quantity: item.quantity,
+                    saleOrderCode: line.saleOrderCode
+                });
             }
         }
 
@@ -224,10 +229,11 @@ export class PickService {
             so: firstOrder.orderLines[0].saleOrderCode,
             sku: skuList[0]?.sku,
             quantity: skuList[0]?.quantity,
-            skuList
+            skuList,
+            get_sku_codes
         };
-
     }
+
     /**
     * Check Pick Ticket
     * POST /backend/warehouse/picking/v1/pick-ticket/active/check
@@ -652,10 +658,6 @@ export class PickService {
             warehouseCode: wareHouseCode,
             ticketId: subTicketId
         };
-
-        console.log("Complete Pick URL:", `${config.hostOrder}${url}`);
-        console.log("Complete Pick Payload:", payload);
-
         for (let attempt = 1; attempt <= 3; attempt++) {
 
             try {

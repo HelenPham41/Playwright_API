@@ -186,7 +186,8 @@ export class PickFlow {
                 basicToken,
                 zone,
             );
-
+        // wait 3 seconds
+        await new Promise(resolve => setTimeout(resolve, 3000));
         // ✅ Check Status Code
         expect([200])
             .toContain(checkInPickResponse.status());

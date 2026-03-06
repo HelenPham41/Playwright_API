@@ -39,17 +39,10 @@ export class QcService {
         };
 
         console.log(`\n[QC] Check In QC Zone`);
-        // console.log(`URL: ${config.hostWarehouse}${url}`);
-        // console.log(`BODY:`, body);
 
         const response = await client.post(url, {
             data: body
         });
-
-        const responseBody = await response.json();
-
-        // console.log(`RESPONSE:`, responseBody);
-
         return response;
     }
 
@@ -81,8 +74,6 @@ export class QcService {
         };
 
         console.log(`\n[QC] Pick Ticket`);
-        // console.log(`URL: ${config.hostWarehouse}${url}`);
-        // console.log(`QUERY:`, query);
 
         const response = await client.get(url, {
             params: {
@@ -91,9 +82,6 @@ export class QcService {
         });
 
         const responseBody = await response.json();
-
-        // console.log(`RESPONSE:`, responseBody);
-
         return {
             response,
             data: responseBody
@@ -171,12 +159,6 @@ export class QcService {
             }
 
             console.log("Generated QR:", qr);
-
-            console.log(
-                "Request URL:",
-                `${config.hostInternal}/backend/operation/qr/v1/qrcode?code=${qr}&warehouseCode=${location}`
-            );
-
             /**
              * GET QR CODE API
              */
@@ -336,7 +318,6 @@ export class QcService {
         const url = `/backend/warehouse/picking/v1/pick-ticket/v2/update`;
 
         console.log("\n📦 Move QC -> PACK");
-        console.log("URL:", config.hostInternal + url);
 
         const body = {
             status: "WAIT_TO_PACK",
@@ -393,7 +374,6 @@ export class QcService {
         const url = `/backend/warehouse/core/v1/staff-zone-session/check`;
 
         console.log("\n🚪 Checkout QC Zone");
-        console.log("URL:", config.hostInternal + url);
 
         const body = {
             status: "CHECK_OUT_ZONE",

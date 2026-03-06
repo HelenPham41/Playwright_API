@@ -150,11 +150,6 @@ export class PickService {
         let get_sku_codes: any[] = [];
 
         for (let i = 1; i <= 6; i++) {
-
-            console.log("\n========= GET ORDER SKU =========");
-            console.log("Attempt:", i);
-            console.log("=================================\n");
-
             const response = await client.get(url, {
                 params: {
                     saleOrderCode: so,
@@ -163,7 +158,6 @@ export class PickService {
             });
 
             const status = response.status();
-            console.log("Status:", status);
 
             const text = await response.text();
 
@@ -194,7 +188,6 @@ export class PickService {
                 firstOrder?.orderLines?.some((line: any) => line.pickItems?.length > 0);
 
             if (ready) {
-                console.log("✅ Order SKU ready on attempt", i);
                 break;
             }
 
@@ -221,9 +214,6 @@ export class PickService {
                 });
             }
         }
-
-        console.log("Total SKU found:", skuList.length);
-
         return {
             ticketId: firstOrder.pickTicketInfos[0].pickTicketId,
             so: firstOrder.orderLines[0].saleOrderCode,
@@ -355,7 +345,6 @@ export class PickService {
             const locationDetails = json?.data?.[0]?.locationDetails;
 
             console.log("ReserveStatus:", json?.data?.[0]?.reserveStatus);
-            console.log("LocationDetails:", locationDetails);
 
             if (locationDetails?.length) {
 

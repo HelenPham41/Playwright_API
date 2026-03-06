@@ -346,13 +346,13 @@ export class QcService {
 
         } catch (error: any) {
 
-            console.error("❌ Move QC -> Pack failed");
+            console.error("❌ Failed to move QC -> Pack");
 
             return {
                 status: "Failed",
                 httpStatus: error.response?.status
             };
-        }
+        };
     }
 
     /**

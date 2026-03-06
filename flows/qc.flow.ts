@@ -88,11 +88,6 @@ export class QcFlow {
             so,
             location
         );
-
-        console.log(
-            `Step 4 Result: ${qcResult.status} (HTTP ${qcResult.httpStatus})`
-        );
-
         /**
         * Step 5 - Checkout QC
         */

@@ -2,11 +2,9 @@ import { test, request } from '@playwright/test';
 
 import { OrderFlow } from '../flows/order.flow';
 import { PickFlow } from '../flows/pick.flow';
-// import { QCFlow } from '../flows/qc.flow';
-// import { PackFlow } from '../flows/pack.flow';
-
 import config from '../configs';
 import { QcFlow } from '../flows/qc.flow';
+import { PackFlow } from '../flows/pack.flow';
 
 test('Run Full Flow N times', async () => {
 
@@ -58,7 +56,6 @@ test('Run Full Flow N times', async () => {
     const qcInput = {
       so: pickResult.so,
       ticketId: pickResult.skuInfo.ticketId,
-      skuList: pickResult.skuInfo.skuList
     };
 
     // 3️⃣ QC FLOW
@@ -70,14 +67,14 @@ test('Run Full Flow N times', async () => {
     );
 
 
-    // // 4️⃣ PACK FLOW
-    // const packFlow =
-    //   new PackFlow();
+    // 4️⃣ PACK FLOW
+    const packFlow =
+      new PackFlow();
 
-    // await packFlow.run(
-    //   basicToken,
-    //   orderId
-    // );
+    await packFlow.run(
+      basicToken,
+      qcInput
+    );
 
 
     console.log(`FULL FLOW RUN #${i} DONE`);

@@ -10,7 +10,6 @@ export class QcFlow {
         pickResult: {
             so: string
             ticketId: string
-            skuList: { sku: string, quantity: number }[]
         }
     ) {
 
@@ -19,7 +18,7 @@ export class QcFlow {
         console.log("==============================");
 
         // Get values from PickFlow result
-        const { so, ticketId, skuList } = pickResult;
+        const { so, ticketId} = pickResult;
 
         const location = await this.qcService.getLocation();
         const zoneCode = await this.qcService.getZoneCode();

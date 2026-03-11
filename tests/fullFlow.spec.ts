@@ -42,7 +42,7 @@ test('Run Full Flow N times', async () => {
     const orderId =
       orderResult.orderId;
 
-    console.log("Order Created:", orderId);
+    console.log("Order Created:"+ orderId);
 
 
     /// 2️⃣ PICK FLOW

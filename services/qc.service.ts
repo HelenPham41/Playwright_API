@@ -117,7 +117,7 @@ export class QcService {
 
         const skuCodes = orderSkuData.get_sku_codes || [];
 
-        console.log("SKU list for next request:", skuCodes);
+        console.log("SKU list for next request:"+ skuCodes);
 
         const skuList = skuCodes as {
             sku: string,
@@ -286,9 +286,9 @@ export class QcService {
         }
 
         console.log("\n========= QR LOOP SUMMARY =========");
-        console.log("Total:", skuList.length);
-        console.log("Scanned:", scanned);
-        console.log("Skipped:", skipped);
+        console.log("Total:"+ skuList.length);
+        console.log("Scanned:"+ scanned);
+        console.log("Skipped:"+ skipped);
         console.log("===================================\n");
 
         return {
@@ -337,7 +337,7 @@ export class QcService {
                     ? "Completed"
                     : "Failed";
 
-            console.log("QC Status:", qcStatus);
+            console.log("QC Status:"+ qcStatus);
 
             return {
                 status: qcStatus,

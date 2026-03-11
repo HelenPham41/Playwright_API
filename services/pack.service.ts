@@ -112,7 +112,7 @@ export class PackService {
 
         const bin = body.data[0].name;
 
-        console.log("✓ BIN extracted:", bin);
+        console.log("✓ BIN extracted:"+ bin);
 
         return {
             response,

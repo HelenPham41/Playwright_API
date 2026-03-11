@@ -344,15 +344,15 @@ export class PickService {
 
             const locationDetails = json?.data?.[0]?.locationDetails;
 
-            console.log("ReserveStatus:", json?.data?.[0]?.reserveStatus);
+            console.log("ReserveStatus:"+ json?.data?.[0]?.reserveStatus);
 
             if (locationDetails?.length) {
 
                 const zone = locationDetails[0]?.zone;
                 const locationCode = locationDetails[0]?.locationCode;
 
-                console.log("✅ Zone:", zone);
-                console.log("✅ Location:", locationCode);
+                console.log("✅ Zone:"+ zone);
+                console.log("✅ Location:"+ locationCode);
 
                 return {
                     response,
@@ -402,7 +402,7 @@ export class PickService {
             data: body
         });
 
-        console.log('Status:', response.status());
+        console.log('Status:'+ response.status());
         return response;
     }
     /**
@@ -443,7 +443,7 @@ export class PickService {
             });
 
             const statusCode = response.status();
-            console.log('Status:', statusCode);
+            console.log('Status:'+ statusCode);
 
             if (statusCode === 200) {
 
@@ -503,7 +503,7 @@ export class PickService {
             throw new Error("❌ OTL list is EMPTY");
         }
 
-        console.log("✅ First OTL:", firstOTL);
+        console.log("✅ First OTL:"+ firstOTL);
 
         return { firstOTL, response };
     }
@@ -592,7 +592,7 @@ export class PickService {
                     data: payload
                 });
 
-                console.log("Status:", response.status());
+                console.log("Status:"+ response.status());
 
                 const responseText = await response.text();
 

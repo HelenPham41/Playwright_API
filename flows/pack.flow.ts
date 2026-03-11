@@ -23,8 +23,8 @@ export class PackFlow {
         // Get values from PickFlow result
         const { so, ticketId } = pickResult;
 
-        console.log("SO:", so);
-        console.log("TicketId:", ticketId);
+        console.log("SO:"+ so);
+        console.log("TicketId:"+ ticketId);
 
         /**
          * PACK-01
@@ -36,7 +36,7 @@ export class PackFlow {
         expect([200]).toContain(packCheckinResponse.status());
 
         console.log(
-            "Pack Checkin PASS:",
+            "Pack Checkin PASS:"+
             packCheckinResponse.status()
         );
 
@@ -56,7 +56,7 @@ export class PackFlow {
         expect([200]).toContain(packPackingResponse.status());
 
         console.log(
-            "Pack Packing PASS:",
+            "Pack Packing PASS:"+
             packPackingResponse.status()
         );
 
@@ -75,13 +75,13 @@ export class PackFlow {
         );
 
         console.log(
-            "Get BIN PASS:",
+            "Get BIN PASS:"+
             getBinResult.response.status()
         );
 
         const bin = getBinResult.bin;
 
-        console.log("BIN:", bin);
+        console.log("BIN:"+ bin);
         console.log("Step 3: Get BIN success");
 
 
@@ -101,8 +101,7 @@ export class PackFlow {
         );
 
         console.log(
-            "Add Basket PASS:",
-            addBasketResponse.status()
+            "Add Basket PASS:"+ addBasketResponse.status()
         );
 
         console.log("Step 4: Add Basket success");
@@ -124,8 +123,7 @@ export class PackFlow {
         );
 
         console.log(
-            "Update Ticket PASS:",
-            updateTicketResponse.status()
+            "Update Ticket PASS:"+ updateTicketResponse.status()
         );
 
         console.log("Step 5: Update Ticket success");
@@ -146,8 +144,7 @@ export class PackFlow {
         );
 
         console.log(
-            "Pack Complete PASS:",
-            packCompleteResponse.status()
+            "Pack Complete PASS:"+ packCompleteResponse.status()
         );
 
         console.log("Step 6: Pack Complete success");
@@ -165,8 +162,7 @@ export class PackFlow {
         );
 
         console.log(
-            "Pack Checkout PASS:",
-            packCheckoutResponse.status()
+            "Pack Checkout PASS:"+ packCheckoutResponse.status()
         );
 
         console.log("Step 7: Pack Checkout success");

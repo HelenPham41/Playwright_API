@@ -23,9 +23,9 @@ export class QcFlow {
         const location = await this.qcService.getLocation();
         const zoneCode = await this.qcService.getZoneCode();
 
-        console.log("SO from PickFlow:", so);
-        console.log("Location:", location);
-        console.log("Zone Code:", zoneCode);;
+        console.log("SO from PickFlow:"+ so);
+        console.log("Location:"+ location);
+        console.log("Zone Code:"+ zoneCode);;
 
         /**
          * Step 1 - Check In QC Zone

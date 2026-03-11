@@ -169,8 +169,8 @@ export class PickFlow {
         const locationItemCode =
             zoneAndLocationResponse.locationCode;
 
-        console.log("Zone:", zone);
-        console.log("Location Item Code:", locationItemCode);
+        console.log("Zone:"+ zone);
+        console.log("Location Item Code:"+ locationItemCode);
 
         // ✅ Validate Data
         expect(zone).toBeTruthy();
@@ -206,7 +206,7 @@ export class PickFlow {
 
         expect(subTicketId).toBeTruthy();
 
-        console.log('subTicketId:', subTicketId);
+        console.log('subTicketId:'+ subTicketId);
         /**
         * Step 11: Get OTL
         * GET /warehouse/inventory/v1/location
@@ -215,7 +215,7 @@ export class PickFlow {
 
         const otlCode = result.firstOTL;
 
-        console.log("Step 11 - OTL Code:", otlCode);
+        console.log("Step 11 - OTL Code:"+ otlCode);
 
         // ✅ Check Status Code
         expect([200]).toContain(result.response.status());

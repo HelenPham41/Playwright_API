@@ -37,7 +37,7 @@ export class QcFlow {
             zoneCode
         );
 
-        console.log("Status:", checkIn.status());
+        console.log("Status:"+ checkIn.status());
 
         expect([200]).toContain(checkIn.status());
 

@@ -147,6 +147,7 @@ export class PackService {
         const response = await client.post(url, {
             data: body
         });
+        
 
         return response;
     }
@@ -238,7 +239,8 @@ export class PackService {
         };
 
         const response = await client.post(url, {
-            data: body
+            data: body,
+            timeout: 3000
         });
 
         return response;

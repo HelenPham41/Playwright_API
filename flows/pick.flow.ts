@@ -153,8 +153,7 @@ export class PickFlow {
 
         // ✅ Log Status
         console.log(
-            "Get Zone and Location Status:",
-            zoneAndLocationResponse.response.status()
+            "Get Zone and Location Status:"+ zoneAndLocationResponse.response.status()
         );
 
         // ✅ Check Status Code

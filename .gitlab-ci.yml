@@ -1,0 +1,22 @@
+image: mcr.microsoft.com/playwright:v1.42.1-jammy
+
+stages:
+  - test
+
+variables:
+  TEST_ENV: "stg"
+  RUN_TIMES: "1"
+
+run_fullflow_test:
+  stage: test
+  script:
+    - echo "Environment: $TEST_ENV"
+    - echo "Run times: $RUN_TIMES"
+    - npm ci
+    - npx playwright install
+    - npx playwright test flows/fullflow.spec.ts --project=$TEST_ENV
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/
+      - fullflow-summary.html

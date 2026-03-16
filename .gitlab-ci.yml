@@ -15,11 +15,11 @@ run_fullflow_tests:
     - ci-v2
 
   script:
-    - echo "Environment: $TEST_ENV"
-    - echo "Run times: $RUN_TIMES"
+    - echo Environment: $TEST_ENV
+    - echo Run times: $RUN_TIMES
     - npm ci
     - npx playwright install
-    - echo "Running Playwright tests on $ENV"
+    - echo Running Playwright tests on $ENV
     - npx playwright test flows/fullflow.spec.ts
     - npx playwright test tests/fullflow.spec.ts
 

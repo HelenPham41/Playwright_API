@@ -14,7 +14,7 @@ run_fullflow_test:
     - echo "Run times: $RUN_TIMES"
     - npm ci
     - npx playwright install
-    - npx playwright test flows/fullflow.spec.ts --project=$TEST_ENV
+    - npx playwright test flows/fullflow.spec.ts
   artifacts:
     when: always
     paths:

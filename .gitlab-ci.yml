@@ -17,14 +17,23 @@ run_fullflow_tests:
     - "echo Environment: $TEST_ENV"
     - "echo Run times: $RUN_TIMES"
 
-    # Clean old reports
-    - "rm -rf playwright-report"
-    - "rm -rf test-results"
-    - "rm -f fullflow-summary.html fullflow-summary.json"
+    - "rm -rf playwright-report test-results fullflow-summary.html fullflow-summary.json"
 
     - "npm ci"
+
     - "echo Running Playwright tests on $ENV"
-    - "npx playwright test tests/fullflow.spec.ts"
+
+    # Run tests and fail pipeline if any test fails
+    - |
+      npx playwright test tests/fullflow.spec.ts
+      TEST_EXIT_CODE=$?
+
+      echo "Playwright exit code: $TEST_EXIT_CODE"
+
+      if [ $TEST_EXIT_CODE -ne 0 ]; then
+        echo "Tests failed!"
+        exit 1
+      fi
 
   artifacts:
     when: always

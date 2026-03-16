@@ -5,7 +5,7 @@ stages:
 
 variables:
   TEST_ENV: "stg"
-  RUN_TIMES: "5"
+  RUN_TIMES: "1"
   ENV: "stg"
 
 run_fullflow_tests:
@@ -16,8 +16,13 @@ run_fullflow_tests:
   script:
     - "echo Environment: $TEST_ENV"
     - "echo Run times: $RUN_TIMES"
+
+    # Clean old reports
+    - "rm -rf playwright-report"
+    - "rm -rf test-results"
+    - "rm -f fullflow-summary.html fullflow-summary.json"
+
     - "npm ci"
-    - "npx playwright install"
     - "echo Running Playwright tests on $ENV"
     - "npx playwright test tests/fullflow.spec.ts"
 
@@ -28,3 +33,4 @@ run_fullflow_tests:
       - test-results
       - fullflow-summary.html
       - fullflow-summary.json
+    expire_in: 7 days

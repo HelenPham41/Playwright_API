@@ -10,6 +10,7 @@ variables:
 
 run_fullflow_tests:
   stage: test
+
   tags:
     - ci-v2
 

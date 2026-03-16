@@ -26,3 +26,5 @@ run_fullflow_tests:
     paths:
       - playwright-report
       - test-results
+      - fullflow-summary.html
+      - fullflow-summary.json

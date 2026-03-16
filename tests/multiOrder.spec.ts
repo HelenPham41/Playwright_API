@@ -1,4 +1,4 @@
-import { test, request } from '@playwright/test';
+import { test, expect, request } from '@playwright/test';
 import { OrderFlow } from '../flows/order.flow';
 
 test('Run Order Flow N times', async () => {

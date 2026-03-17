@@ -14,25 +14,26 @@ run_fullflow_tests:
     - ci-v2
 
   script:
-    - "echo Environment: $TEST_ENV"
-    - "echo Run times: $RUN_TIMES"
+    - echo "Environment: $TEST_ENV"
+    - echo "Run times: $RUN_TIMES"
 
-    - "rm -rf playwright-report test-results fullflow-summary.html fullflow-summary.json"
+    # Clean old reports
+    - rm -rf playwright-report test-results fullflow-summary.*
 
-    - "npm ci"
+    - npm ci
 
-    - "echo Running Playwright tests on $ENV"
+    - echo "Running Playwright tests on $ENV"
 
-    # Run tests and fail pipeline if any test fails
+    # Run tests and capture exit code
     - |
       npx playwright test tests/fullflow.spec.ts
-      TEST_EXIT_CODE=$?
+      EXIT_CODE=$?
 
-      echo "Playwright exit code: $TEST_EXIT_CODE"
+      echo "Playwright exit code: $EXIT_CODE"
 
-      if [ $TEST_EXIT_CODE -ne 0 ]; then
+      if [ $EXIT_CODE -ne 0 ]; then
         echo "Tests failed!"
-        exit 1
+        exit $EXIT_CODE
       fi
 
   artifacts:

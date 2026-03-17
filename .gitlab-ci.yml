@@ -18,7 +18,7 @@ run_fullflow_tests:
     - "echo Run times: $RUN_TIMES"
 
     # Clean old reports
-    - "rm -rf playwright-report test-results fullflow-summary.*"
+    - "rm -rf playwright-report test-results reports"
 
     - "npm ci"
 
@@ -44,6 +44,6 @@ run_fullflow_tests:
     paths:
       - playwright-report
       - test-results
-      - fullflow-summary.html
-      - fullflow-summary.json
+      - reports/fullflow-summary.html
+      - reports/fullflow-summary.json
     expire_in: 7 days

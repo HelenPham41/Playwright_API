@@ -172,7 +172,7 @@ export class QcService {
                         params: {
                             code: qr,
                             warehouseCode: location
-                        }
+                        }, timeout: 3000
                     }
                 );
 

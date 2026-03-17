@@ -146,7 +146,7 @@ export class PackService {
 
         const response = await client.post(url, {
             data: body, 
-            timeout: 5000
+            timeout: 7000
         });
         
 

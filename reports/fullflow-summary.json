@@ -1,37 +1,73 @@
 [
   {
     "run": 1,
-    "orderId": 1583268,
-    "so": "SOBD1583268",
-    "ticketId": 1052962,
-    "status": "PASS"
+    "orderId": 1583343,
+    "so": "SOBD1583343",
+    "ticketId": 1053035,
+    "status": "FAIL",
+    "message": "QC Flow failed: GET QR API failed with status 400"
   },
   {
     "run": 2,
-    "orderId": 1583269,
-    "so": "SOBD1583269",
-    "ticketId": 1052963,
+    "orderId": 1583344,
+    "so": "SOBD1583344",
+    "ticketId": 1053036,
     "status": "PASS"
   },
   {
     "run": 3,
-    "orderId": 1583270,
-    "so": "SOBD1583270",
-    "ticketId": 1052964,
+    "orderId": 1583345,
+    "so": "SOBD1583345",
+    "ticketId": 1053037,
     "status": "PASS"
   },
   {
     "run": 4,
-    "orderId": 1583271,
-    "so": "SOBD1583271",
-    "ticketId": 1052965,
+    "orderId": 1583346,
+    "so": "SOBD1583346",
+    "ticketId": 1053038,
     "status": "PASS"
   },
   {
     "run": 5,
-    "orderId": 1583272,
-    "so": "SOBD1583272",
-    "ticketId": 1052966,
+    "orderId": 1583347,
+    "so": "SOBD1583347",
+    "ticketId": 1053039,
+    "status": "PASS"
+  },
+  {
+    "run": 6,
+    "orderId": 1583348,
+    "so": "SOBD1583348",
+    "ticketId": 1053040,
+    "status": "PASS"
+  },
+  {
+    "run": 7,
+    "orderId": 1583349,
+    "so": "SOBD1583349",
+    "ticketId": 1053041,
+    "status": "PASS"
+  },
+  {
+    "run": 8,
+    "orderId": 1583350,
+    "so": "SOBD1583350",
+    "ticketId": 1053042,
+    "status": "PASS"
+  },
+  {
+    "run": 9,
+    "orderId": 1583351,
+    "so": "SOBD1583351",
+    "ticketId": 1053043,
+    "status": "PASS"
+  },
+  {
+    "run": 10,
+    "orderId": 1583352,
+    "so": "SOBD1583352",
+    "ticketId": 1053044,
     "status": "PASS"
   }
 ]

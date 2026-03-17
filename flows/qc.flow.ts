@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { QcService } from "../services/qc.service";
+import { time } from 'console';
 
 export class QcFlow {
 
@@ -18,14 +19,14 @@ export class QcFlow {
         console.log("==============================");
 
         // Get values from PickFlow result
-        const { so, ticketId} = pickResult;
+        const { so, ticketId } = pickResult;
 
         const location = await this.qcService.getLocation();
         const zoneCode = await this.qcService.getZoneCode();
 
-        console.log("SO from PickFlow:"+ so);
-        console.log("Location:"+ location);
-        console.log("Zone Code:"+ zoneCode);;
+        console.log("SO from PickFlow:" + so);
+        console.log("Location:" + location);
+        console.log("Zone Code:" + zoneCode);;
 
         /**
          * Step 1 - Check In QC Zone
@@ -37,7 +38,7 @@ export class QcFlow {
             zoneCode
         );
 
-        console.log("Status:"+ checkIn.status());
+        console.log("Status:" + checkIn.status());
 
         expect([200]).toContain(checkIn.status());
 
@@ -108,5 +109,43 @@ export class QcFlow {
         console.log("==============================");
 
     }
+    /**
+    * Teardown QC (checkout QC if flow fails)
+    */
+    async teardownQc(basicToken: string, input: any) {
 
+        try {
+
+            console.log("Running QC teardown → checkout QC");
+            const location = await this.qcService.getLocation();
+            const zoneCode = await this.qcService.getZoneCode();
+
+            const response = await this.qcService.checkoutQc(
+                basicToken,
+                location,
+                zoneCode
+            );
+
+            const status = response?.status();
+
+            if (status !== 200) {
+
+                const body = await response?.text();
+
+                throw new Error(
+                    `QC checkout failed | status=${status} | response=${body}`
+                );
+            }
+
+            console.log("QC checkout success");
+
+        } catch (error: any) {
+
+            console.error(
+                "QC teardown failed:",
+                error?.response?.data?.message || error?.message
+            );
+
+        }
+    }
 }

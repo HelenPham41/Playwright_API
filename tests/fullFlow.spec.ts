@@ -20,6 +20,8 @@ type FlowResult = {
   ticketId: string;
   status: 'PASS' | 'FAIL';
   message?: string;
+  location?: string;
+  zoneCode?: string;
 };
 
 test('Run Full Flow N times', async () => {
@@ -73,21 +75,83 @@ test('Run Full Flow N times', async () => {
         console.log("Order Created:", orderId);
 
         /**
-         * PICK FLOW
-         */
-        const pickFlow = new PickFlow();
-        const pickResult = await pickFlow.run(basicToken, orderId);
+        * PICK FLOW
+        */
+        let pickResult;
 
-        so = pickResult.so;
-        ticketId = pickResult.skuInfo.ticketId;
+        try {
+
+          const pickFlow = new PickFlow();
+          pickResult = await pickFlow.run(basicToken, orderId);
+
+          so = pickResult.so;
+          ticketId = pickResult.skuInfo.ticketId;
+
+        } catch (error: any) {
+
+          const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Pick Flow failed";
+
+          const status =
+            error?.response?.status ||
+            error?.status ||
+            "UNKNOWN";
+
+          const url =
+            error?.response?.config?.url ||
+            error?.config?.url ||
+            "UNKNOWN";
+
+          console.error("Pick Flow failed:", {
+            message,
+            status,
+            url
+          });
+
+          throw {
+            flow: "PICK",
+            message,
+            status,
+            url
+          };
+        }
 
         const flowInput = { so, ticketId, orderId };
 
         /**
-         * QC FLOW
-         */
+        * QC FLOW
+        */
         const qcFlow = new QcFlow();
-        await qcFlow.run(basicToken, flowInput);
+
+        try {
+
+          await qcFlow.run(basicToken, flowInput);
+          console.log("QC Flow completed");
+
+        } catch (error: any) {
+
+          console.error("QC Flow failed. Running QC teardown...");
+
+          try {
+
+            await qcFlow.teardownQc(basicToken, flowInput);
+            console.log("QC teardown completed");
+
+          } catch (teardownError: any) {
+
+            console.error("QC teardown failed:", teardownError?.message);
+
+          }
+
+          const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "QC Flow unknown error";
+
+          throw new Error(`QC Flow failed: ${message}`);
+        }
 
         /**
          * PACK FLOW

@@ -117,7 +117,7 @@ export class QcService {
 
         const skuCodes = orderSkuData.get_sku_codes || [];
 
-        console.log("SKU list for next request:"+ skuCodes);
+        console.log("SKU list for next request:" + skuCodes);
 
         const skuList = skuCodes as {
             sku: string,
@@ -172,7 +172,7 @@ export class QcService {
                         params: {
                             code: qr,
                             warehouseCode: location
-                        }, timeout: 3000
+                        }, timeout: 5000
                     }
                 );
 
@@ -189,10 +189,11 @@ export class QcService {
              */
             if (!qrResponse || qrResponse.status() !== 200) {
 
-                console.log("⏭ Skip Scan because GET QR status != 200");
+                const status = qrResponse?.status();
 
-                skipped++;
-                continue;
+                console.log(`❌ GET QR failed. Status: ${status}`);
+
+                throw new Error(`GET QR API failed with status ${status}`);
             }
 
             /**
@@ -286,9 +287,9 @@ export class QcService {
         }
 
         console.log("\n========= QR LOOP SUMMARY =========");
-        console.log("Total:"+ skuList.length);
-        console.log("Scanned:"+ scanned);
-        console.log("Skipped:"+ skipped);
+        console.log("Total:" + skuList.length);
+        console.log("Scanned:" + scanned);
+        console.log("Skipped:" + skipped);
         console.log("===================================\n");
 
         return {
@@ -337,7 +338,7 @@ export class QcService {
                     ? "Completed"
                     : "Failed";
 
-            console.log("QC Status:"+ qcStatus);
+            console.log("QC Status:" + qcStatus);
 
             return {
                 status: qcStatus,
@@ -383,7 +384,7 @@ export class QcService {
         };
 
         const response = await client.post(url, {
-            data: body
+            data: body, timeout: 3000
         });
 
         return response;

@@ -13,8 +13,12 @@ export async function teardownOrder(
   console.log("Running teardown...");
 
   await orderService.cancelOrder(basicToken, orderId, orderCode);
+  console.log("✓ Order cancelled: " + orderId, "OrderCode:", orderCode);
+  await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for 2s to ensure order is cancelled before proceeding with pack checkout
 
   await packService.packCheckout(ticketId);
+  await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2s to ensure pack checkout is processed before finishing teardown
+  console.log("✓ Pack checkout completed: " + ticketId);
 
   console.log("Teardown completed");
 }

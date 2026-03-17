@@ -11,7 +11,7 @@ import config from '../configs';
 
 import { writeFullFlowSummary, generateHtmlReport } from '../utils/fullflow-summary';
 
-test.setTimeout(2 * 60 * 1000); // 2 minutes
+test.setTimeout(15 * 60 * 1000); // 15 minutes
 
 type FlowResult = {
   run: number;

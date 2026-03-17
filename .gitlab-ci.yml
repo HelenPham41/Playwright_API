@@ -6,7 +6,6 @@ stages:
 variables:
   TEST_ENV: "stg"
   RUN_TIMES: "1"
-  ENV: "stg"
 
 run_fullflow_tests:
   stage: test

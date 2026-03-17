@@ -112,7 +112,7 @@ export class PackService {
 
         const bin = body.data[0].name;
 
-        console.log("✓ BIN extracted:"+ bin);
+        console.log("✓ BIN extracted:" + bin);
 
         return {
             response,
@@ -144,13 +144,28 @@ export class PackService {
             basketCode: bin
         };
 
-        const response = await client.post(url, {
-            data: body, 
-            timeout: 7000
-        });
-        
+        try {
 
-        return response;
+            const response = await client.post(url, {
+                data: body,
+                timeout: 7000
+            });
+
+            return {
+                status: response.status(),
+                url: config.hostOrder + url,
+                response
+            };
+
+        } catch (error: any) {
+
+            return {
+                status: error.response?.status() || 500,
+                url: config.hostOrder + url,
+                error: true
+            };
+
+        }
     }
     /**
     * PACK-05

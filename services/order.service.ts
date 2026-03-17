@@ -31,7 +31,6 @@ export class OrderService {
     return response;
   }
 
-
   /**
    * Get Cart Info
    */
@@ -101,7 +100,7 @@ export class OrderService {
 
     console.log("selectedSkuCodes = " + selectedSkuCodes);
 
-    console.log("Cart is empty = "+ (skuCodes.length === 0));
+    console.log("Cart is empty = " + (skuCodes.length === 0));
 
     return {
       response,
@@ -371,5 +370,31 @@ export class OrderService {
       response,
       orderId
     };
+  }
+  /**
+    * Cancel Order
+    * PASS if 200
+    */
+  async cancelOrder(basicToken: string, orderId: string, orderCode: string) {
+
+    const client = await createClient(
+      config.hostInternal,
+      basicToken,
+      "basic"
+    );
+
+    const response = await client.put(
+      "/backend/marketplace/order/v2/order/status",
+      {
+        data: {
+          orderCode: orderCode,
+          orderId: orderId,
+          status: "CANCEL",
+          note: "Cancel order for testing purpose"
+        }
+      }
+    );
+
+    return response;
   }
 }

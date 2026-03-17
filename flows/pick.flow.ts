@@ -299,7 +299,8 @@ export class PickFlow {
             skuInfo,
             zone,
             subTicketId,
-            otlCode
+            otlCode,
+            orderCode: orderInfo.orderCode
         };
     }
 }

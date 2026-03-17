@@ -1,42 +1,40 @@
+<html>
+<head>
+    <title>Full Flow Summary</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #f4f4f4; }
+        .pass { color: green; }
+        .fail { color: red; }
+    </style>
+</head>
 
-  <html>
-  <head>
-      <title>Full Flow Summary</title>
-      <style>
-          body { font-family: Arial; padding: 20px; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-          th { background: #f4f4f4; }
-          h1 { color: #333; }
-      </style>
-  </head>
-  <body>
+<body>
 
-      <h1>Full Flow Execution Summary</h1>
+<h1>Full Flow Execution Summary</h1>
 
-      <p><b>Total Runs:</b> 1</p>
-      <p style="color:green"><b>Total Pass:</b> 1</p>
-      <p style="color:red"><b>Total Fail:</b> 0</p>
+<p><b>Total Runs:</b> {{totalRuns}}</p>
+<p class="pass"><b>Total Pass:</b> {{totalPass}}</p>
+<p class="fail"><b>Total Fail:</b> {{totalFail}}</p>
 
-      <table>
-          <tr>
-              <th>Run</th>
-              <th>OrderId</th>
-              <th>SO</th>
-              <th>TicketId</th>
-              <th>Status</th>
-          </tr>
-          
-      <tr>
-        <td>1</td>
-        <td>1583123</td>
-        <td>SOBD1583123</td>
-        <td>1052854</td>
-        <td style="color:green">PASS</td>
-      </tr>
-  
-      </table>
+<table>
 
-  </body>
-  </html>
-  
+<tr>
+<th>Run</th>
+<th>OrderId</th>
+<th>SO</th>
+<th>TicketId</th>
+<th>Step</th>
+<th>Status</th>
+<th>Code</th>
+<th>URL</th>
+</tr>
+
+{{rows}}
+
+</table>
+
+</body>
+</html>

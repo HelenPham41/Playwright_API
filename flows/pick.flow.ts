@@ -1,10 +1,12 @@
 import { expect } from '@playwright/test';
 import { PickService } from "../services/pick.service";
+import { PackService } from "../services/pack.service";
+import { handleApiResponse } from '../utils/api-helper';
 
 export class PickFlow {
-
-    private pickService = new PickService();
     private otlCode!: string;
+    private packService = new PackService();
+    private pickService = new PickService(this.packService);
 
     async run(
         basicToken: string,
@@ -14,8 +16,8 @@ export class PickFlow {
         console.log("\n==============================");
         console.log("========= PICK FLOW =========");
         console.log("==============================");
-
         const warehouseCode = await this.pickService.getWarehouseCode();
+
         /**
          * Step 1 - Get Order Info
          */
@@ -28,8 +30,7 @@ export class PickFlow {
 
         console.log("OrderId: " + orderId);
         console.log("Price: " + orderInfo.price);
-        expect([200])
-            .toContain(orderInfo.response.status());
+        await handleApiResponse(orderInfo.response, [200]);
 
         console.log("\nStep 1: Get Order Info success");
 
@@ -48,8 +49,7 @@ export class PickFlow {
             confirmResult.status()
         );
 
-        expect([200])
-            .toContain(confirmResult.status());
+        await handleApiResponse(confirmResult, [200]);
 
 
         /**
@@ -114,9 +114,8 @@ export class PickFlow {
             "Check Pick Ticket Status: " +
             checkTicketResult.status()
         );
+        await handleApiResponse(checkTicketResult, [200]);
 
-        expect([200])
-            .toContain(checkTicketResult.status());
 
 
         /**
@@ -134,12 +133,10 @@ export class PickFlow {
             "Active Pick Ticket: " +
             skuInfo.ticketId +
             " - Status " +
-            activeTicketResult.status()
+            activeTicketResult.response.status()
         );
 
-        expect([200])
-            .toContain(activeTicketResult.status());
-
+        await handleApiResponse(activeTicketResult.response, [200]);
         /**
         * Step 8 - Get Zone and Location
         */
@@ -153,14 +150,11 @@ export class PickFlow {
 
         // ✅ Log Status
         console.log(
-            "Get Zone and Location Status:"+ zoneAndLocationResponse.response.status()
+            "Get Zone and Location Status:" + zoneAndLocationResponse.response.status()
         );
 
         // ✅ Check Status Code
-        expect([200])
-            .toContain(
-                zoneAndLocationResponse.response.status()
-            );
+        await handleApiResponse(zoneAndLocationResponse.response, [200]);
 
         const zone =
             zoneAndLocationResponse.zone;
@@ -168,8 +162,8 @@ export class PickFlow {
         const locationItemCode =
             zoneAndLocationResponse.locationCode;
 
-        console.log("Zone:"+ zone);
-        console.log("Location Item Code:"+ locationItemCode);
+        console.log("Zone:" + zone);
+        console.log("Location Item Code:" + locationItemCode);
 
         // ✅ Validate Data
         expect(zone).toBeTruthy();
@@ -185,13 +179,27 @@ export class PickFlow {
                 basicToken,
                 zone,
             );
-        // wait 3 seconds
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        // ✅ Check Status Code
-        expect([200])
-            .toContain(checkInPickResponse.status());
 
-        console.log('✅ Check in Pick Success');
+        // optional wait
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        try {
+
+            // ✅ validate response
+            await handleApiResponse(checkInPickResponse, [200]);
+
+            console.log('✅ Check in Pick Success');
+
+        } catch (error: any) {
+
+            console.error('❌ Check in Pick Failed:', {
+                message: error?.body || error?.message,
+                code: error?.status,
+                url: error?.url
+            });
+
+            throw error;
+        }
 
         /**
         * Step 10: Assign Pick Staff
@@ -205,7 +213,7 @@ export class PickFlow {
 
         expect(subTicketId).toBeTruthy();
 
-        console.log('subTicketId:'+ subTicketId);
+        console.log('subTicketId:' + subTicketId);
         /**
         * Step 11: Get OTL
         * GET /warehouse/inventory/v1/location
@@ -214,10 +222,10 @@ export class PickFlow {
 
         const otlCode = result.firstOTL;
 
-        console.log("Step 11 - OTL Code:"+ otlCode);
+        console.log("Step 11 - OTL Code:" + otlCode);
 
         // ✅ Check Status Code
-        expect([200]).toContain(result.response.status());
+        await handleApiResponse(result.response, [200]);
 
         /**
         * Step 12: Use Basket
@@ -229,7 +237,7 @@ export class PickFlow {
             otlCode
         );
 
-        expect(useBasketResponse.status()).toBe(200);
+        await handleApiResponse(useBasketResponse.response, [200]);
 
         console.log("Step 12 - Use Basket success");
 
@@ -248,7 +256,7 @@ export class PickFlow {
             throw new Error("Check Pick Items response is null");
         }
 
-        expect([200]).toContain(checkPickItemsResult.response.status());
+        await handleApiResponse(checkPickItemsResult.response, [200]);
 
         console.log("Step 13 - Check Pick Items done");
 
@@ -261,7 +269,7 @@ export class PickFlow {
             Number(subTicketId),
         );
 
-        expect([200]).toContain(completePickResult.status());
+        await handleApiResponse(completePickResult, [200]);
 
         console.log("Step 14 - Complete Pick success");
 
@@ -274,7 +282,7 @@ export class PickFlow {
             so,
         );
 
-        expect([200]).toContain(completePickSOResult.status());
+        await handleApiResponse(completePickSOResult, [200]);
 
         console.log("Step 15 - Complete Pick for SO success");
 
@@ -287,7 +295,7 @@ export class PickFlow {
             zone,
         );
 
-        expect([200]).toContain(checkoutPickResult.status());
+        await handleApiResponse(checkoutPickResult, [200]);
 
         console.log("Step 16 - Checkout Pick success");
         console.log("\n========= PICK FLOW DONE =========\n");

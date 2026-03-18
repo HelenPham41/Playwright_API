@@ -2,6 +2,8 @@ import { createClient } from "../clients/apiClient";
 import config from "../configs";
 import { APIResponse, request } from '@playwright/test';
 import { PickService } from "./pick.service";
+import { url } from "inspector";
+import { PackService } from "./pack.service";
 
 export class QcService {
 
@@ -111,7 +113,8 @@ export class QcService {
             "basic"
         );
 
-        const pickService = new PickService();
+        const packService = new PackService();
+        const pickService = new PickService(packService);
 
         const orderSkuData = await pickService.getOrderSku(basicToken, so);
 
@@ -295,7 +298,7 @@ export class QcService {
         return {
             total: skuList.length,
             scanned,
-            skipped
+            skipped,
         };
     }
 

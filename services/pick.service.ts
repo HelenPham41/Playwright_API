@@ -2,8 +2,16 @@ import { createClient } from "../clients/apiClient";
 import config from "../configs";
 import { APIResponse, request } from '@playwright/test';
 import { extractSkuCodes } from "../utils/sku.util";
+import { PackService } from './pack.service';
+import { handleApiResponse } from "../utils/api-helper";
 
 export class PickService {
+
+    private packService: PackService;
+
+    constructor(packService: PackService) {
+        this.packService = packService;
+    }
 
     async getOrderInfo(
         basicToken: string,
@@ -294,7 +302,7 @@ export class PickService {
 
         console.log("=======================================\n");
 
-        return response;
+        return { response, message: json.message, url };
     }
     /**
     * Get Zone and Location
@@ -383,28 +391,58 @@ export class PickService {
 
         const endpoint = '/warehouse/core/v1/staff-zone-session/check';
 
-
         const client = await createClient(
             config.hostOrder,
             basicToken,
             'basic'
         );
+
         const wareHouseCode = await this.getWarehouseCode();
 
         const body = {
             zoneCode: zone,
             status: 'CHECK_IN_ZONE',
             jobType: 'PICK',
-            wareHouseCode: wareHouseCode
+            wareHouseCode
         };
 
         console.log('===== CHECK IN PICK =====');
 
-        const response = await client.post(endpoint, {
-            data: body
-        });
+        let response = await client.post(endpoint, { data: body });
 
-        console.log('Status:' + response.status());
+        console.log('Status:', response.status());
+
+        // 🔥 Handle special business case
+        if (response.status() === 400) {
+
+            let message = "";
+
+            try {
+                const json = await response.json();
+                message = json?.message || "";
+            } catch {
+                message = await response.text();
+            }
+
+            console.log("⚠️ CheckIn failed message:", message);
+
+            // ✅ Detect PACK conflict
+            if (message.includes('công việc PACK')) {
+
+                console.log("👉 Detected PACK session → calling PackService.checkout...");
+
+                // 🔥 CALL PACK SERVICE
+                const packCheckinResponse = await this.packService.packCheckout(wareHouseCode);
+                await handleApiResponse(packCheckinResponse, [200]);
+
+                console.log("🔁 Retry Check in PICK...");
+
+                response = await client.post(endpoint, { data: body });
+
+                console.log('Retry Status:', response.status());
+            }
+        }
+
         return response;
     }
     /**
@@ -537,7 +575,7 @@ export class PickService {
                 }
             }
         );
-        return response;
+        return { response, message: await response.text(), url: response.url() };
     }
     /**
     * Check Pick Items

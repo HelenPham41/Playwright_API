@@ -4,7 +4,7 @@ import { PackService } from "../services/pack.service";
 import { OrderService } from "../services/order.service";
 import { PickService } from "../services/pick.service";
 import { teardownOrder } from "../utils/teardown";
-import { writeFullFlowSummary } from "../utils/fullflow-summary";
+import { handleApiResponse } from '../utils/api-helper';
 
 export class PackFlow {
 
@@ -30,7 +30,8 @@ export class PackFlow {
         console.log("SO:", so);
         console.log("TicketId:", ticketId);
 
-        const pickService = new PickService();
+        const packService = new PackService();
+        const pickService = new PickService(packService);
         const orderService = new OrderService(request);
 
         const orderInfo = await pickService.getOrderInfo(basicToken, orderId);
@@ -42,7 +43,7 @@ export class PackFlow {
         const packCheckinResponse =
             await this.packService.packCheckin(location);
 
-        expect([200]).toContain(packCheckinResponse.status());
+        await handleApiResponse(packCheckinResponse, [200]);
 
         console.log("Pack Checkin PASS:", packCheckinResponse.status());
 
@@ -53,7 +54,7 @@ export class PackFlow {
         const packPackingResponse =
             await this.packService.packPacking(ticketId, location);
 
-        expect([200]).toContain(packPackingResponse.status());
+        await handleApiResponse(packPackingResponse, [200]);
 
         console.log("Pack Packing PASS:", packPackingResponse.status());
 
@@ -64,7 +65,7 @@ export class PackFlow {
         const getBinResult =
             await this.packService.getBin(location);
 
-        expect([200]).toContain(getBinResult.response.status());
+        await handleApiResponse(getBinResult.response, [200]);
 
         const bin = getBinResult.bin;
 
@@ -83,7 +84,7 @@ export class PackFlow {
 
         if (addBasketResponse.status !== 200) {
 
-            console.log("PACK-04 FAILED");
+            console.log("PACK-04 FAILED + Status:", addBasketResponse.status);
 
             // 🔴 Run teardown
             await teardownOrder(
@@ -113,7 +114,7 @@ export class PackFlow {
                 location
             );
 
-        expect([200]).toContain(updateTicketResponse.status());
+        await handleApiResponse(updateTicketResponse, [200]);
 
         console.log("Update Ticket PASS:", updateTicketResponse.status());
 
@@ -127,7 +128,7 @@ export class PackFlow {
                 location
             );
 
-        expect([200, 403]).toContain(packCompleteResponse.status());
+        await handleApiResponse(packCompleteResponse, [200, 403]);
 
         console.log("Pack Complete PASS:", packCompleteResponse.status());
 
@@ -138,7 +139,7 @@ export class PackFlow {
         const packCheckoutResponse =
             await this.packService.packCheckout(location);
 
-        expect([200]).toContain(packCheckoutResponse.status());
+        await handleApiResponse(packCheckoutResponse, [200]);
 
         console.log("Pack Checkout PASS:", packCheckoutResponse.status());
 

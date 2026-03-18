@@ -14,42 +14,6 @@ function removeAnsi(text: string) {
 }
 
 /**
- * Parse message to extract Status Code and URL
- */
-function parseMessage(message: string) {
-
-  let cleanMessage = message || "";
-  let code = "-";
-  let url = "-";
-
-  cleanMessage = removeAnsi(cleanMessage);
-
-  const statusMatch = cleanMessage.match(/Status:\s*(\d+)/);
-  const urlMatch = cleanMessage.match(/URL:\s*(https?:\/\/[^\s]+)/);
-
-  if (statusMatch) {
-    code = statusMatch[1];
-    cleanMessage = cleanMessage.replace(statusMatch[0], "");
-  }
-
-  if (urlMatch) {
-    url = urlMatch[1];
-    cleanMessage = cleanMessage.replace(urlMatch[0], "");
-  }
-
-  cleanMessage = cleanMessage
-    .replace(/\|\s*\|/g, "|")
-    .replace(/\|\s*$/, "")
-    .trim();
-
-  return {
-    message: cleanMessage || "-",
-    code,
-    url
-  };
-}
-
-/**
  * Save summary JSON
  */
 export function writeFullFlowSummary(data: any[]) {
@@ -91,7 +55,14 @@ export function generateHtmlReport() {
 
   results.forEach((r, index) => {
 
-    const parsed = parseMessage(r.message || "");
+    const message = removeAnsi(r.message || "-");
+    const code = r.code ?? "-";
+    const url = r.url ?? "-";
+
+    const codeColor =
+      code >= 500 ? "red" :
+      code >= 400 ? "orange" :
+      "black";
 
     rows += `
     <tr>
@@ -104,10 +75,18 @@ export function generateHtmlReport() {
             ${r.status}
         </td>
         ${!allPass ? `
-        <td style="max-width:400px;text-align:left">${parsed.message}</td>
-        <td>${parsed.code}</td>
-        <td style="text-align:left">
-            ${parsed.url !== "-" ? `<a href="${parsed.url}" target="_blank">${parsed.url}</a>` : "-"}
+        <td style="max-width:400px;text-align:left;word-break:break-word">
+            ${message}
+        </td>
+        <td style="color:${codeColor}">
+            ${code}
+        </td>
+        <td style="text-align:left;max-width:400px;word-break:break-all">
+            ${
+              url !== "-"
+                ? `<a href="${url}" target="_blank">${url}</a>`
+                : "-"
+            }
         </td>
         ` : ``}
     </tr>

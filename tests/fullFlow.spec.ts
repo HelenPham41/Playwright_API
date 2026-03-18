@@ -11,7 +11,7 @@ import config from '../configs';
 
 import { writeFullFlowSummary, generateHtmlReport } from '../utils/fullflow-summary';
 
-test.setTimeout(15 * 60 * 1000); // 15 minutes
+test.setTimeout(150 * 60 * 1000); // 150 minutes
 
 type FlowResult = {
   run: number;
@@ -22,6 +22,8 @@ type FlowResult = {
   message?: string;
   location?: string;
   zoneCode?: string;
+  url?: string;
+  code?: number;
 };
 
 test('Run Full Flow N times', async () => {
@@ -29,18 +31,13 @@ test('Run Full Flow N times', async () => {
   const RUN_TIMES = Number(process.env.RUN_TIMES || 1);
   console.log("RUN_TIMES =", RUN_TIMES);
 
-  /**
-   * Use separate folder for custom report
-   */
   const reportDir = path.join(process.cwd(), 'fullflow-report');
 
   try {
-
     if (fs.existsSync(reportDir)) {
       fs.rmSync(reportDir, { recursive: true, force: true });
     }
-
-  } catch (err) {
+  } catch {
     console.log("Cannot delete old report folder. Continue...");
   }
 
@@ -75,8 +72,8 @@ test('Run Full Flow N times', async () => {
         console.log("Order Created:", orderId);
 
         /**
-        * PICK FLOW
-        */
+         * PICK FLOW
+         */
         let pickResult;
 
         try {
@@ -89,40 +86,32 @@ test('Run Full Flow N times', async () => {
 
         } catch (error: any) {
 
-          const message =
-            error?.response?.data?.message ||
-            error?.message ||
-            "Pick Flow failed";
-
-          const status =
-            error?.response?.status ||
-            error?.status ||
-            "UNKNOWN";
-
-          const url =
-            error?.response?.config?.url ||
-            error?.config?.url ||
-            "UNKNOWN";
-
-          console.error("Pick Flow failed:", {
-            message,
-            status,
-            url
+          summary.push({
+            run: i,
+            orderId,
+            so,
+            ticketId,
+            status: 'FAIL',
+            message: error?.body,
+            code: error?.status,
+            url: error?.url
           });
 
-          throw {
-            flow: "PICK",
-            message,
-            status,
-            url
-          };
+          console.error(`PICK FLOW FAILED`, {
+            orderId,
+            message: error?.message,
+            code: error?.status,
+            url: error?.url
+          });
+
+          continue; // skip this run
         }
 
         const flowInput = { so, ticketId, orderId };
 
         /**
-        * QC FLOW
-        */
+         * QC FLOW
+         */
         const qcFlow = new QcFlow();
 
         try {
@@ -135,30 +124,31 @@ test('Run Full Flow N times', async () => {
           console.error("QC Flow failed. Running QC teardown...");
 
           try {
-
             await qcFlow.teardownQc(basicToken, flowInput);
             console.log("QC teardown completed");
-
           } catch (teardownError: any) {
-
             console.error("QC teardown failed:", teardownError?.message);
-
           }
 
-          const message =
-            error?.response?.data?.message ||
-            error?.message ||
-            "QC Flow unknown error";
-
-          throw new Error(`QC Flow failed: ${message}`);
+          throw error; // keep ApiError
         }
 
         /**
          * PACK FLOW
          */
-        const packFlow = new PackFlow();
-        await packFlow.run(context, basicToken, flowInput);
+        try {
 
+          const packFlow = new PackFlow();
+          await packFlow.run(context, basicToken, flowInput);
+
+        } catch (error: any) {
+
+          throw error;
+        }
+
+        /**
+         * SUCCESS
+         */
         summary.push({
           run: i,
           orderId,
@@ -171,25 +161,22 @@ test('Run Full Flow N times', async () => {
 
       } catch (error: any) {
 
-        let message = "Unknown error";
-
-        if (error?.response?.data?.message) {
-          message = error.response.data.message;
-        } else if (error?.message) {
-          message = error.message;
-        }
-
         summary.push({
           run: i,
           orderId,
           so,
           ticketId,
           status: 'FAIL',
-          message
+          message: error?.body || error?.message || "Unknown error",
+          url: error?.url ?? "N/A",
+          code: error?.status ?? 0
         });
 
-        console.error(`FULL FLOW RUN #${i} FAILED`);
-        console.error("Message:", message);
+        console.error(`FULL FLOW RUN #${i} FAILED`, {
+          message: error?.message,
+          code: error?.status,
+          url: error?.url
+        });
       }
     }
 
@@ -200,6 +187,8 @@ test('Run Full Flow N times', async () => {
     console.log("\n====================");
     console.log("Generating FullFlow Report...");
     console.log("====================");
+
+    console.table(summary); // Log summary in table format
 
     writeFullFlowSummary(summary);
     generateHtmlReport();

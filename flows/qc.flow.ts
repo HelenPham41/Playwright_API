@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { QcService } from "../services/qc.service";
-import { time } from 'console';
+import { handleApiResponse } from '../utils/api-helper';
 
 export class QcFlow {
 
@@ -40,7 +40,7 @@ export class QcFlow {
 
         console.log("Status:" + checkIn.status());
 
-        expect([200]).toContain(checkIn.status());
+        await handleApiResponse(checkIn, [200]);
 
         console.log("Step 1: Check In QC Zone success");
 
@@ -54,8 +54,7 @@ export class QcFlow {
             location
         );
 
-        expect([200])
-            .toContain(ticket.response.status());
+        await handleApiResponse(ticket.response, [200]);
         console.log("\nStep 2: Pick Ticket success");
 
 
@@ -99,8 +98,7 @@ export class QcFlow {
             zoneCode
         );
 
-        expect([200])
-            .toContain(checkout.status());
+        await handleApiResponse(checkout, [200]);
 
         console.log("\nStep 5: Checkout QC success");
 
@@ -126,26 +124,13 @@ export class QcFlow {
                 zoneCode
             );
 
-            const status = response?.status();
+            await handleApiResponse(response, [200]);
 
-            if (status !== 200) {
-
-                const body = await response?.text();
-
-                throw new Error(
-                    `QC checkout failed | status=${status} | response=${body}`
-                );
-            }
-
-            console.log("QC checkout success");
-
+            console.log("QC teardown successful");
         } catch (error: any) {
 
-            console.error(
-                "QC teardown failed:",
-                error?.response?.data?.message || error?.message
-            );
-
+            console.error("QC teardown failed:", error?.message);
+            throw new Error(`QC teardown failed: ${error?.message}`);
         }
     }
 }

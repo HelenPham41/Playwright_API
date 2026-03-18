@@ -149,20 +149,20 @@ export class QcService {
              */
             const sellerLength = item.sellerCodeLength || 0;
             const random = Math.floor(Math.random() * 10);
-            const PO = Math.floor(Math.random() * 10000)
+            const PO = Math.floor(Math.random() * 1000)
                 .toString()
-                .padStart(4, '0');
+                .padStart(3, '0');
 
             let qr: string;
 
             if (sellerLength < 10) {
                 qr =
                     `P07${item.product_id}S0${sellerLength}${item.seller}` +
-                    `L01AE06010130V018R06` + `PO${PO}`+ `U21T101770212989C01AI01${random}`;
+                    `L01AE06010130V018R06` + `PO8${PO}`+ `U21T101770212989C01AI01${random}`;
             } else {
                 qr =
                     `P07${item.product_id}S${sellerLength}${item.seller}` +
-                    `L01AE06010130V018R06` + `PO${PO}`+ `U21T101770212989C01AI01${random}`;
+                    `L01AE06010130V018R06` + `PO8${PO}`+ `U21T101770212989C01AI01${random}`;
             }
 
             console.log("Generated QR:", qr);

@@ -110,27 +110,14 @@ test('Run Full Flow N times', async () => {
         const flowInput = { so, ticketId, orderId };
 
         /**
-         * QC FLOW
-         */
-        const qcFlow = new QcFlow();
-
+        * QC FLOW
+        */
         try {
+          const qcFlow = new QcFlow(context);
 
           await qcFlow.run(basicToken, flowInput);
-          console.log("QC Flow completed");
-
         } catch (error: any) {
-
-          console.error("QC Flow failed. Running QC teardown...");
-
-          try {
-            await qcFlow.teardownQc(basicToken, flowInput);
-            console.log("QC teardown completed");
-          } catch (teardownError: any) {
-            console.error("QC teardown failed:", teardownError?.message);
-          }
-
-          throw error; // keep ApiError
+          throw error;
         }
 
         /**

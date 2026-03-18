@@ -14,7 +14,7 @@ export class QcFlow {
         this.orderService = new OrderService(request);
     }
 
- 
+
     async run(
         basicToken: string,
         pickResult: {
@@ -118,8 +118,8 @@ export class QcFlow {
 
     }
     /**
-    * Teardown QC (checkout QC if flow fails)
-    */
+     * Teardown QC (checkout QC if flow fails)
+     */
     async teardown(
         basicToken: string,
         orderId: string,
@@ -128,16 +128,32 @@ export class QcFlow {
         location: string,
         zoneCode: string
     ) {
-        
-        await teardownQC(
-            this.orderService,
-            this.qcService,
-            basicToken,
-            orderId,
-            ticketId,
-            orderCode,
-            location,
-            zoneCode
-        );
+
+        console.log("Running QC teardown...");
+
+        try {
+
+            await teardownQC(
+                this.orderService,
+                this.qcService,
+                basicToken,
+                orderId,
+                ticketId,
+                orderCode,
+                location,
+                zoneCode
+            );
+
+            console.log("✅ QC teardown success");
+
+        } catch (error: any) {
+
+            console.error(
+                "❌ QC teardown failed:",
+                error?.message
+            );
+
+        }
     }
+
 }

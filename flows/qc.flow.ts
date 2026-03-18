@@ -1,11 +1,20 @@
-import { expect } from '@playwright/test';
+import { APIRequestContext } from '@playwright/test';
 import { QcService } from "../services/qc.service";
 import { handleApiResponse } from '../utils/api-helper';
+import { teardownQC } from '../utils/teardown';
+import { OrderService } from '../services/order.service';
+import { request } from 'node:http';
 
 export class QcFlow {
 
     private qcService = new QcService();
+    private orderService: OrderService;
 
+    constructor(private request: APIRequestContext) {
+        this.orderService = new OrderService(request);
+    }
+
+ 
     async run(
         basicToken: string,
         pickResult: {
@@ -27,6 +36,7 @@ export class QcFlow {
         console.log("SO from PickFlow:" + so);
         console.log("Location:" + location);
         console.log("Zone Code:" + zoneCode);;
+
 
         /**
          * Step 1 - Check In QC Zone
@@ -110,27 +120,24 @@ export class QcFlow {
     /**
     * Teardown QC (checkout QC if flow fails)
     */
-    async teardownQc(basicToken: string, input: any) {
-
-        try {
-
-            console.log("Running QC teardown → checkout QC");
-            const location = await this.qcService.getLocation();
-            const zoneCode = await this.qcService.getZoneCode();
-
-            const response = await this.qcService.checkoutQc(
-                basicToken,
-                location,
-                zoneCode
-            );
-
-            await handleApiResponse(response, [200]);
-
-            console.log("QC teardown successful");
-        } catch (error: any) {
-
-            console.error("QC teardown failed:", error?.message);
-            throw new Error(`QC teardown failed: ${error?.message}`);
-        }
+    async teardown(
+        basicToken: string,
+        orderId: string,
+        ticketId: string,
+        orderCode: string,
+        location: string,
+        zoneCode: string
+    ) {
+        
+        await teardownQC(
+            this.orderService,
+            this.qcService,
+            basicToken,
+            orderId,
+            ticketId,
+            orderCode,
+            location,
+            zoneCode
+        );
     }
 }

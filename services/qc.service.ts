@@ -329,7 +329,7 @@ export class QcService {
         try {
 
             const response = await client.put(url, {
-                data: body
+                data: body, timeout: 3000
             });
 
             const qcStatus =

@@ -148,7 +148,7 @@ export class QcService {
              * Generate QR
              */
             const sellerLength = item.sellerCodeLength || 0;
-            const random = Math.floor(Math.random() * 10);
+            const random = Math.floor(Math.random() * 100);
 
             let qr: string;
 

@@ -4,6 +4,7 @@ import { APIResponse, request } from '@playwright/test';
 import { PickService } from "./pick.service";
 import { url } from "inspector";
 import { PackService } from "./pack.service";
+import { handleApiResponse } from "../utils/api-helper";
 
 export class QcService {
 
@@ -190,15 +191,7 @@ export class QcService {
             /**
              * Check response status
              */
-            if (!qrResponse || qrResponse.status() !== 200) {
-
-                const status = qrResponse?.status();
-
-                console.log(`❌ GET QR failed. Status: ${status}`);
-
-                throw new Error(`GET QR API failed with status ${status}`);
-            }
-
+            await handleApiResponse(qrResponse, [200]);
             /**
              * Parse QR response
              */

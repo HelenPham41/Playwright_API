@@ -2,9 +2,9 @@ import { createClient } from "../clients/apiClient";
 import config from "../configs";
 import { APIResponse, request } from '@playwright/test';
 import { PickService } from "./pick.service";
-import { url } from "inspector";
 import { PackService } from "./pack.service";
 import { handleApiResponse } from "../utils/api-helper";
+
 
 export class QcService {
 
@@ -16,6 +16,7 @@ export class QcService {
         const location = config.location;
         return location;
     }
+
 
     /**
      * Check in QC Zone
@@ -113,10 +114,8 @@ export class QcService {
             basicToken,
             "basic"
         );
-
-        const packService = new PackService();
-        const pickService = new PickService(packService);
-
+        const apiContext = await request.newContext();
+        const pickService = new PickService(apiContext);
         const orderSkuData = await pickService.getOrderSku(basicToken, so);
 
         const skuCodes = orderSkuData.get_sku_codes || [];
@@ -148,21 +147,21 @@ export class QcService {
              * Generate QR
              */
             const sellerLength = item.sellerCodeLength || 0;
-            const random = Math.floor(Math.random() * 10);
-            const PO = Math.floor(Math.random() * 1000)
-                .toString()
-                .padStart(3, '0');
+            const random = Math.floor(Math.random() * 9) + 1;
+            // const PO = Math.floor(Math.random() * 1000)
+            //     .toString()
+            //     .padStart(3, '0');
 
             let qr: string;
 
             if (sellerLength < 10) {
                 qr =
                     `P07${item.product_id}S0${sellerLength}${item.seller}` +
-                    `L01AE06010130V018R06` + `PO8${PO}`+ `U21T101770212989C01AI01${random}`;
+                    `L01AE06010130V01${random}` + `R06PO8998` + `U21T101770212989C01AI01${random}`;
             } else {
                 qr =
                     `P07${item.product_id}S${sellerLength}${item.seller}` +
-                    `L01AE06010130V018R06` + `PO8${PO}`+ `U21T101770212989C01AI01${random}`;
+                    `L01AE06010130V01${random}` + `R06PO8998` + `U21T101770212989C01AI01${random}`;
             }
 
             console.log("Generated QR:", qr);
@@ -321,40 +320,32 @@ export class QcService {
 
         const body = {
             status: "WAIT_TO_PACK",
-            ticketId: ticketId,
-            so: so,
+            ticketId,
+            so,
             warehouseCode: location
         };
 
-        try {
+        const response = await client.put(url, {
+            data: body,
+            timeout: 3000
+        });
 
-            const response = await client.put(url, {
-                data: body, timeout: 3000
-            });
+        // await new Promise(resolve => setTimeout(resolve, 3000));
 
-            const qcStatus =
-                response.status() === 200
-                    ? "Completed"
-                    : "Failed";
+        // const resBody = await response.json();
 
-            console.log("QC Status:" + qcStatus);
+        // const ticketStatus = resBody?.data?.[0]?.status;
 
-            return {
-                status: qcStatus,
-                httpStatus: response.status
-            };
+        // if (ticketStatus !== "WAIT_TO_PACK") {
+        //     throw new Error(
+        //         `QC Step 4 failed | Message: ${resBody?.message} | URL: ${response.url()}`
+        //     );
+        // }
 
-        } catch (error: any) {
+        console.log("✅ QC Move to PACK success");
 
-            console.error("❌ Failed to move QC -> Pack");
-
-            return {
-                status: "Failed",
-                httpStatus: error.response?.status
-            };
-        };
+        return response;
     }
-
     /**
     * Checkout QC Zone
     * Same as JMeter "Checkout QC"

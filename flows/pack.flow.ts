@@ -1,4 +1,4 @@
-import { expect, APIRequestContext } from "@playwright/test";
+import { expect, APIRequestContext, request } from "@playwright/test";
 import config from "../configs";
 import { PackService } from "../services/pack.service";
 import { OrderService } from "../services/order.service";
@@ -31,7 +31,7 @@ export class PackFlow {
         console.log("TicketId:", ticketId);
 
         const packService = new PackService();
-        const pickService = new PickService(packService);
+        const pickService = new PickService(request);
         const orderService = new OrderService(request);
 
         const orderInfo = await pickService.getOrderInfo(basicToken, orderId);

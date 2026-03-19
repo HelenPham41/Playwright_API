@@ -4,7 +4,6 @@ import config from "../configs";
 
 export class PackService {
 
-
     async getLocation(): Promise<string> {
         const location = config.location;
         return location;

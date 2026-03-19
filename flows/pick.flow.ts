@@ -1,12 +1,16 @@
-import { expect } from '@playwright/test';
+import { APIRequestContext, expect } from '@playwright/test';
 import { PickService } from "../services/pick.service";
 import { PackService } from "../services/pack.service";
 import { handleApiResponse } from '../utils/api-helper';
 
+
 export class PickFlow {
     private otlCode!: string;
+    private pickService: PickService;
     private packService = new PackService();
-    private pickService = new PickService(this.packService);
+    constructor(private request: APIRequestContext) {
+        this.pickService = new PickService(request);
+    }
 
     async run(
         basicToken: string,

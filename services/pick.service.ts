@@ -1,18 +1,14 @@
 import { createClient } from "../clients/apiClient";
 import config from "../configs";
-import { APIResponse, request } from '@playwright/test';
+import { APIRequestContext, APIResponse, request } from '@playwright/test';
 import { extractSkuCodes } from "../utils/sku.util";
-import { PackService } from './pack.service';
 import { handleApiResponse } from "../utils/api-helper";
+import { PackService } from "./pack.service";
 
 export class PickService {
 
-    private packService: PackService;
-
-    constructor(packService: PackService) {
-        this.packService = packService;
-    }
-
+ constructor(private request: APIRequestContext) {} 
+    
     async getOrderInfo(
         basicToken: string,
         orderId: string
@@ -432,7 +428,8 @@ export class PickService {
                 console.log("👉 Detected PACK session → calling PackService.checkout...");
 
                 // 🔥 CALL PACK SERVICE
-                const packCheckinResponse = await this.packService.packCheckout(wareHouseCode);
+                const packService = new PackService();
+                const packCheckinResponse = await packService.packCheckout(wareHouseCode);
                 await handleApiResponse(packCheckinResponse, [200]);
 
                 console.log("🔁 Retry Check in PICK...");

@@ -34,7 +34,7 @@ export class PackFlow {
         const pickService = new PickService(request);
         const orderService = new OrderService(request);
 
-        const orderInfo = await pickService.getOrderInfo(basicToken, orderId);
+        const orderInfo = await pickService.getOrderInfo(basicToken, Number(orderId));
         const orderCode = orderInfo.orderCode;
 
         /**

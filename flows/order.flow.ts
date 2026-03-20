@@ -15,177 +15,181 @@ export class OrderFlow {
   async run() {
 
     console.log("===== ORDER FLOW START =====");
-
-    /**
-     * Step 1 — Login
-     */
-    const tokenWeb = await this.authService.login();
-    console.log("Login success");
-
-
-    /**
-     * Step 2 — Check Cart
-     */
-    const checkCartResponse =
-      await this.orderService.checkCart(tokenWeb);
-
-    expect([200, 404])
-      .toContain(checkCartResponse.status());
-
-    console.log(
-      "Check Cart PASS:" +
-      checkCartResponse.status()
-    );
+    try {
+      /**
+       * Step 1 — Login
+       */
+      const tokenWeb = await this.authService.login();
+      console.log("Login success");
 
 
-    /**
-     * Step 3 — Get Cart Info
-     */
-    const cartResult =
-      await this.orderService.getCartInfo(tokenWeb);
-
-    expect([200, 404])
-      .toContain(cartResult.response.status());
-
-    console.log(
-      "Get Cart Info PASS: " +
-      cartResult.response.status()
-    );
-
-    console.log("===== EXTRACTED DATA =====");
-
-    console.log("CartNo = "+ cartResult.cartNo);
-    console.log("skuCodes = "+ cartResult.skuCodes);
-
-
-    const cartNo =
-      cartResult?.cartNo ?? null;
-
-    const selectedSkuCodes =
-      Array.isArray(cartResult?.skuCodes)
-        ? cartResult.skuCodes
-        : [];
-
-
-    /**
-     * Step 4 — Remove Cart
-     */
-    if (cartNo && selectedSkuCodes.length > 0) {
-
-      console.log("Cart NOT empty → Removing cart...");
-
-      const removeCartResponse =
-        await this.orderService.removeCart(
-          tokenWeb,
-          cartNo,
-          selectedSkuCodes
-        );
+      /**
+       * Step 2 — Check Cart
+       */
+      const checkCartResponse =
+        await this.orderService.checkCart(tokenWeb);
 
       expect([200, 404])
-        .toContain(removeCartResponse.status());
+        .toContain(checkCartResponse.status());
 
       console.log(
-        "Remove Cart PASS: "+
-        removeCartResponse.status()
+        "Check Cart PASS:" +
+        checkCartResponse.status()
       );
 
-    } else {
+
+      /**
+       * Step 3 — Get Cart Info
+       */
+      const cartResult =
+        await this.orderService.getCartInfo(tokenWeb);
+
+      expect([200, 404])
+        .toContain(cartResult.response.status());
 
       console.log(
-        "Cart EMPTY → Skip Remove Cart"
+        "Get Cart Info PASS: " +
+        cartResult.response.status()
       );
 
-    }
+      console.log("===== EXTRACTED DATA =====");
+
+      console.log("CartNo = " + cartResult.cartNo);
+      console.log("skuCodes = " + cartResult.skuCodes);
 
 
-    /**
-     * Step 5 — Add Cart
-     */
-    const addCartResult =
-      await this.orderService.addCart(
-        tokenWeb,
-        cartNo ?? ""
-      );
+      const cartNo =
+        cartResult?.cartNo ?? null;
 
-    expect([200, 201])
-      .toContain(
+      const selectedSkuCodes =
+        Array.isArray(cartResult?.skuCodes)
+          ? cartResult.skuCodes
+          : [];
+
+
+      /**
+       * Step 4 — Remove Cart
+       */
+      if (cartNo && selectedSkuCodes.length > 0) {
+
+        console.log("Cart NOT empty → Removing cart...");
+
+        const removeCartResponse =
+          await this.orderService.removeCart(
+            tokenWeb,
+            cartNo,
+            selectedSkuCodes
+          );
+
+        expect([200, 404])
+          .toContain(removeCartResponse.status());
+
+        console.log(
+          "Remove Cart PASS: " +
+          removeCartResponse.status()
+        );
+
+      } else {
+
+        console.log(
+          "Cart EMPTY → Skip Remove Cart"
+        );
+
+      }
+
+
+      /**
+       * Step 5 — Add Cart
+       */
+      const addCartResult =
+        await this.orderService.addCart(
+          tokenWeb,
+          cartNo ?? ""
+        );
+
+      expect([200, 201])
+        .toContain(
+          addCartResult.response.status()
+        );
+
+      console.log(
+        "Add Cart PASS: " +
         addCartResult.response.status()
       );
 
-    console.log(
-      "Add Cart PASS: "+
-      addCartResult.response.status()
-    );
-
-    console.log(
-      "New CartNo = "+
-      addCartResult.cartNo
-    );
-
-
-    /**
-     * Step 6 — Update Cart
-     */
-
-    const finalCartNo =
-      addCartResult.cartNo ?? cartNo ?? "";
-
-    const updateCartResponse =
-      await this.orderService.updateCart(
-        tokenWeb,
-        finalCartNo
+      console.log(
+        "New CartNo = " +
+        addCartResult.cartNo
       );
 
-    expect([200])
-      .toContain(updateCartResponse.status());
 
-    console.log(
-      "Update Cart PASS: "+
-      updateCartResponse.status()
-    );
+      /**
+       * Step 6 — Update Cart
+       */
 
-    /**
-   * Step 7 — Checkout
-   */
+      const finalCartNo =
+        addCartResult.cartNo ?? cartNo ?? "";
 
-    const checkoutResult =
-      await this.orderService.checkout(tokenWeb);
+      const updateCartResponse =
+        await this.orderService.updateCart(
+          tokenWeb,
+          finalCartNo
+        );
 
-    expect([200, 201])
-      .toContain(
+      expect([200])
+        .toContain(updateCartResponse.status());
+
+      console.log(
+        "Update Cart PASS: " +
+        updateCartResponse.status()
+      );
+
+      /**
+     * Step 7 — Checkout
+     */
+
+      const checkoutResult =
+        await this.orderService.checkout(tokenWeb);
+
+      expect([200, 201])
+        .toContain(
+          checkoutResult.response.status()
+        );
+
+      console.log(
+        "Checkout PASS: " +
         checkoutResult.response.status()
       );
+      console.log("ORDER_ID = " + checkoutResult.orderId);
 
-    console.log(
-      "Checkout PASS: "+
-      checkoutResult.response.status()
-    );
-    console.log("ORDER_ID = " + checkoutResult.orderId);
+      console.log("===== ORDER FLOW END =====");
 
-    console.log("===== ORDER FLOW END =====");
+      /**
+       * Return result
+       */
+      return {
 
-    /**
-     * Return result
-     */
-    return {
+        tokenWeb,
 
-      tokenWeb,
+        orderId:
+          checkoutResult.orderId,
 
-      orderId:
-        checkoutResult.orderId,
+        cartNo:
+          addCartResult.cartNo ?? cartNo,
 
-      cartNo:
-        addCartResult.cartNo ?? cartNo,
+        skuCodes:
+          cartResult?.skuCodes ?? [],
 
-      skuCodes:
-        cartResult?.skuCodes ?? [],
+        selectedSkuCodes,
 
-      selectedSkuCodes,
-
-      cartInfo:
-        cartResult?.response
-          ? await cartResult.response.json()
-          : null
-    };
+        cartInfo:
+          cartResult?.response
+            ? await cartResult.response.json()
+            : null
+      };
+    } catch (error) {
+      console.error("❌ Order flow failed:", error);
+      throw error;
+    }
   }
 }

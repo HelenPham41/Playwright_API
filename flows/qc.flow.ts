@@ -48,7 +48,7 @@ export class QcFlow {
             console.log("Zone Code:" + zoneCode);
 
        
-                const orderInfo = await this.pickService.getOrderInfo(basicToken, orderId);
+                const orderInfo = await this.pickService.getOrderInfo(basicToken,Number(orderId));
                 orderCode = orderInfo.orderCode;
   
 

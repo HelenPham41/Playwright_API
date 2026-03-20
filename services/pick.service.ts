@@ -459,6 +459,7 @@ export class PickService {
                         const ticketData = await this.getOrderSku(basicToken, sobdCode);
                         const ticketIdOld = ticketData.ticketId
                         console.log("Ticket ID for teardown:", ticketIdOld);
+                        const location = await this.getWarehouseCode();
 
                         if (orderCodeOld && ticketIdOld) {
                             console.log("Teardown order:", orderCodeOld);

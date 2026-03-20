@@ -1,6 +1,7 @@
 import { APIRequestContext, APIResponse } from "@playwright/test";
 import { createClient } from "../clients/apiClient";
 import config from "../configs";
+import { time } from "node:console";
 
 export class PackService {
 
@@ -100,7 +101,7 @@ export class PackService {
             `/warehouse/inventory/v1/location?q=${encodeURIComponent(
                 JSON.stringify(query)
             )}`;
-        const response = await client.get(url);
+        const response = await client.get(url, { timeout: 3000 });
 
         const body = await response.json();
 

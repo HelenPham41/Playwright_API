@@ -84,24 +84,34 @@ export class PackFlow {
 
         if (addBasketResponse.status !== 200) {
 
-            console.log("PACK-04 FAILED + Status:", addBasketResponse.status);
+            let mainError: any;
 
-            // 🔴 Run teardown
-            await teardownOrder(
-                orderService,
-                this.packService,
-                basicToken,
-                orderId,
-                ticketId,
-                orderCode
-            );
+            // Capture main error (500)
+            try {
+                await handleApiResponse(addBasketResponse.status, [200]);
+            } catch (err) {
+                mainError = err;
+            }
 
-            throw new Error(
-                `PACK-04 Add Basket failed | Status: ${addBasketResponse.status} | URL: ${addBasketResponse.url}`
+            // Run teardown safely (never override)
+            try {
+                await teardownOrder(
+                    orderService,
+                    this.packService,
+                    basicToken,
+                    orderId,
+                    ticketId,
+                    orderCode
+                );
+            } catch (teardownError) {
+                console.error("⚠️ Teardown failed:", teardownError);
+            }
+
+            // ✅ ALWAYS throw main error
+            throw mainError || new Error(
+                `PACK-04 failed | Status: ${addBasketResponse.status}`
             );
         }
-
-        console.log("Add Basket PASS:", addBasketResponse.status);
 
 
         /**

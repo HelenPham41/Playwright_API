@@ -388,7 +388,7 @@ export class OrderService {
       {
         data: {
           orderCode: orderCode,
-          orderId: orderId,
+          orderId: Number(orderId),
           status: "CANCEL",
           note: "Cancel order for testing purpose"
         }

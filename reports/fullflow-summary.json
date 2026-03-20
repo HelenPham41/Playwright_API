@@ -1,212 +1,218 @@
 [
   {
     "run": 1,
-    "orderId": 1583825,
-    "so": "SOBD1583825",
-    "ticketId": 1053421,
-    "status": "PASS"
+    "orderId": 1583964,
+    "so": "SOBD1583964",
+    "ticketId": 1053557,
+    "status": "FAIL",
+    "message": "Không thể hủy đơn do có phiếu giao hàng không thể hủy.",
+    "url": "https://internal.v2-stg.thuocsi.vn/backend/marketplace/order/v2/order/status",
+    "code": 400
   },
   {
     "run": 2,
-    "orderId": 1583826,
-    "so": "SOBD1583826",
-    "ticketId": 1053422,
-    "status": "PASS"
+    "orderId": 1583965,
+    "so": "",
+    "ticketId": "",
+    "status": "FAIL",
+    "message": "Can not parse input data.",
+    "code": 400,
+    "url": "https://api.v2-stg.thuocsi.vn/warehouse/core/v1/staff-zone-session/check"
   },
   {
     "run": 3,
-    "orderId": 1583827,
-    "so": "SOBD1583827",
-    "ticketId": 1053423,
+    "orderId": 1583966,
+    "so": "SOBD1583966",
+    "ticketId": 1053559,
     "status": "PASS"
   },
   {
     "run": 4,
-    "orderId": 1583828,
-    "so": "SOBD1583828",
-    "ticketId": 1053424,
+    "orderId": 1583967,
+    "so": "SOBD1583967",
+    "ticketId": 1053560,
     "status": "PASS"
   },
   {
     "run": 5,
-    "orderId": 1583829,
-    "so": "SOBD1583829",
-    "ticketId": 1053425,
+    "orderId": 1583968,
+    "so": "SOBD1583968",
+    "ticketId": 1053561,
     "status": "PASS"
   },
   {
     "run": 6,
-    "orderId": 1583831,
-    "so": "SOBD1583831",
-    "ticketId": 1053426,
+    "orderId": 1583969,
+    "so": "SOBD1583969",
+    "ticketId": 1053562,
     "status": "PASS"
   },
   {
     "run": 7,
-    "orderId": 1583832,
-    "so": "SOBD1583832",
-    "ticketId": 1053427,
+    "orderId": 1583970,
+    "so": "SOBD1583970",
+    "ticketId": 1053563,
     "status": "PASS"
   },
   {
     "run": 8,
-    "orderId": 1583833,
-    "so": "SOBD1583833",
-    "ticketId": 1053428,
+    "orderId": 1583971,
+    "so": "SOBD1583971",
+    "ticketId": 1053564,
     "status": "PASS"
   },
   {
     "run": 9,
-    "orderId": 1583834,
-    "so": "SOBD1583834",
-    "ticketId": 1053429,
+    "orderId": 1583972,
+    "so": "SOBD1583972",
+    "ticketId": 1053565,
     "status": "PASS"
   },
   {
     "run": 10,
-    "orderId": 1583835,
-    "so": "SOBD1583835",
-    "ticketId": 1053430,
+    "orderId": 1583973,
+    "so": "SOBD1583973",
+    "ticketId": 1053566,
     "status": "PASS"
   },
   {
     "run": 11,
-    "orderId": 1583836,
-    "so": "SOBD1583836",
-    "ticketId": 1053431,
+    "orderId": 1583974,
+    "so": "SOBD1583974",
+    "ticketId": 1053567,
     "status": "PASS"
   },
   {
     "run": 12,
-    "orderId": 1583837,
-    "so": "SOBD1583837",
-    "ticketId": 1053432,
+    "orderId": 1583975,
+    "so": "SOBD1583975",
+    "ticketId": 1053568,
     "status": "PASS"
   },
   {
     "run": 13,
-    "orderId": 1583840,
-    "so": "SOBD1583840",
-    "ticketId": 1053433,
+    "orderId": 1583976,
+    "so": "SOBD1583976",
+    "ticketId": 1053569,
     "status": "PASS"
   },
   {
     "run": 14,
-    "orderId": 1583841,
-    "so": "SOBD1583841",
-    "ticketId": 1053434,
+    "orderId": 1583977,
+    "so": "SOBD1583977",
+    "ticketId": 1053570,
     "status": "PASS"
   },
   {
     "run": 15,
-    "orderId": 1583842,
-    "so": "SOBD1583842",
-    "ticketId": 1053435,
+    "orderId": 1583978,
+    "so": "SOBD1583978",
+    "ticketId": 1053571,
     "status": "PASS"
   },
   {
     "run": 16,
-    "orderId": 1583843,
-    "so": "SOBD1583843",
-    "ticketId": 1053436,
+    "orderId": 1583979,
+    "so": "SOBD1583979",
+    "ticketId": 1053572,
     "status": "PASS"
   },
   {
     "run": 17,
-    "orderId": 1583844,
-    "so": "SOBD1583844",
-    "ticketId": 1053437,
+    "orderId": 1583980,
+    "so": "SOBD1583980",
+    "ticketId": 1053573,
     "status": "PASS"
   },
   {
     "run": 18,
-    "orderId": 1583845,
-    "so": "SOBD1583845",
-    "ticketId": 1053438,
+    "orderId": 1583981,
+    "so": "SOBD1583981",
+    "ticketId": 1053574,
     "status": "PASS"
   },
   {
     "run": 19,
-    "orderId": 1583846,
-    "so": "SOBD1583846",
-    "ticketId": 1053439,
+    "orderId": 1583982,
+    "so": "SOBD1583982",
+    "ticketId": 1053575,
     "status": "PASS"
   },
   {
     "run": 20,
-    "orderId": 1583847,
-    "so": "SOBD1583847",
-    "ticketId": 1053440,
+    "orderId": 1583983,
+    "so": "SOBD1583983",
+    "ticketId": 1053576,
     "status": "PASS"
   },
   {
     "run": 21,
-    "orderId": 1583848,
-    "so": "SOBD1583848",
-    "ticketId": 1053441,
+    "orderId": 1583984,
+    "so": "SOBD1583984",
+    "ticketId": 1053577,
     "status": "PASS"
   },
   {
     "run": 22,
-    "orderId": 1583849,
-    "so": "SOBD1583849",
-    "ticketId": 1053442,
+    "orderId": 1583985,
+    "so": "SOBD1583985",
+    "ticketId": 1053578,
     "status": "PASS"
   },
   {
     "run": 23,
-    "orderId": 1583850,
-    "so": "SOBD1583850",
-    "ticketId": 1053443,
+    "orderId": 1583986,
+    "so": "SOBD1583986",
+    "ticketId": 1053579,
     "status": "PASS"
   },
   {
     "run": 24,
-    "orderId": 1583851,
-    "so": "SOBD1583851",
-    "ticketId": 1053444,
+    "orderId": 1583987,
+    "so": "SOBD1583987",
+    "ticketId": 1053580,
     "status": "PASS"
   },
   {
     "run": 25,
-    "orderId": 1583852,
-    "so": "SOBD1583852",
-    "ticketId": 1053445,
+    "orderId": 1583988,
+    "so": "SOBD1583988",
+    "ticketId": 1053581,
     "status": "PASS"
   },
   {
     "run": 26,
-    "orderId": 1583853,
-    "so": "SOBD1583853",
-    "ticketId": 1053446,
+    "orderId": 1583989,
+    "so": "SOBD1583989",
+    "ticketId": 1053582,
     "status": "PASS"
   },
   {
     "run": 27,
-    "orderId": 1583854,
-    "so": "SOBD1583854",
-    "ticketId": 1053447,
+    "orderId": 1583990,
+    "so": "SOBD1583990",
+    "ticketId": 1053583,
     "status": "PASS"
   },
   {
     "run": 28,
-    "orderId": 1583855,
-    "so": "SOBD1583855",
-    "ticketId": 1053448,
+    "orderId": 1583991,
+    "so": "SOBD1583991",
+    "ticketId": 1053584,
     "status": "PASS"
   },
   {
     "run": 29,
-    "orderId": 1583856,
-    "so": "SOBD1583856",
-    "ticketId": 1053449,
+    "orderId": 1583992,
+    "so": "SOBD1583992",
+    "ticketId": 1053585,
     "status": "PASS"
   },
   {
     "run": 30,
-    "orderId": 1583857,
-    "so": "SOBD1583857",
-    "ticketId": 1053450,
+    "orderId": 1583993,
+    "so": "SOBD1583993",
+    "ticketId": 1053586,
     "status": "PASS"
   }
 ]

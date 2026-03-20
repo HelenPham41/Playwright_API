@@ -9,20 +9,21 @@ export async function teardownOrder(
   packService: PackService,
   basicToken: string,
   orderId: string,
-  ticketId: string,
+  location: string,
   orderCode: string
 ) {
 
   console.log("Running Pack flow teardown...");
 
-  await orderService.cancelOrder(basicToken, orderId, orderCode);
+  const responseCancel =await orderService.cancelOrder(basicToken, orderId, orderCode);
+  await handleApiResponse(responseCancel, [200]);
   console.log("✓ Order cancelled: " + orderId, "OrderCode:", orderCode);
   await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for 3s to ensure order is cancelled before proceeding with pack checkout
 
-  const response = await packService.packCheckout(ticketId);
+  const response = await packService.packCheckout(location);
   await handleApiResponse(response, [200]);
   await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for 3s to ensure pack checkout is processed before finishing teardown
-  console.log("✓ Pack checkout completed: " + ticketId);
+  console.log("✓ Pack checkout completed: " + location);
 
   console.log("Teardown completed");
 }

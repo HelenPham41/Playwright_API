@@ -4,16 +4,17 @@ import { APIRequestContext, APIResponse, request } from '@playwright/test';
 import { extractSkuCodes } from "../utils/sku.util";
 import { handleApiResponse } from "../utils/api-helper";
 import { PackService } from "./pack.service";
+import { OrderService } from "./order.service";
+import { teardownOrder } from "../utils/teardown";
 
 export class PickService {
 
- constructor(private request: APIRequestContext) {} 
-    
+    constructor(private request: APIRequestContext) { }
+
     async getOrderInfo(
         basicToken: string,
-        orderId: string
+        orderId: number
     ) {
-
         const client = await createClient(
             config.hostInternal,
             basicToken,
@@ -25,12 +26,14 @@ export class PickService {
                 orderId: orderId
             })
         };
-        const response = await client.get(
-            `/backend/marketplace/order/v2/order/list`,
-            { params }
-        );
+
+        const url = `/backend/marketplace/order/v2/order/list`;
+        //const fullUrl = `${url}?q=${encodeURIComponent(params.q)}`;
+
+        const response = await client.get(url, { params });
 
         const body = await response.json();
+
         const price = body?.data?.[0]?.totalPrice;
         const orderCode = body?.data?.[0]?.orderCode;
 
@@ -39,7 +42,6 @@ export class PickService {
             price,
             orderCode
         };
-
     }
 
     async getWarehouseCode(): Promise<string> {
@@ -430,6 +432,52 @@ export class PickService {
                 // 🔥 CALL PACK SERVICE
                 const packService = new PackService();
                 const packCheckinResponse = await packService.packCheckout(wareHouseCode);
+
+                // Safely read response body (depends on your API client)
+                const responseBody = await packCheckinResponse.json().catch(() => ({}));
+                const message: string = responseBody?.message || "";
+
+                // Check for specific error message
+                if (message.includes("Nhân viên còn phiếu")) {
+                    // Extract SOBD code using regex
+                    const match = message.match(/SOBD\d+/);
+
+                    if (match) {
+                        const sobdCode = match[0];
+
+                        // Convert SOBD -> orderId
+                        const orderIdOld = Number(sobdCode.replace("SOBD", ""));
+
+                        console.log("Detected unfinished order:", orderIdOld);
+
+                        // Call API to get order info
+                        const orderInfo = await this.getOrderInfo(basicToken, orderIdOld);
+                        const orderCodeOld = orderInfo.orderCode;
+
+                        console.log("Order code for teardown:", orderCodeOld);
+                        const orderService = new OrderService(this.request);
+                        const ticketData = await this.getOrderSku(basicToken, sobdCode);
+                        const ticketIdOld = ticketData.ticketId
+                        console.log("Ticket ID for teardown:", ticketIdOld);
+
+                        if (orderCodeOld && ticketIdOld) {
+                            console.log("Teardown order:", orderCodeOld);
+
+                            await teardownOrder(
+                                orderService,
+                                packService,
+                                basicToken,
+                                String(orderIdOld),
+                                ticketIdOld,
+                                orderCodeOld
+                            );
+                        } else {
+                            console.warn("Order code not found for orderId:", orderIdOld);
+                        }
+                    }
+                }
+
+                // keep validation last
                 await handleApiResponse(packCheckinResponse, [200]);
 
                 console.log("🔁 Retry Check in PICK...");

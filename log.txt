@@ -1,0 +1,2909 @@
+=================================
+Running ENV: stg
+=================================
+
+Running 2 tests using 1 worker
+
+[1A[2K=================================
+
+[1A[2KRunning ENV: stg
+
+[1A[2K=================================
+
+[1A[2K[1/2] tests\fullFlow.spec.ts:29:1 ΓÇ║ Run Full Flow N times
+[1A[2Ktests\fullFlow.spec.ts:29:1 ΓÇ║ Run Full Flow N times
+RUN_TIMES = [33m15[39m
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #1
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = B1X984FW
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = B1X984FW
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586723
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586723[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586723
+
+[1A[2KPrice: 1947100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586723
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054050
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054050 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+
+[1A[2KΓ£à Check in Pick Success
+
+[1A[2K===== ASSIGN PICK STAFF =====
+
+[1A[2K≡ƒöü Attempt #1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Assign Pick Staff Success
+
+[1A[2KsubTicketId:213462
+
+[1A[2KΓ£à First OTL:OTL-UJYQBT3CY9
+
+[1A[2KStep 11 - OTL Code:OTL-UJYQBT3CY9
+
+[1A[2KStep 12 - Use Basket success
+
+[1A[2K
+======= START CHECK PICK ITEMS =======
+
+[1A[2KAttempt 1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Pick item success
+
+[1A[2K
+======= CHECK PICK ITEMS DONE =======
+
+[1A[2KStep 13 - Check Pick Items done
+
+[1A[2KComplete Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 14 - Complete Pick success
+
+[1A[2KComplete Pick SO attempt 1: [33m200[39m
+
+[1A[2KStep 15 - Complete Pick for SO success
+
+[1A[2KCheckout Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 16 - Checkout Pick success
+
+[1A[2K
+========= PICK FLOW DONE =========
+
+
+[1A[2K
+==============================
+
+[1A[2K========== QC FLOW ==========
+
+[1A[2K==============================
+
+[1A[2KSO from PickFlow:SOBD1586723
+
+[1A[2KLocation:BD
+
+[1A[2KZone Code:QC-01
+
+[1A[2K
+[QC] Check In QC Zone
+
+[1A[2KStatus:200
+
+[1A[2K
+[QC] Pick Ticket
+
+[1A[2KSKU list for next request:[object Object]
+
+[1A[2K
+Γû╢ Processing SKU 1/1
+
+[1A[2KItem: {
+  sku: [32m'MEDX.Y4XP61PG'[39m,
+  seller: [32m'MEDX'[39m,
+  product_id: [33m2431073[39m,
+  reservedQuantity: [33m2[39m,
+  sellerCodeLength: [33m4[39m
+}
+
+[1A[2KGenerated QR: P072431073S04MEDXL01AE06010130V018R06PO8998U21T101770212989C01AI018
+
+[1A[2KΓ£à Scan success SKU 1
+
+[1A[2K
+========= QR LOOP SUMMARY =========
+
+[1A[2KTotal:1
+
+[1A[2KScanned:1
+
+[1A[2KSkipped:0
+
+[1A[2K===================================
+
+
+[1A[2K
+                Total SKU: 1
+                Scanned: 1
+                Skipped: 0
+            
+
+[1A[2K
+≡ƒôª Move QC -> PACK
+
+[1A[2KΓ£à QC Move to PACK success
+
+[1A[2K
+≡ƒÜ¬ Checkout QC Zone
+
+[1A[2K======= QC FLOW DONE ========
+
+[1A[2K
+==============================
+
+[1A[2K========== PACK FLOW =========
+
+[1A[2K==============================
+
+[1A[2KSO: SOBD1586723
+
+[1A[2KTicketId: [33m1054050[39m
+
+[1A[2KPack Checkin PASS: [33m200[39m
+
+[1A[2KPack Packing PASS: [33m200[39m
+
+[1A[2KΓ£ô BIN extracted:BIN0075
+
+[1A[2KBIN: BIN0075
+
+[1A[2KUpdate Ticket PASS: [33m200[39m
+
+[1A[2KPack Complete PASS: [33m403[39m
+
+[1A[2K==== REQUEST ====
+
+[1A[2KURL: /warehouse/core/v1/staff-zone-session/check
+
+[1A[2KMETHOD: POST
+
+[1A[2KHEADERS: {
+  Authorization: [32m'Basic UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU='[39m,
+  [32m'Content-Type'[39m: [32m'application/json'[39m
+}
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KPack Checkout PASS: [33m200[39m
+
+[1A[2KFULL FLOW RUN #1 DONE
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #2
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = QQW872AX
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = QQW872AX
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586724
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586724[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586724
+
+[1A[2KPrice: 2169100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586724
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054051
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É╞ín h├áng SOBD1586724 kh├┤ng ─æ╞░ß╗úc ph├⌐p cho ─æi v├¼ ch╞░a giß╗» ─æ╞░ß╗úc h├áng.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054051 - Status 400
+
+
+[1A[2KPICK FLOW FAILED {
+  orderId: 1586724,
+  message: 'API request failed | Status: 400 | URL: https://api.v2-stg.thuocsi.vn/warehouse/picking/v1/pick-ticket/active',
+  code: 400,
+  url: 'https://api.v2-stg.thuocsi.vn/warehouse/picking/v1/pick-ticket/active'
+}
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #3
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = WUYHYJYJ
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = WUYHYJYJ
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586725
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586725[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586725
+
+[1A[2KPrice: 1947100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586725
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054052
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É╞ín h├áng SOBD1586725 kh├┤ng ─æ╞░ß╗úc ph├⌐p cho ─æi v├¼ ch╞░a giß╗» ─æ╞░ß╗úc h├áng.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054052 - Status 400
+
+[1A[2KPICK FLOW FAILED {
+  orderId: 1586725,
+  message: 'API request failed | Status: 400 | URL: https://api.v2-stg.thuocsi.vn/warehouse/picking/v1/pick-ticket/active',
+  code: 400,
+  url: 'https://api.v2-stg.thuocsi.vn/warehouse/picking/v1/pick-ticket/active'
+
+}
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #4
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = E6W872AX
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = E6W872AX
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586726
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586726[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586726
+
+[1A[2KPrice: 1947100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586726
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054053
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054053 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+
+[1A[2KΓ£à Check in Pick Success
+
+[1A[2K===== ASSIGN PICK STAFF =====
+
+[1A[2K≡ƒöü Attempt #1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Assign Pick Staff Success
+
+[1A[2KsubTicketId:213463
+
+[1A[2KΓ£à First OTL:OTL-YC84V6NX83
+
+[1A[2KStep 11 - OTL Code:OTL-YC84V6NX83
+
+[1A[2KStep 12 - Use Basket success
+
+[1A[2K
+======= START CHECK PICK ITEMS =======
+
+[1A[2KAttempt 1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Pick item success
+
+[1A[2K
+======= CHECK PICK ITEMS DONE =======
+
+[1A[2KStep 13 - Check Pick Items done
+
+[1A[2KComplete Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 14 - Complete Pick success
+
+[1A[2KComplete Pick SO attempt 1: [33m200[39m
+
+[1A[2KStep 15 - Complete Pick for SO success
+
+[1A[2KCheckout Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 16 - Checkout Pick success
+
+[1A[2K
+========= PICK FLOW DONE =========
+
+
+[1A[2K
+==============================
+
+[1A[2K========== QC FLOW ==========
+
+[1A[2K==============================
+
+[1A[2KSO from PickFlow:SOBD1586726
+
+[1A[2KLocation:BD
+
+[1A[2KZone Code:QC-01
+
+[1A[2K
+[QC] Check In QC Zone
+
+[1A[2KStatus:200
+
+[1A[2K
+[QC] Pick Ticket
+
+[1A[2KSKU list for next request:[object Object]
+
+[1A[2K
+Γû╢ Processing SKU 1/1
+
+[1A[2KItem: {
+  sku: [32m'MEDX.Y4XP61PG'[39m,
+  seller: [32m'MEDX'[39m,
+  product_id: [33m2431073[39m,
+  reservedQuantity: [33m2[39m,
+  sellerCodeLength: [33m4[39m
+}
+
+[1A[2KGenerated QR: P072431073S04MEDXL01AE06010130V014R06PO8998U21T101770212989C01AI014
+
+[1A[2KΓ£à Scan success SKU 1
+
+[1A[2K
+========= QR LOOP SUMMARY =========
+
+[1A[2KTotal:1
+
+[1A[2KScanned:1
+
+[1A[2KSkipped:0
+
+[1A[2K===================================
+
+
+[1A[2K
+                Total SKU: 1
+                Scanned: 1
+                Skipped: 0
+            
+
+[1A[2K
+≡ƒôª Move QC -> PACK
+
+[1A[2KΓ£à QC Move to PACK success
+
+[1A[2K
+≡ƒÜ¬ Checkout QC Zone
+
+[1A[2K======= QC FLOW DONE ========
+
+[1A[2K
+==============================
+
+[1A[2K========== PACK FLOW =========
+
+[1A[2K==============================
+
+[1A[2KSO: SOBD1586726
+
+[1A[2KTicketId: [33m1054053[39m
+
+[1A[2KPack Checkin PASS: [33m200[39m
+
+[1A[2KPack Packing PASS: [33m200[39m
+
+[1A[2KΓ£ô BIN extracted:BIN0074
+
+[1A[2KBIN: BIN0074
+
+[1A[2KUpdate Ticket PASS: [33m200[39m
+
+[1A[2KPack Complete PASS: [33m403[39m
+
+[1A[2K==== REQUEST ====
+
+[1A[2KURL: /warehouse/core/v1/staff-zone-session/check
+
+[1A[2KMETHOD: POST
+
+[1A[2KHEADERS: {
+  Authorization: [32m'Basic UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU='[39m,
+  [32m'Content-Type'[39m: [32m'application/json'[39m
+}
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KPack Checkout PASS: [33m200[39m
+
+[1A[2KFULL FLOW RUN #4 DONE
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #5
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = RWPFR2AX
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = RWPFR2AX
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586727
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586727[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586727
+
+[1A[2KPrice: 1947100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586727
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054054
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054054 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+
+[1A[2KΓ£à Check in Pick Success
+
+[1A[2K===== ASSIGN PICK STAFF =====
+
+[1A[2K≡ƒöü Attempt #1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Assign Pick Staff Success
+
+[1A[2KsubTicketId:213464
+
+[1A[2KΓ£à First OTL:OTL-THRMLKJHFA
+
+[1A[2KStep 11 - OTL Code:OTL-THRMLKJHFA
+
+[1A[2KStep 12 - Use Basket success
+
+[1A[2K
+======= START CHECK PICK ITEMS =======
+
+[1A[2KAttempt 1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Pick item success
+
+[1A[2K
+======= CHECK PICK ITEMS DONE =======
+
+[1A[2KStep 13 - Check Pick Items done
+
+[1A[2KComplete Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 14 - Complete Pick success
+
+[1A[2KComplete Pick SO attempt 1: [33m200[39m
+
+[1A[2KStep 15 - Complete Pick for SO success
+
+[1A[2KCheckout Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 16 - Checkout Pick success
+
+[1A[2K
+========= PICK FLOW DONE =========
+
+
+[1A[2K
+==============================
+
+[1A[2K========== QC FLOW ==========
+
+[1A[2K==============================
+
+[1A[2KSO from PickFlow:SOBD1586727
+
+[1A[2KLocation:BD
+
+[1A[2KZone Code:QC-01
+
+[1A[2K
+[QC] Check In QC Zone
+
+[1A[2KStatus:200
+
+[1A[2K
+[QC] Pick Ticket
+
+[1A[2KSKU list for next request:[object Object]
+
+[1A[2K
+Γû╢ Processing SKU 1/1
+
+[1A[2KItem: {
+  sku: [32m'MEDX.Y4XP61PG'[39m,
+  seller: [32m'MEDX'[39m,
+  product_id: [33m2431073[39m,
+  reservedQuantity: [33m2[39m,
+  sellerCodeLength: [33m4[39m
+}
+
+[1A[2KGenerated QR: P072431073S04MEDXL01AE06010130V011R06PO8998U21T101770212989C01AI011
+
+[1A[2KΓ£à Scan success SKU 1
+
+[1A[2K
+========= QR LOOP SUMMARY =========
+
+[1A[2KTotal:1
+
+[1A[2KScanned:1
+
+[1A[2KSkipped:0
+
+[1A[2K===================================
+
+
+[1A[2K
+                Total SKU: 1
+                Scanned: 1
+                Skipped: 0
+            
+
+[1A[2K
+≡ƒôª Move QC -> PACK
+
+[1A[2KΓ£à QC Move to PACK success
+
+[1A[2K
+≡ƒÜ¬ Checkout QC Zone
+
+[1A[2K======= QC FLOW DONE ========
+
+[1A[2K
+==============================
+
+[1A[2K========== PACK FLOW =========
+
+[1A[2K==============================
+
+[1A[2KSO: SOBD1586727
+
+[1A[2KTicketId: [33m1054054[39m
+
+[1A[2KPack Checkin PASS: [33m200[39m
+
+[1A[2KPack Packing PASS: [33m200[39m
+
+[1A[2KΓ£ô BIN extracted:BIN0072
+
+[1A[2KBIN: BIN0072
+
+[1A[2KUpdate Ticket PASS: [33m200[39m
+
+[1A[2KPack Complete PASS: [33m403[39m
+
+[1A[2K==== REQUEST ====
+
+[1A[2KURL: /warehouse/core/v1/staff-zone-session/check
+
+[1A[2KMETHOD: POST
+
+[1A[2KHEADERS: {
+  Authorization: [32m'Basic UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU='[39m,
+  [32m'Content-Type'[39m: [32m'application/json'[39m
+}
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KPack Checkout PASS: [33m200[39m
+
+[1A[2KFULL FLOW RUN #5 DONE
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #6
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = TREBBCV8
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = TREBBCV8
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586728
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586728[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586728
+
+[1A[2KPrice: 1947100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586728
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054055
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054055 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+
+[1A[2KΓ£à Check in Pick Success
+
+[1A[2K===== ASSIGN PICK STAFF =====
+
+[1A[2K≡ƒöü Attempt #1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Assign Pick Staff Success
+
+[1A[2KsubTicketId:213465
+
+[1A[2KΓ£à First OTL:OTL-RFW83CY94V
+
+[1A[2KStep 11 - OTL Code:OTL-RFW83CY94V
+
+[1A[2KStep 12 - Use Basket success
+
+[1A[2K
+======= START CHECK PICK ITEMS =======
+
+[1A[2KAttempt 1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Pick item success
+
+[1A[2K
+======= CHECK PICK ITEMS DONE =======
+
+[1A[2KStep 13 - Check Pick Items done
+
+[1A[2KComplete Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 14 - Complete Pick success
+
+[1A[2KComplete Pick SO attempt 1: [33m200[39m
+
+[1A[2KStep 15 - Complete Pick for SO success
+
+[1A[2KCheckout Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 16 - Checkout Pick success
+
+[1A[2K
+========= PICK FLOW DONE =========
+
+
+[1A[2K
+==============================
+
+[1A[2K========== QC FLOW ==========
+
+[1A[2K==============================
+
+[1A[2KSO from PickFlow:SOBD1586728
+
+[1A[2KLocation:BD
+
+[1A[2KZone Code:QC-01
+
+[1A[2K
+[QC] Check In QC Zone
+
+[1A[2KStatus:200
+
+[1A[2K
+[QC] Pick Ticket
+
+[1A[2KSKU list for next request:[object Object]
+
+[1A[2K
+Γû╢ Processing SKU 1/1
+
+[1A[2KItem: {
+  sku: [32m'MEDX.Y4XP61PG'[39m,
+  seller: [32m'MEDX'[39m,
+  product_id: [33m2431073[39m,
+  reservedQuantity: [33m2[39m,
+  sellerCodeLength: [33m4[39m
+}
+
+[1A[2KGenerated QR: P072431073S04MEDXL01AE06010130V011R06PO8998U21T101770212989C01AI011
+
+[1A[2KΓ£à Scan success SKU 1
+
+[1A[2K
+========= QR LOOP SUMMARY =========
+
+[1A[2KTotal:1
+
+[1A[2KScanned:1
+
+[1A[2KSkipped:0
+
+[1A[2K===================================
+
+
+[1A[2K
+                Total SKU: 1
+                Scanned: 1
+                Skipped: 0
+            
+
+[1A[2K
+≡ƒôª Move QC -> PACK
+
+[1A[2KΓ£à QC Move to PACK success
+
+[1A[2K
+≡ƒÜ¬ Checkout QC Zone
+
+[1A[2K======= QC FLOW DONE ========
+
+[1A[2K
+==============================
+
+[1A[2K========== PACK FLOW =========
+
+[1A[2K==============================
+
+[1A[2KSO: SOBD1586728
+
+[1A[2KTicketId: [33m1054055[39m
+
+[1A[2KPack Checkin PASS: [33m200[39m
+
+[1A[2KPack Packing PASS: [33m200[39m
+
+[1A[2KΓ£ô BIN extracted:BIN0071
+
+[1A[2KBIN: BIN0071
+
+[1A[2KUpdate Ticket PASS: [33m200[39m
+
+[1A[2KPack Complete PASS: [33m403[39m
+
+[1A[2K==== REQUEST ====
+
+[1A[2KURL: /warehouse/core/v1/staff-zone-session/check
+
+[1A[2KMETHOD: POST
+
+[1A[2KHEADERS: {
+  Authorization: [32m'Basic UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU='[39m,
+  [32m'Content-Type'[39m: [32m'application/json'[39m
+}
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KPack Checkout PASS: [33m200[39m
+
+[1A[2KFULL FLOW RUN #6 DONE
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #7
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = YA1U961P
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = YA1U961P
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586729
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586729[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586729
+
+[1A[2KPrice: 2169100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586729
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054056
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054056 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+
+[1A[2KΓ£à Check in Pick Success
+
+[1A[2K===== ASSIGN PICK STAFF =====
+
+[1A[2K≡ƒöü Attempt #1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Assign Pick Staff Success
+
+[1A[2KsubTicketId:213466
+
+[1A[2KΓ£à First OTL:OTL-E7KKJHFARN
+
+[1A[2KStep 11 - OTL Code:OTL-E7KKJHFARN
+
+[1A[2KStep 12 - Use Basket success
+
+[1A[2K
+======= START CHECK PICK ITEMS =======
+
+[1A[2KAttempt 1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Pick item success
+
+[1A[2K
+======= CHECK PICK ITEMS DONE =======
+
+[1A[2KStep 13 - Check Pick Items done
+
+[1A[2KComplete Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 14 - Complete Pick success
+
+[1A[2KComplete Pick SO attempt 1: [33m200[39m
+
+[1A[2KStep 15 - Complete Pick for SO success
+
+[1A[2KCheckout Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 16 - Checkout Pick success
+
+[1A[2K
+========= PICK FLOW DONE =========
+
+
+[1A[2K
+==============================
+
+[1A[2K========== QC FLOW ==========
+
+[1A[2K==============================
+
+[1A[2KSO from PickFlow:SOBD1586729
+
+[1A[2KLocation:BD
+
+[1A[2KZone Code:QC-01
+
+[1A[2K
+[QC] Check In QC Zone
+
+[1A[2KStatus:200
+
+[1A[2K
+[QC] Pick Ticket
+
+[1A[2KSKU list for next request:[object Object]
+
+[1A[2K
+Γû╢ Processing SKU 1/1
+
+[1A[2KItem: {
+  sku: [32m'MEDX.Y4XP61PG'[39m,
+  seller: [32m'MEDX'[39m,
+  product_id: [33m2431073[39m,
+  reservedQuantity: [33m2[39m,
+  sellerCodeLength: [33m4[39m
+}
+
+[1A[2KGenerated QR: P072431073S04MEDXL01AE06010130V019R06PO8998U21T101770212989C01AI019
+
+[1A[2KΓ£à Scan success SKU 1
+
+[1A[2K
+========= QR LOOP SUMMARY =========
+
+[1A[2KTotal:1
+
+[1A[2KScanned:1
+
+[1A[2KSkipped:0
+
+[1A[2K===================================
+
+
+[1A[2K
+                Total SKU: 1
+                Scanned: 1
+                Skipped: 0
+            
+
+[1A[2K
+≡ƒôª Move QC -> PACK
+
+[1A[2KΓ£à QC Move to PACK success
+
+[1A[2K
+≡ƒÜ¬ Checkout QC Zone
+
+[1A[2K======= QC FLOW DONE ========
+
+[1A[2K
+==============================
+
+[1A[2K========== PACK FLOW =========
+
+[1A[2K==============================
+
+[1A[2KSO: SOBD1586729
+
+[1A[2KTicketId: [33m1054056[39m
+
+[1A[2KPack Checkin PASS: [33m200[39m
+
+[1A[2KPack Packing PASS: [33m200[39m
+
+[1A[2KΓ£ô BIN extracted:BIN0073
+
+[1A[2KBIN: BIN0073
+
+[1A[2KUpdate Ticket PASS: [33m200[39m
+
+[1A[2KPack Complete PASS: [33m403[39m
+
+[1A[2K==== REQUEST ====
+
+[1A[2KURL: /warehouse/core/v1/staff-zone-session/check
+
+[1A[2KMETHOD: POST
+
+[1A[2KHEADERS: {
+  Authorization: [32m'Basic UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU='[39m,
+  [32m'Content-Type'[39m: [32m'application/json'[39m
+}
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KPack Checkout PASS: [33m200[39m
+
+[1A[2KFULL FLOW RUN #7 DONE
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #8
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = UTT41PGE
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = UTT41PGE
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586730
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586730[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586730
+
+[1A[2KPrice: 1947100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586730
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054057
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054057 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+
+[1A[2KΓ£à Check in Pick Success
+
+[1A[2K===== ASSIGN PICK STAFF =====
+
+[1A[2K≡ƒöü Attempt #1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Assign Pick Staff Success
+
+[1A[2KsubTicketId:213467
+
+[1A[2KΓ£à First OTL:OTL-WLPBT3CY94
+
+[1A[2KStep 11 - OTL Code:OTL-WLPBT3CY94
+
+[1A[2KStep 12 - Use Basket success
+
+[1A[2K
+======= START CHECK PICK ITEMS =======
+
+[1A[2KAttempt 1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Pick item success
+
+[1A[2K
+======= CHECK PICK ITEMS DONE =======
+
+[1A[2KStep 13 - Check Pick Items done
+
+[1A[2KComplete Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 14 - Complete Pick success
+
+[1A[2KComplete Pick SO attempt 1: [33m200[39m
+
+[1A[2KStep 15 - Complete Pick for SO success
+
+[1A[2KCheckout Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 16 - Checkout Pick success
+
+[1A[2K
+========= PICK FLOW DONE =========
+
+
+[1A[2K
+==============================
+
+[1A[2K========== QC FLOW ==========
+
+[1A[2K==============================
+
+[1A[2KSO from PickFlow:SOBD1586730
+
+[1A[2KLocation:BD
+
+[1A[2KZone Code:QC-01
+
+[1A[2K
+[QC] Check In QC Zone
+
+[1A[2KStatus:200
+
+[1A[2K
+[QC] Pick Ticket
+
+[1A[2KSKU list for next request:[object Object]
+
+[1A[2K
+Γû╢ Processing SKU 1/1
+
+[1A[2KItem: {
+  sku: [32m'MEDX.Y4XP61PG'[39m,
+  seller: [32m'MEDX'[39m,
+  product_id: [33m2431073[39m,
+  reservedQuantity: [33m2[39m,
+  sellerCodeLength: [33m4[39m
+}
+
+[1A[2KGenerated QR: P072431073S04MEDXL01AE06010130V016R06PO8998U21T101770212989C01AI016
+
+[1A[2KΓ£à Scan success SKU 1
+
+[1A[2K
+========= QR LOOP SUMMARY =========
+
+[1A[2KTotal:1
+
+[1A[2KScanned:1
+
+[1A[2KSkipped:0
+
+[1A[2K===================================
+
+
+[1A[2K
+                Total SKU: 1
+                Scanned: 1
+                Skipped: 0
+            
+
+[1A[2K
+≡ƒôª Move QC -> PACK
+
+[1A[2KΓ£à QC Move to PACK success
+
+[1A[2K
+≡ƒÜ¬ Checkout QC Zone
+
+[1A[2K======= QC FLOW DONE ========
+
+[1A[2K
+==============================
+
+[1A[2K========== PACK FLOW =========
+
+[1A[2K==============================
+
+[1A[2KSO: SOBD1586730
+
+[1A[2KTicketId: [33m1054057[39m
+
+[1A[2KPack Checkin PASS: [33m200[39m
+
+[1A[2KPack Packing PASS: [33m200[39m
+
+[1A[2KΓ£ô BIN extracted:BIN0069
+
+[1A[2KBIN: BIN0069
+
+[1A[2KUpdate Ticket PASS: [33m200[39m
+
+[1A[2KPack Complete PASS: [33m403[39m
+
+[1A[2K==== REQUEST ====
+
+[1A[2KURL: /warehouse/core/v1/staff-zone-session/check
+
+[1A[2KMETHOD: POST
+
+[1A[2KHEADERS: {
+  Authorization: [32m'Basic UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU='[39m,
+  [32m'Content-Type'[39m: [32m'application/json'[39m
+}
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KPack Checkout PASS: [33m200[39m
+
+[1A[2KFULL FLOW RUN #8 DONE
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #9
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = PB2P2AXH
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = PB2P2AXH
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586731
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586731[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586731
+
+[1A[2KPrice: 2169100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586731
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054058
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054058 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+
+[1A[2KΓ£à Check in Pick Success
+
+[1A[2K===== ASSIGN PICK STAFF =====
+
+[1A[2K≡ƒöü Attempt #1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Assign Pick Staff Success
+
+[1A[2KsubTicketId:213468
+
+[1A[2KΓ£à First OTL:OTL-QD96NX83CY
+
+[1A[2KStep 11 - OTL Code:OTL-QD96NX83CY
+
+[1A[2KStep 12 - Use Basket success
+
+[1A[2K
+======= START CHECK PICK ITEMS =======
+
+[1A[2KAttempt 1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Pick item success
+
+[1A[2K
+======= CHECK PICK ITEMS DONE =======
+
+[1A[2KStep 13 - Check Pick Items done
+
+[1A[2KComplete Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 14 - Complete Pick success
+
+[1A[2KComplete Pick SO attempt 1: [33m200[39m
+
+[1A[2KStep 15 - Complete Pick for SO success
+
+[1A[2KCheckout Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 16 - Checkout Pick success
+
+[1A[2K
+========= PICK FLOW DONE =========
+
+
+[1A[2K
+==============================
+
+[1A[2K========== QC FLOW ==========
+
+[1A[2K==============================
+
+[1A[2KSO from PickFlow:SOBD1586731
+
+[1A[2KLocation:BD
+
+[1A[2KZone Code:QC-01
+
+[1A[2K
+[QC] Check In QC Zone
+
+[1A[2KStatus:200
+
+[1A[2K
+[QC] Pick Ticket
+
+[1A[2KSKU list for next request:[object Object]
+
+[1A[2K
+Γû╢ Processing SKU 1/1
+
+[1A[2KItem: {
+  sku: [32m'MEDX.Y4XP61PG'[39m,
+  seller: [32m'MEDX'[39m,
+  product_id: [33m2431073[39m,
+  reservedQuantity: [33m2[39m,
+  sellerCodeLength: [33m4[39m
+}
+
+[1A[2KGenerated QR: P072431073S04MEDXL01AE06010130V014R06PO8998U21T101770212989C01AI014
+
+[1A[2KΓ£à Scan success SKU 1
+
+[1A[2K
+========= QR LOOP SUMMARY =========
+
+[1A[2KTotal:1
+
+[1A[2KScanned:1
+
+[1A[2KSkipped:0
+
+[1A[2K===================================
+
+
+[1A[2K
+                Total SKU: 1
+                Scanned: 1
+                Skipped: 0
+            
+
+[1A[2K
+≡ƒôª Move QC -> PACK
+
+[1A[2KΓ£à QC Move to PACK success
+
+[1A[2K
+≡ƒÜ¬ Checkout QC Zone
+
+[1A[2K======= QC FLOW DONE ========
+
+[1A[2K
+==============================
+
+[1A[2K========== PACK FLOW =========
+
+[1A[2K==============================
+
+[1A[2KSO: SOBD1586731
+
+[1A[2KTicketId: [33m1054058[39m
+
+[1A[2KPack Checkin PASS: [33m200[39m
+
+[1A[2KPack Packing PASS: [33m200[39m
+
+[1A[2KΓ£ô BIN extracted:BIN0070
+
+[1A[2KBIN: BIN0070
+
+[1A[2KUpdate Ticket PASS: [33m200[39m
+
+[1A[2KPack Complete PASS: [33m403[39m
+
+[1A[2K==== REQUEST ====
+
+[1A[2KURL: /warehouse/core/v1/staff-zone-session/check
+
+[1A[2KMETHOD: POST
+
+[1A[2KHEADERS: {
+  Authorization: [32m'Basic UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU='[39m,
+  [32m'Content-Type'[39m: [32m'application/json'[39m
+}
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KPack Checkout PASS: [33m200[39m
+
+[1A[2KFULL FLOW RUN #9 DONE
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #10
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = AG941PGE
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = AG941PGE
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586732
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586732[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586732
+
+[1A[2KPrice: 2169100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586732
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054059
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054059 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+
+[1A[2KΓ£à Check in Pick Success
+
+[1A[2K===== ASSIGN PICK STAFF =====
+
+[1A[2K≡ƒöü Attempt #1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Assign Pick Staff Success
+
+[1A[2KsubTicketId:213469
+
+[1A[2KΓ£à First OTL:OTL-9JYQBT3CY9
+
+[1A[2KStep 11 - OTL Code:OTL-9JYQBT3CY9
+
+[1A[2KStep 12 - Use Basket success
+
+[1A[2K
+======= START CHECK PICK ITEMS =======
+
+[1A[2KAttempt 1
+
+[1A[2KStatus:200
+
+[1A[2KΓ£à Pick item success
+
+[1A[2K
+======= CHECK PICK ITEMS DONE =======
+
+[1A[2KStep 13 - Check Pick Items done
+
+[1A[2KComplete Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 14 - Complete Pick success
+
+[1A[2KComplete Pick SO attempt 1: [33m200[39m
+
+[1A[2KStep 15 - Complete Pick for SO success
+
+[1A[2KCheckout Pick response attempt 1: [33m200[39m
+
+[1A[2KStep 16 - Checkout Pick success
+
+[1A[2K
+========= PICK FLOW DONE =========
+
+
+[1A[2K
+==============================
+
+[1A[2K========== QC FLOW ==========
+
+[1A[2K==============================
+
+[1A[2KSO from PickFlow:SOBD1586732
+
+[1A[2KLocation:BD
+
+[1A[2KZone Code:QC-01
+
+[1A[2K
+[QC] Check In QC Zone
+
+[1A[2KStatus:200
+
+[1A[2K
+[QC] Pick Ticket
+
+[1A[2KSKU list for next request:[object Object]
+
+[1A[2K
+Γû╢ Processing SKU 1/1
+
+[1A[2KItem: {
+  sku: [32m'MEDX.Y4XP61PG'[39m,
+  seller: [32m'MEDX'[39m,
+  product_id: [33m2431073[39m,
+  reservedQuantity: [33m2[39m,
+  sellerCodeLength: [33m4[39m
+}
+
+[1A[2KGenerated QR: P072431073S04MEDXL01AE06010130V017R06PO8998U21T101770212989C01AI017
+
+[1A[2KΓ£à Scan success SKU 1
+
+[1A[2K
+========= QR LOOP SUMMARY =========
+
+[1A[2KTotal:1
+
+[1A[2KScanned:1
+
+[1A[2KSkipped:0
+
+[1A[2K===================================
+
+
+[1A[2K
+                Total SKU: 1
+                Scanned: 1
+                Skipped: 0
+            
+
+[1A[2K
+≡ƒôª Move QC -> PACK
+
+[1A[2KΓ£à QC Move to PACK success
+
+[1A[2K
+≡ƒÜ¬ Checkout QC Zone
+
+[1A[2K======= QC FLOW DONE ========
+
+[1A[2K
+==============================
+
+[1A[2K========== PACK FLOW =========
+
+[1A[2K==============================
+
+[1A[2KSO: SOBD1586732
+
+[1A[2KTicketId: [33m1054059[39m
+
+[1A[2KPack Checkin PASS: [33m200[39m
+
+[1A[2KPack Packing PASS: [33m200[39m
+
+[1A[2KΓ£ô BIN extracted:BIN0068
+
+[1A[2KBIN: BIN0068
+
+[1A[2KUpdate Ticket PASS: [33m200[39m
+
+[1A[2KPack Complete PASS: [33m403[39m
+
+[1A[2K==== REQUEST ====
+
+[1A[2KURL: /warehouse/core/v1/staff-zone-session/check
+
+[1A[2KMETHOD: POST
+
+[1A[2KHEADERS: {
+  Authorization: [32m'Basic UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU='[39m,
+  [32m'Content-Type'[39m: [32m'application/json'[39m
+}
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KBODY: {
+  "zoneCode": "PACK-RFID-01",
+  "status": "CHECK_OUT_ZONE",
+  "jobType": "PACK",
+  "warehouseCode": "BD"
+}
+
+[1A[2K=================
+
+[1A[2KPack Checkout PASS: [33m200[39m
+
+[1A[2KFULL FLOW RUN #10 DONE
+
+[1A[2K
+====================
+
+[1A[2KFULL FLOW RUN #11
+
+[1A[2K====================
+
+[1A[2K===== ORDER FLOW START =====
+
+[1A[2KLogin success
+
+[1A[2KCheck Cart PASS:404
+
+[1A[2K
+===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KselectedSkuCodes = 
+
+[1A[2KCart is empty = true
+
+[1A[2KGet Cart Info PASS: 404
+
+[1A[2K===== EXTRACTED DATA =====
+
+[1A[2KCartNo = null
+
+[1A[2KskuCodes = 
+
+[1A[2KCart EMPTY ΓåÆ Skip Remove Cart
+
+[1A[2K===== ADD CART RESPONSE =====
+
+[1A[2KStatus: 200
+
+[1A[2KNew CartNo = D4BXKU72
+
+[1A[2KAdd Cart PASS: 200
+
+[1A[2KNew CartNo = D4BXKU72
+
+[1A[2KUpdate Cart PASS: 200
+
+[1A[2KCheckout PASS: 200
+
+[1A[2KORDER_ID = 1586733
+
+[1A[2K===== ORDER FLOW END =====
+
+[1A[2KOrder Created: [33m1586733[39m
+
+[1A[2K
+==============================
+
+[1A[2K========= PICK FLOW =========
+
+[1A[2K==============================
+
+[1A[2K
+Step 1: Get Order Info
+
+[1A[2KOrderId: 1586733
+
+[1A[2KPrice: 1947100
+
+[1A[2K
+Step 1: Get Order Info success
+
+[1A[2K
+Step 2: Confirm Order
+
+[1A[2KConfirm Order Status: 200
+
+[1A[2K
+Waiting 5s before Get SO...
+
+[1A[2K
+Step 4: Get SO
+
+[1A[2KGet SO Status: 200
+
+[1A[2KSO ready on attempt 1
+
+[1A[2KSO: SOBD1586733
+
+[1A[2K
+Step 5: Get Order SKU
+
+[1A[2KTicketId: 1054060
+
+[1A[2KSKU: MEDX.Y4XP61PG
+
+[1A[2KQuantity: 2
+
+[1A[2KSKU Count: 1
+
+[1A[2K
+Step 6: Check Pick Ticket
+
+[1A[2KCheck Pick Ticket Status: 200
+
+[1A[2K
+Step 7: Active Pick Ticket
+
+[1A[2KWaiting 8s before Active Pick Ticket...
+
+[1A[2KMessage: ─É├ú active phiß║┐u.
+
+[1A[2K=======================================
+
+
+[1A[2KActive Pick Ticket: 1054060 - Status 200
+
+[1A[2K
+Step 8: Get Zone and Location
+
+[1A[2KGet Zone and Location Attempt 1...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KGet Zone and Location Attempt 2...
+
+[1A[2KReserveStatus:FINISH
+
+[1A[2KΓ£à Zone:ZONE-P
+
+[1A[2KΓ£à Location:TECH05
+
+[1A[2KGet Zone and Location Status:200
+
+[1A[2KZone:ZONE-P
+
+[1A[2KLocation Item Code:TECH05
+
+[1A[2KStep 9: Check in Pick
+
+[1A[2K===== CHECK IN PICK =====
+
+[1A[2KStatus: [33m200[39m
+

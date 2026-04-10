@@ -1,85 +1,148 @@
 [
   {
     "run": 1,
-    "orderId": 1586691,
-    "so": "SOBD1586691",
-    "ticketId": 1054018,
-    "status": "FAIL",
-    "message": "response.status is not a function",
-    "url": "N/A",
-    "code": 0
+    "orderId": 1586863,
+    "so": "SOBD1586863",
+    "ticketId": 1054188,
+    "status": "PASS"
   },
   {
     "run": 2,
-    "orderId": 1586692,
-    "so": "SOBD1586692",
-    "ticketId": 1054019,
+    "orderId": 1586864,
+    "so": "SOBD1586864",
+    "ticketId": 1054189,
     "status": "PASS"
   },
   {
     "run": 3,
-    "orderId": 1586693,
-    "so": "SOBD1586693",
-    "ticketId": 1054020,
+    "orderId": 1586865,
+    "so": "SOBD1586865",
+    "ticketId": 1054190,
     "status": "PASS"
   },
   {
     "run": 4,
-    "orderId": 1586694,
-    "so": "SOBD1586694",
-    "ticketId": 1054021,
+    "orderId": 1586866,
+    "so": "SOBD1586866",
+    "ticketId": 1054191,
     "status": "PASS"
   },
   {
     "run": 5,
-    "orderId": 1586695,
-    "so": "SOBD1586695",
-    "ticketId": 1054022,
+    "orderId": 1586867,
+    "so": "SOBD1586867",
+    "ticketId": 1054192,
     "status": "PASS"
   },
   {
     "run": 6,
-    "orderId": 1586696,
-    "so": "SOBD1586696",
-    "ticketId": 1054023,
+    "orderId": 1586868,
+    "so": "SOBD1586868",
+    "ticketId": 1054193,
     "status": "PASS"
   },
   {
     "run": 7,
-    "orderId": 1586697,
-    "so": "SOBD1586697",
-    "ticketId": 1054024,
+    "orderId": 1586869,
+    "so": "SOBD1586869",
+    "ticketId": 1054194,
     "status": "PASS"
   },
   {
     "run": 8,
-    "orderId": 1586698,
-    "so": "SOBD1586698",
-    "ticketId": 1054025,
+    "orderId": 1586870,
+    "so": "SOBD1586870",
+    "ticketId": 1054195,
     "status": "PASS"
   },
   {
     "run": 9,
-    "orderId": 1586699,
-    "so": "SOBD1586699",
-    "ticketId": 1054026,
-    "status": "PASS"
+    "orderId": 1586871,
+    "so": "",
+    "ticketId": "",
+    "status": "FAIL",
+    "message": "Đơn hàng SOBD1586871 không được phép cho đi vì chưa giữ được hàng.",
+    "code": 400,
+    "url": "https://api.v2-stg.thuocsi.vn/warehouse/picking/v1/pick-ticket/active"
   },
   {
     "run": 10,
-    "orderId": 1586700,
-    "so": "SOBD1586700",
-    "ticketId": 1054027,
+    "orderId": 1586872,
+    "so": "",
+    "ticketId": "",
     "status": "FAIL",
-    "message": "Endpoint error: write tcp 10.206.6.187:36260->10.90.106.91:80: write: broken pipe",
-    "url": "https://api.v2-stg.thuocsi.vn/warehouse/core/v1/staff-zone-session/check",
-    "code": 500
+    "message": "Đơn hàng SOBD1586872 không được phép cho đi vì chưa giữ được hàng.",
+    "code": 400,
+    "url": "https://api.v2-stg.thuocsi.vn/warehouse/picking/v1/pick-ticket/active"
   },
   {
     "run": 11,
-    "orderId": 1586701,
-    "so": "SOBD1586701",
-    "ticketId": 1054028,
+    "orderId": 1586873,
+    "so": "SOBD1586873",
+    "ticketId": 1054198,
+    "status": "PASS"
+  },
+  {
+    "run": 12,
+    "orderId": 1586874,
+    "so": "SOBD1586874",
+    "ticketId": 1054199,
+    "status": "PASS"
+  },
+  {
+    "run": 13,
+    "orderId": 1586875,
+    "so": "SOBD1586875",
+    "ticketId": 1054200,
+    "status": "PASS"
+  },
+  {
+    "run": 14,
+    "orderId": 1586876,
+    "so": "SOBD1586876",
+    "ticketId": 1054201,
+    "status": "PASS"
+  },
+  {
+    "run": 15,
+    "orderId": 1586877,
+    "so": "SOBD1586877",
+    "ticketId": 1054202,
+    "status": "PASS"
+  },
+  {
+    "run": 16,
+    "orderId": 1586878,
+    "so": "SOBD1586878",
+    "ticketId": 1054203,
+    "status": "PASS"
+  },
+  {
+    "run": 17,
+    "orderId": 1586879,
+    "so": "SOBD1586879",
+    "ticketId": 1054204,
+    "status": "PASS"
+  },
+  {
+    "run": 18,
+    "orderId": 1586880,
+    "so": "SOBD1586880",
+    "ticketId": 1054205,
+    "status": "PASS"
+  },
+  {
+    "run": 19,
+    "orderId": 1586881,
+    "so": "SOBD1586881",
+    "ticketId": 1054206,
+    "status": "PASS"
+  },
+  {
+    "run": 20,
+    "orderId": 1586882,
+    "so": "SOBD1586882",
+    "ticketId": 1054207,
     "status": "PASS"
   }
 ]

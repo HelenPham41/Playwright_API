@@ -7,6 +7,7 @@ import { handleApiResponse } from "../utils/api-helper.js";
 import { PackService } from "./pack.service.js";
 import { OrderService } from "./order.service.js";
 import { teardownOrder } from "../utils/teardown.js";
+import { time } from "node:console";
 
 export class PickService {
 
@@ -24,25 +25,45 @@ export class PickService {
 
         const params = {
             q: JSON.stringify({
-                orderId: orderId
+                orderId: Number(orderId) 
             })
         };
 
         const url = `/backend/marketplace/order/v2/order/list`;
-        //const fullUrl = `${url}?q=${encodeURIComponent(params.q)}`;
 
-        const response = await client.get(url, { params });
+        try {
+            const response = await client.get(url, { params });
+            const body = await response.json();
 
-        const body = await response.json();
+            // console.log("📦 getOrderInfo response:", JSON.stringify(body, null, 2));
 
-        const price = body?.data?.[0]?.totalPrice;
-        const orderCode = body?.data?.[0]?.orderCode;
+            if (!body?.data || body.data.length === 0) {
+                console.warn("⚠️ No order data found for orderId:", orderId);
+                return {
+                    response,
+                    price: undefined,
+                    orderCode: undefined
+                };
+            }
 
-        return {
-            response,
-            price,
-            orderCode
-        };
+            const price = body?.data?.[0]?.totalPrice;
+            const orderCode = body?.data?.[0]?.orderCode;
+
+            console.log("✅ Extracted - OrderCode:", orderCode, "Price:", price);
+
+            return {
+                response,
+                price,
+                orderCode
+            };
+        } catch (error) {
+            console.error("❌ getOrderInfo failed:", error);
+            return {
+                response: null,
+                price: undefined,
+                orderCode: undefined
+            };
+        }
     }
 
     async getWarehouseCode(): Promise<string> {
@@ -99,7 +120,7 @@ export class PickService {
 
         let so: string | undefined;
 
-        for (let i = 1; i <= 6; i++) {
+        for (let i = 1; i <= 10; i++) {
 
             const params = {
                 q: JSON.stringify({
@@ -283,8 +304,6 @@ export class PickService {
         const url =
             "/warehouse/picking/v1/pick-ticket/active";
 
-        const warehouseCode = await this.getWarehouseCode();
-
         const body = {
             ticketId: Number(ticketId),
             isManualActive: true,
@@ -432,16 +451,18 @@ export class PickService {
 
                 // 🔥 CALL PACK SERVICE
                 const packService = new PackService();
-                const packCheckinResponse = await packService.packCheckout(wareHouseCode);
+                const packCheckinResponse = await packService.packCheckout();
 
-                // Safely read response body (depends on your API client)
+                // ✅ Read response FIRST before validation
                 const responseBody = await packCheckinResponse.json().catch(() => ({}));
-                const message: string = responseBody?.message || "";
+                const checkoutMessage: string = responseBody?.message || "";
 
-                // Check for specific error message
-                if (message.includes("Nhân viên còn phiếu")) {
+                console.log("Pack checkout response:", checkoutMessage);
+
+                // Check for specific error message (unfinished orders)
+                if (checkoutMessage.includes("Nhân viên còn phiếu")) {
                     // Extract SOBD code using regex
-                    const match = message.match(/SOBD\d+/);
+                    const match = checkoutMessage.match(/SOBD\d+/);
 
                     if (match) {
                         const sobdCode = match[0];
@@ -456,31 +477,40 @@ export class PickService {
                         const orderCodeOld = orderInfo.orderCode;
 
                         console.log("Order code for teardown:", orderCodeOld);
+                        //console.log("Full orderInfo object:", JSON.stringify(orderInfo, null, 2));
+                        
                         const orderService = new OrderService(this.request);
-                        const ticketData = await this.getOrderSku(basicToken, sobdCode);
-                        const ticketIdOld = ticketData.ticketId
+                        let ticketIdOld: string | undefined;
+                        
+                        try {
+                            const ticketData = await this.getOrderSku(basicToken, sobdCode);
+                            ticketIdOld = ticketData.ticketId;
+                        } catch (error) {
+                            console.warn("⚠️ Failed to get order SKU for teardown:", error);
+                            // Continue without ticket ID - teardown might still work
+                        }
+                        
                         console.log("Ticket ID for teardown:", ticketIdOld);
                         const location = await this.getWarehouseCode();
 
                         if (orderCodeOld && ticketIdOld) {
                             console.log("Teardown order:", orderCodeOld);
-
                             await teardownOrder(
                                 orderService,
                                 packService,
                                 basicToken,
                                 String(orderIdOld),
-                                ticketIdOld,
+                                location,
                                 orderCodeOld
                             );
                         } else {
-                            console.warn("Order code not found for orderId:", orderIdOld);
+                            console.warn("⚠️ Cannot teardown - missing orderCode or ticketId:", { orderCodeOld, ticketIdOld });
                         }
                     }
+                } else {
+                    // ✅ Only validate if not error message
+                    await handleApiResponse(packCheckinResponse, [200]);
                 }
-
-                // keep validation last
-                await handleApiResponse(packCheckinResponse, [200]);
 
                 console.log("🔁 Retry Check in PICK...");
 

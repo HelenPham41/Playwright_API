@@ -150,20 +150,16 @@ export class PackService {
                 timeout: 7000
             });
 
-            return {
-                status: response.status(),
-                url: config.hostOrder + url,
-                response
-            };
+            return response; // ✅ RETURN APIResponse
 
         } catch (error: any) {
 
-            return {
-                status: error.response?.status() || 500,
-                url: config.hostOrder + url,
-                error: true
-            };
+            // 🔥 IMPORTANT: still return response if exists
+            if (error.response) {
+                return error.response; // ✅ still APIResponse (400/500)
+            }
 
+            throw error; // network error
         }
     }
     /**
@@ -255,18 +251,15 @@ export class PackService {
             data: body,
             timeout: 3000
         });
-        console.log("==== REQUEST ====");
-        console.log("URL:", url);
-        console.log("METHOD: POST");
-        console.log("HEADERS:", {
-            Authorization: `Basic ${config.basicToken}`,
-            "Content-Type": "application/json"
-        });
-        console.log("BODY:", JSON.stringify(body, null, 2));
-        console.log("=================");
-        console.log("BODY:", JSON.stringify(body, null, 2));
-        console.log("=================");
-
+        // console.log("==== REQUEST ====");
+        // console.log("URL:", url);
+        // console.log("METHOD: POST");
+        // console.log("HEADERS:", {
+        //     Authorization: `Basic ${config.basicToken}`,
+        //     "Content-Type": "application/json"
+        // });
+        // console.log("BODY:", JSON.stringify(body, null, 2));
+        // console.log("=================");
         return response;
     }
 }

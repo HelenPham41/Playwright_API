@@ -77,39 +77,39 @@ export class PackFlow {
          * PACK-04 Add Basket
          */
         const addBasketResponse =
-            await this.packService.addBasket(
-                ticketId,
-                bin
-            );
+            await this.packService.addBasket(ticketId, bin);
 
-        if (addBasketResponse.status !== 200) {
+        // ✅ ALWAYS extract status first
+        const status = addBasketResponse.status();
+
+        if (status !== 200) {
 
             let mainError: any;
 
-            // Capture main error (500)
+            // ✅ Pass FULL response (NOT status)
             try {
-                await handleApiResponse(addBasketResponse.status, [200]);
+                await handleApiResponse(addBasketResponse, [200]);
             } catch (err) {
                 mainError = err;
             }
 
-            // Run teardown safely (never override)
+            // Run teardown safely (never override main error)
             try {
                 await teardownOrder(
                     orderService,
                     this.packService,
                     basicToken,
                     orderId,
-                    ticketId,
+                    location,
                     orderCode
                 );
             } catch (teardownError) {
                 console.error("⚠️ Teardown failed:", teardownError);
             }
 
-            // ✅ ALWAYS throw main error
+            // ✅ Correct status usage
             throw mainError || new Error(
-                `PACK-04 failed | Status: ${addBasketResponse.status}`
+                `PACK-04 failed | Status: ${status}`
             );
         }
 

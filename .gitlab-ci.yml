@@ -1,0 +1,16 @@
+stages:
+  - test
+
+playwright-test:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.43.0-jammy
+
+  script:
+    - npm install
+    - npx playwright install --with-deps
+    - npx playwright test
+
+  artifacts:
+    paths:
+      - playwright-report
+    expire_in: 1 week

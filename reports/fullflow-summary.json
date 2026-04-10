@@ -1,9 +1,85 @@
 [
   {
     "run": 1,
-    "orderId": 1584072,
-    "so": "SOBD1584072",
-    "ticketId": 1053657,
+    "orderId": 1586691,
+    "so": "SOBD1586691",
+    "ticketId": 1054018,
+    "status": "FAIL",
+    "message": "response.status is not a function",
+    "url": "N/A",
+    "code": 0
+  },
+  {
+    "run": 2,
+    "orderId": 1586692,
+    "so": "SOBD1586692",
+    "ticketId": 1054019,
+    "status": "PASS"
+  },
+  {
+    "run": 3,
+    "orderId": 1586693,
+    "so": "SOBD1586693",
+    "ticketId": 1054020,
+    "status": "PASS"
+  },
+  {
+    "run": 4,
+    "orderId": 1586694,
+    "so": "SOBD1586694",
+    "ticketId": 1054021,
+    "status": "PASS"
+  },
+  {
+    "run": 5,
+    "orderId": 1586695,
+    "so": "SOBD1586695",
+    "ticketId": 1054022,
+    "status": "PASS"
+  },
+  {
+    "run": 6,
+    "orderId": 1586696,
+    "so": "SOBD1586696",
+    "ticketId": 1054023,
+    "status": "PASS"
+  },
+  {
+    "run": 7,
+    "orderId": 1586697,
+    "so": "SOBD1586697",
+    "ticketId": 1054024,
+    "status": "PASS"
+  },
+  {
+    "run": 8,
+    "orderId": 1586698,
+    "so": "SOBD1586698",
+    "ticketId": 1054025,
+    "status": "PASS"
+  },
+  {
+    "run": 9,
+    "orderId": 1586699,
+    "so": "SOBD1586699",
+    "ticketId": 1054026,
+    "status": "PASS"
+  },
+  {
+    "run": 10,
+    "orderId": 1586700,
+    "so": "SOBD1586700",
+    "ticketId": 1054027,
+    "status": "FAIL",
+    "message": "Endpoint error: write tcp 10.206.6.187:36260->10.90.106.91:80: write: broken pipe",
+    "url": "https://api.v2-stg.thuocsi.vn/warehouse/core/v1/staff-zone-session/check",
+    "code": 500
+  },
+  {
+    "run": 11,
+    "orderId": 1586701,
+    "so": "SOBD1586701",
+    "ticketId": 1054028,
     "status": "PASS"
   }
 ]

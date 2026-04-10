@@ -1,7 +1,8 @@
-import { APIRequestContext, expect } from '@playwright/test';
-import { PickService } from "../services/pick.service";
-import { PackService } from "../services/pack.service";
-import { handleApiResponse } from '../utils/api-helper';
+import { expect } from '@playwright/test';
+import type { APIRequestContext } from '@playwright/test';
+import { PickService } from "../services/pick.service.js";
+import { PackService } from "../services/pack.service.js";
+import { handleApiResponse } from '../utils/api-helper.js';
 
 
 export class PickFlow {

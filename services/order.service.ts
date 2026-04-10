@@ -1,6 +1,6 @@
-import { APIRequestContext } from '@playwright/test';
-import { createClient } from '../clients/apiClient';
-import config from '../configs';
+import type { APIRequestContext } from '@playwright/test';
+import { createClient } from '../clients/apiClient.js';
+import config from '../configs/index.js';
 
 export class OrderService {
 

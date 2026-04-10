@@ -2,14 +2,14 @@ import { test, request } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 
-import { OrderFlow } from '../flows/order.flow';
-import { PickFlow } from '../flows/pick.flow';
-import { QcFlow } from '../flows/qc.flow';
-import { PackFlow } from '../flows/pack.flow';
+import { OrderFlow } from '../flows/order.flow.js';
+import { PickFlow } from '../flows/pick.flow.js';
+import { QcFlow } from '../flows/qc.flow.js';
+import { PackFlow } from '../flows/pack.flow.js';
 
-import config from '../configs';
+import config from '../configs/index.js';
 
-import { writeFullFlowSummary, generateHtmlReport } from '../utils/fullflow-summary';
+import { writeFullFlowSummary, generateHtmlReport } from '../utils/fullflow-summary.js';
 
 test.setTimeout(150 * 60 * 1000); // 150 minutes
 
@@ -78,7 +78,7 @@ test('Run Full Flow N times', async () => {
 
         try {
 
-          const pickFlow = new PickFlow();
+          const pickFlow = new PickFlow(context);
           pickResult = await pickFlow.run(basicToken, orderId);
 
           so = pickResult.so;

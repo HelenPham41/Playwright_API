@@ -1,9 +1,9 @@
-import { APIRequestContext } from '@playwright/test';
-import { QcService } from "../services/qc.service";
-import { handleApiResponse } from '../utils/api-helper';
-import { teardownQC } from '../utils/teardown';
-import { OrderService } from '../services/order.service';
-import { PickService } from '../services/pick.service';
+import type { APIRequestContext } from '@playwright/test';
+import { QcService } from "../services/qc.service.js";
+import { handleApiResponse } from '../utils/api-helper.js';
+import { teardownQC } from '../utils/teardown.js';
+import { OrderService } from '../services/order.service.js';
+import { PickService } from '../services/pick.service.js';
 
 
 
@@ -48,7 +48,7 @@ export class QcFlow {
             console.log("Zone Code:" + zoneCode);
 
        
-                const orderInfo = await this.pickService.getOrderInfo(basicToken,Number(orderId));
+                const orderInfo = await this.pickService.getOrderInfo(basicToken, orderId);
                 orderCode = orderInfo.orderCode;
   
 

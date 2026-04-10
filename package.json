@@ -1,12 +1,1 @@
-
-{
-"name":"playwright-api",
-"version":"1.0.0",
-"scripts":{
-"test":"playwright test"
-},
-"devDependencies":{
-"@playwright/test":"latest",
-"typescript":"latest"
-}
-}
+{"name":"playwright-api","version":"1.0.0","type":"module","scripts":{"test":"playwright test"},"devDependencies":{"@playwright/test":"latest","@types/node":"latest","typescript":"latest"}}

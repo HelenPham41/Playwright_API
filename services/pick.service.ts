@@ -1,11 +1,12 @@
-import { createClient } from "../clients/apiClient";
-import config from "../configs";
-import { APIRequestContext, APIResponse, request } from '@playwright/test';
-import { extractSkuCodes } from "../utils/sku.util";
-import { handleApiResponse } from "../utils/api-helper";
-import { PackService } from "./pack.service";
-import { OrderService } from "./order.service";
-import { teardownOrder } from "../utils/teardown";
+import { createClient } from "../clients/apiClient.js";
+import config from "../configs/index.js";
+import type { APIRequestContext, APIResponse } from '@playwright/test';
+import { request } from '@playwright/test';
+import { extractSkuCodes } from "../utils/sku.util.js";
+import { handleApiResponse } from "../utils/api-helper.js";
+import { PackService } from "./pack.service.js";
+import { OrderService } from "./order.service.js";
+import { teardownOrder } from "../utils/teardown.js";
 
 export class PickService {
 
@@ -13,7 +14,7 @@ export class PickService {
 
     async getOrderInfo(
         basicToken: string,
-        orderId: number
+        orderId: string
     ) {
         const client = await createClient(
             config.hostInternal,
@@ -451,7 +452,7 @@ export class PickService {
                         console.log("Detected unfinished order:", orderIdOld);
 
                         // Call API to get order info
-                        const orderInfo = await this.getOrderInfo(basicToken, orderIdOld);
+                        const orderInfo = await this.getOrderInfo(basicToken, String(orderIdOld));
                         const orderCodeOld = orderInfo.orderCode;
 
                         console.log("Order code for teardown:", orderCodeOld);

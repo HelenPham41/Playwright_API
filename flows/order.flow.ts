@@ -1,6 +1,7 @@
-import { APIRequestContext, expect } from '@playwright/test';
-import { AuthService } from '../services/auth.service';
-import { OrderService } from '../services/order.service';
+import { expect } from '@playwright/test';
+import type { APIRequestContext } from '@playwright/test';
+import { AuthService } from '../services/auth.service.js';
+import { OrderService } from '../services/order.service.js';
 
 export class OrderFlow {
 

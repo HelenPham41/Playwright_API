@@ -1,8 +1,8 @@
 import { expect } from "@playwright/test";
-import { OrderService } from "../services/order.service";
-import { PackService } from "../services/pack.service";
-import { QcService } from "../services/qc.service";
-import { handleApiResponse } from './api-helper';
+import { OrderService } from "../services/order.service.js";
+import { PackService } from "../services/pack.service.js";
+import { QcService } from "../services/qc.service.js";
+import { handleApiResponse } from './api-helper.js';
 
 export async function teardownOrder(
   orderService: OrderService,
@@ -20,7 +20,9 @@ export async function teardownOrder(
   console.log("✓ Order cancelled: " + orderId, "OrderCode:", orderCode);
   await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for 3s to ensure order is cancelled before proceeding with pack checkout
 
-  const response = await packService.packCheckout(location);
+  const response = await packService.packCheckout();
+  const responseBody = await response.json();
+  console.log("Pack checkout response message: " + responseBody?.message);
   await handleApiResponse(response, [200]);
   await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for 3s to ensure pack checkout is processed before finishing teardown
   console.log("✓ Pack checkout completed: " + location);

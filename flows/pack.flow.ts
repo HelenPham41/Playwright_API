@@ -1,10 +1,11 @@
-import { expect, APIRequestContext, request } from "@playwright/test";
-import config from "../configs";
-import { PackService } from "../services/pack.service";
-import { OrderService } from "../services/order.service";
-import { PickService } from "../services/pick.service";
-import { teardownOrder } from "../utils/teardown";
-import { handleApiResponse } from '../utils/api-helper';
+import { expect, request } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
+import config from "../configs/index.js";
+import { PackService } from "../services/pack.service.js";
+import { OrderService } from "../services/order.service.js";
+import { PickService } from "../services/pick.service.js";
+import { teardownOrder } from "../utils/teardown.js";
+import { handleApiResponse } from '../utils/api-helper.js';
 
 export class PackFlow {
 
@@ -34,14 +35,14 @@ export class PackFlow {
         const pickService = new PickService(request);
         const orderService = new OrderService(request);
 
-        const orderInfo = await pickService.getOrderInfo(basicToken, Number(orderId));
+        const orderInfo = await pickService.getOrderInfo(basicToken, orderId);
         const orderCode = orderInfo.orderCode;
 
         /**
          * PACK-01 Checkin pack zone
          */
         const packCheckinResponse =
-            await this.packService.packCheckin(location);
+            await this.packService.packCheckin();
 
         await handleApiResponse(packCheckinResponse, [200]);
 
@@ -52,7 +53,7 @@ export class PackFlow {
          * PACK-02 Update ticket status to PACKING
          */
         const packPackingResponse =
-            await this.packService.packPacking(ticketId, location);
+            await this.packService.packPacking(ticketId);
 
         await handleApiResponse(packPackingResponse, [200]);
 
@@ -63,7 +64,7 @@ export class PackFlow {
          * PACK-03 Get BIN
          */
         const getBinResult =
-            await this.packService.getBin(location);
+            await this.packService.getBin();
 
         await handleApiResponse(getBinResult.response, [200]);
 
@@ -77,7 +78,6 @@ export class PackFlow {
          */
         const addBasketResponse =
             await this.packService.addBasket(
-                location,
                 ticketId,
                 bin
             );
@@ -121,7 +121,6 @@ export class PackFlow {
             await this.packService.updateTicket(
                 ticketId,
                 so,
-                location
             );
 
         await handleApiResponse(updateTicketResponse, [200]);
@@ -135,7 +134,6 @@ export class PackFlow {
         const packCompleteResponse =
             await this.packService.packComplete(
                 ticketId,
-                location
             );
 
         await handleApiResponse(packCompleteResponse, [200, 403]);
@@ -147,7 +145,7 @@ export class PackFlow {
          * PACK-07 Pack Checkout
          */
         const packCheckoutResponse =
-            await this.packService.packCheckout(location);
+            await this.packService.packCheckout();
 
         await handleApiResponse(packCheckoutResponse, [200]);
 

@@ -1,6 +1,6 @@
-import { APIRequestContext, APIResponse } from "@playwright/test";
-import { createClient } from "../clients/apiClient";
-import config from "../configs";
+import type { APIRequestContext, APIResponse } from "@playwright/test";
+import { createClient } from "../clients/apiClient.js";
+import config from "../configs/index.js";
 import { time } from "node:console";
 
 export class PackService {
@@ -13,7 +13,7 @@ export class PackService {
     /**
     * PACK-01 - Check in Pack Zone (Retry max 3 times)
     */
-    async packCheckin(location: string): Promise<APIResponse> {
+    async packCheckin(): Promise<APIResponse> {
         const client = await createClient(
             config.hostOrder,
             config.basicToken,
@@ -27,7 +27,7 @@ export class PackService {
             zoneCode: "PACK-RFID-01",
             status: "CHECK_IN_ZONE",
             jobType: "PACK",
-            warehouseCode: location
+            warehouseCode: await config.location
         };
 
         const maxRetry = 3;
@@ -61,7 +61,7 @@ export class PackService {
     /**
      * PACK-02 - Update ticket status to PACKING
      */
-    async packPacking(ticketId: string, location: string) {
+    async packPacking(ticketId: string) {
         const client = await createClient(
             config.hostOrder,
             config.basicToken,
@@ -74,7 +74,7 @@ export class PackService {
         const body = {
             ticketId,
             status: "PACKING",
-            warehouseCode: location
+            warehouseCode: await config.location
         };
 
         const response = await client.put(url, { data: body });
@@ -85,14 +85,14 @@ export class PackService {
     * PACK-03
     * Get available BIN
     */
-    async getBin(location: string) {
+    async getBin() {
         const client = await createClient(
             config.hostOrder,
             config.basicToken,
             'basic'
         );
         const query = {
-            warehouseCode: location,
+            warehouseCode: await config.location,
             type: "BIN",
             isUsed: false
         };
@@ -124,7 +124,6 @@ export class PackService {
     * Add Basket
     */
     async addBasket(
-        location: string,
         ticketId: string,
         bin: string
     ) {
@@ -138,7 +137,7 @@ export class PackService {
         const url = `/warehouse/picking/v1/basket/use`;
 
         const body = {
-            warehouseCode: location,
+            warehouseCode: await config.location,
             ticketId: ticketId,
             basketType: "DELIVERY",
             basketCode: bin
@@ -174,7 +173,6 @@ export class PackService {
     async updateTicket(
         ticketId: string,
         so: string,
-        location: string
     ) {
 
         const client = await createClient(
@@ -192,7 +190,7 @@ export class PackService {
             so: so,
             packageNum: 1,
             packageImages: [],
-            warehouseCode: location
+            warehouseCode: await config.location
         };
 
         const response = await client.put(url, {
@@ -207,7 +205,6 @@ export class PackService {
     */
     async packComplete(
         ticketId: string,
-        location: string
     ) {
 
         const url =
@@ -223,7 +220,7 @@ export class PackService {
         const body = {
             ticketId: ticketId,
             status: "WAIT_TO_DELIVERY",
-            warehouseCode: location
+            warehouseCode: await config.location
         };
 
         const response = await client.put(url, {
@@ -236,7 +233,7 @@ export class PackService {
      * PACK-07
      * Pack Checkout
      */
-    async packCheckout(location: string) {
+    async packCheckout() {
 
         const client = await createClient(
             config.hostOrder,
@@ -251,13 +248,24 @@ export class PackService {
             zoneCode: "PACK-RFID-01",
             status: "CHECK_OUT_ZONE",
             jobType: "PACK",
-            warehouseCode: location
+            warehouseCode: await config.location
         };
 
         const response = await client.post(url, {
             data: body,
             timeout: 3000
         });
+        console.log("==== REQUEST ====");
+        console.log("URL:", url);
+        console.log("METHOD: POST");
+        console.log("HEADERS:", {
+            Authorization: `Basic ${config.basicToken}`,
+            "Content-Type": "application/json"
+        });
+        console.log("BODY:", JSON.stringify(body, null, 2));
+        console.log("=================");
+        console.log("BODY:", JSON.stringify(body, null, 2));
+        console.log("=================");
 
         return response;
     }

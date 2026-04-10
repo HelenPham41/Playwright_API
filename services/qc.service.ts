@@ -1,9 +1,10 @@
-import { createClient } from "../clients/apiClient";
-import config from "../configs";
-import { APIResponse, request } from '@playwright/test';
-import { PickService } from "./pick.service";
-import { PackService } from "./pack.service";
-import { handleApiResponse } from "../utils/api-helper";
+import { createClient } from "../clients/apiClient.js";
+import config from "../configs/index.js";
+import type { APIResponse } from '@playwright/test';
+import { request } from '@playwright/test';
+import { PickService } from "./pick.service.js";
+import { PackService } from "./pack.service.js";
+import { handleApiResponse } from "../utils/api-helper.js";
 
 
 export class QcService {
@@ -139,6 +140,11 @@ export class QcService {
         for (let index = 0; index < skuList.length; index++) {
 
             const item = skuList[index];
+
+            if (!item) {
+                skipped++;
+                continue;
+            }
 
             console.log(`\n▶ Processing SKU ${index + 1}/${skuList.length}`);
             console.log("Item:", item);

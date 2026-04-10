@@ -1,4 +1,4 @@
-import { APIResponse } from '@playwright/test';
+import type { APIResponse } from '@playwright/test';
 
 export class ApiError extends Error {
   status?: number;
@@ -13,9 +13,9 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = 'ApiError';
-    this.status = status;
-    this.url = url;
-    this.body = body;
+    if (status !== undefined) this.status = status;
+    if (url !== undefined) this.url = url;
+    if (body !== undefined) this.body = body;
   }
 }
 

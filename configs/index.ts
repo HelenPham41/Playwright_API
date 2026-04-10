@@ -1,6 +1,6 @@
-import stg from "./stg.env";
-import dev from "./dev.env";
-import prod from "./prod.env";
+import stg from "./stg.env.js";
+import dev from "./dev.env.js";
+import prod from "./prod.env.js";
 
 const envName =
   process.env.TEST_ENV?.toLowerCase() || "stg";

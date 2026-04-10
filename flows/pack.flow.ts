@@ -86,7 +86,6 @@ export class PackFlow {
 
             let mainError: any;
 
-            // ✅ Pass FULL response (NOT status)
             try {
                 await handleApiResponse(addBasketResponse, [200]);
             } catch (err) {
@@ -113,6 +112,8 @@ export class PackFlow {
             );
         }
 
+        console.log("Add Basket PASS:", status);
+
 
         /**
          * PACK-05 Update Ticket
@@ -123,9 +124,16 @@ export class PackFlow {
                 so,
             );
 
-        await handleApiResponse(updateTicketResponse, [200]);
-
-        console.log("Update Ticket PASS:", updateTicketResponse.status());
+        try {
+            await handleApiResponse(updateTicketResponse, [200]);
+            console.log("Update Ticket PASS:", updateTicketResponse.status());
+        } catch (err: any) {
+            console.error("❌ Update Ticket failed:", {
+                status: err.status,
+                message: err.body || err.message
+            });
+            throw err;
+        }
 
 
         /**

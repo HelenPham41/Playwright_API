@@ -1,148 +1,212 @@
 [
   {
     "run": 1,
-    "orderId": 1586863,
-    "so": "SOBD1586863",
-    "ticketId": 1054188,
+    "orderId": 1586911,
+    "so": "SOBD1586911",
+    "ticketId": 1054234,
     "status": "PASS"
   },
   {
     "run": 2,
-    "orderId": 1586864,
-    "so": "SOBD1586864",
-    "ticketId": 1054189,
+    "orderId": 1586912,
+    "so": "SOBD1586912",
+    "ticketId": 1054235,
     "status": "PASS"
   },
   {
     "run": 3,
-    "orderId": 1586865,
-    "so": "SOBD1586865",
-    "ticketId": 1054190,
+    "orderId": 1586913,
+    "so": "SOBD1586913",
+    "ticketId": 1054236,
     "status": "PASS"
   },
   {
     "run": 4,
-    "orderId": 1586866,
-    "so": "SOBD1586866",
-    "ticketId": 1054191,
+    "orderId": 1586914,
+    "so": "SOBD1586914",
+    "ticketId": 1054237,
     "status": "PASS"
   },
   {
     "run": 5,
-    "orderId": 1586867,
-    "so": "SOBD1586867",
-    "ticketId": 1054192,
+    "orderId": 1586915,
+    "so": "SOBD1586915",
+    "ticketId": 1054238,
     "status": "PASS"
   },
   {
     "run": 6,
-    "orderId": 1586868,
-    "so": "SOBD1586868",
-    "ticketId": 1054193,
+    "orderId": 1586916,
+    "so": "SOBD1586916",
+    "ticketId": 1054239,
     "status": "PASS"
   },
   {
     "run": 7,
-    "orderId": 1586869,
-    "so": "SOBD1586869",
-    "ticketId": 1054194,
+    "orderId": 1586917,
+    "so": "SOBD1586917",
+    "ticketId": 1054240,
     "status": "PASS"
   },
   {
     "run": 8,
-    "orderId": 1586870,
-    "so": "SOBD1586870",
-    "ticketId": 1054195,
+    "orderId": 1586918,
+    "so": "SOBD1586918",
+    "ticketId": 1054241,
     "status": "PASS"
   },
   {
     "run": 9,
-    "orderId": 1586871,
-    "so": "",
-    "ticketId": "",
-    "status": "FAIL",
-    "message": "Đơn hàng SOBD1586871 không được phép cho đi vì chưa giữ được hàng.",
-    "code": 400,
-    "url": "https://api.v2-stg.thuocsi.vn/warehouse/picking/v1/pick-ticket/active"
+    "orderId": 1586919,
+    "so": "SOBD1586919",
+    "ticketId": 1054242,
+    "status": "PASS"
   },
   {
     "run": 10,
-    "orderId": 1586872,
-    "so": "",
-    "ticketId": "",
-    "status": "FAIL",
-    "message": "Đơn hàng SOBD1586872 không được phép cho đi vì chưa giữ được hàng.",
-    "code": 400,
-    "url": "https://api.v2-stg.thuocsi.vn/warehouse/picking/v1/pick-ticket/active"
+    "orderId": 1586920,
+    "so": "SOBD1586920",
+    "ticketId": 1054243,
+    "status": "PASS"
   },
   {
     "run": 11,
-    "orderId": 1586873,
-    "so": "SOBD1586873",
-    "ticketId": 1054198,
+    "orderId": 1586921,
+    "so": "SOBD1586921",
+    "ticketId": 1054244,
     "status": "PASS"
   },
   {
     "run": 12,
-    "orderId": 1586874,
-    "so": "SOBD1586874",
-    "ticketId": 1054199,
+    "orderId": 1586922,
+    "so": "SOBD1586922",
+    "ticketId": 1054245,
     "status": "PASS"
   },
   {
     "run": 13,
-    "orderId": 1586875,
-    "so": "SOBD1586875",
-    "ticketId": 1054200,
+    "orderId": 1586923,
+    "so": "SOBD1586923",
+    "ticketId": 1054246,
     "status": "PASS"
   },
   {
     "run": 14,
-    "orderId": 1586876,
-    "so": "SOBD1586876",
-    "ticketId": 1054201,
+    "orderId": 1586924,
+    "so": "SOBD1586924",
+    "ticketId": 1054247,
     "status": "PASS"
   },
   {
     "run": 15,
-    "orderId": 1586877,
-    "so": "SOBD1586877",
-    "ticketId": 1054202,
+    "orderId": 1586925,
+    "so": "SOBD1586925",
+    "ticketId": 1054248,
     "status": "PASS"
   },
   {
     "run": 16,
-    "orderId": 1586878,
-    "so": "SOBD1586878",
-    "ticketId": 1054203,
+    "orderId": 1586926,
+    "so": "SOBD1586926",
+    "ticketId": 1054249,
     "status": "PASS"
   },
   {
     "run": 17,
-    "orderId": 1586879,
-    "so": "SOBD1586879",
-    "ticketId": 1054204,
+    "orderId": 1586927,
+    "so": "SOBD1586927",
+    "ticketId": 1054250,
     "status": "PASS"
   },
   {
     "run": 18,
-    "orderId": 1586880,
-    "so": "SOBD1586880",
-    "ticketId": 1054205,
+    "orderId": 1586928,
+    "so": "SOBD1586928",
+    "ticketId": 1054251,
     "status": "PASS"
   },
   {
     "run": 19,
-    "orderId": 1586881,
-    "so": "SOBD1586881",
-    "ticketId": 1054206,
+    "orderId": 1586929,
+    "so": "SOBD1586929",
+    "ticketId": 1054252,
     "status": "PASS"
   },
   {
     "run": 20,
-    "orderId": 1586882,
-    "so": "SOBD1586882",
-    "ticketId": 1054207,
+    "orderId": 1586930,
+    "so": "SOBD1586930",
+    "ticketId": 1054253,
+    "status": "PASS"
+  },
+  {
+    "run": 21,
+    "orderId": 1586931,
+    "so": "SOBD1586931",
+    "ticketId": 1054254,
+    "status": "PASS"
+  },
+  {
+    "run": 22,
+    "orderId": 1586932,
+    "so": "SOBD1586932",
+    "ticketId": 1054255,
+    "status": "PASS"
+  },
+  {
+    "run": 23,
+    "orderId": 1586933,
+    "so": "SOBD1586933",
+    "ticketId": 1054256,
+    "status": "PASS"
+  },
+  {
+    "run": 24,
+    "orderId": 1586935,
+    "so": "SOBD1586935",
+    "ticketId": 1054257,
+    "status": "PASS"
+  },
+  {
+    "run": 25,
+    "orderId": 1586936,
+    "so": "SOBD1586936",
+    "ticketId": 1054258,
+    "status": "PASS"
+  },
+  {
+    "run": 26,
+    "orderId": 1586937,
+    "so": "SOBD1586937",
+    "ticketId": 1054259,
+    "status": "PASS"
+  },
+  {
+    "run": 27,
+    "orderId": 1586938,
+    "so": "SOBD1586938",
+    "ticketId": 1054260,
+    "status": "PASS"
+  },
+  {
+    "run": 28,
+    "orderId": 1586939,
+    "so": "SOBD1586939",
+    "ticketId": 1054261,
+    "status": "PASS"
+  },
+  {
+    "run": 29,
+    "orderId": 1586940,
+    "so": "SOBD1586940",
+    "ticketId": 1054262,
+    "status": "PASS"
+  },
+  {
+    "run": 30,
+    "orderId": 1586941,
+    "so": "SOBD1586941",
+    "ticketId": 1054263,
     "status": "PASS"
   }
 ]

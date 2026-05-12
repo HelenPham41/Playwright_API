@@ -20,7 +20,7 @@ test('Run Order Flow N times', async () => {
     const flow =
       new OrderFlow(context);
 
-    await flow.placeOrder();
+    await flow.placeOrder_VN();
 
   }
 

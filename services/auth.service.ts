@@ -3,6 +3,7 @@ import { createClient } from '../clients/apiClient.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 import { ApiError, assertStatus } from '../errors/api.error.js';
+import { HTTP_STATUS, ERROR_MSG } from '../constants/status-code.js';
 
 export class AuthService {
 
@@ -23,13 +24,13 @@ export class AuthService {
       },
     });
 
-    await assertStatus(response, [200], 'login');
+    await assertStatus(response, [HTTP_STATUS.OK], 'login');
 
     const json = await response.json();
     const token: string | undefined = json?.data?.[0]?.bearerToken;
 
     if (!token) {
-      throw new ApiError('login', 200, this.cfg.auth.loginEndpoint, 'bearerToken not found in response');
+      throw new ApiError('login', HTTP_STATUS.OK, this.cfg.auth.loginEndpoint, ERROR_MSG.TOKEN_MISSING);
     }
 
     return token;

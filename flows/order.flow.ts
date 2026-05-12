@@ -22,7 +22,23 @@ export class OrderFlow {
     this.orderService = new OrderService(request, cfg);
   }
 
-  async placeOrder(): Promise<OrderResult> {
+  async placeOrder_TH(): Promise<{ tokenWeb: string; cartNo: string | null; skuCodes: string[] }> {
+    console.log('===== ORDER FLOW TH START =====');
+
+    const tokenWeb = await this.authService.login();
+    console.log('Step 1 | Login         : OK');
+
+    await this.orderService.checkCart(tokenWeb);
+    console.log('Step 2 | Check Cart    : OK');
+
+    const { cartNo, skuCodes } = await this.orderService.getCartInfo(tokenWeb);
+    console.log(`Step 3 | Get Cart Info : cartNo=${cartNo ?? 'null'}, skus=${skuCodes.length}`);
+
+    console.log('===== ORDER FLOW TH END =====');
+    return { tokenWeb, cartNo, skuCodes };
+  }
+
+  async placeOrder_VN(): Promise<OrderResult> {
     console.log('===== ORDER FLOW START =====');
 
     try {

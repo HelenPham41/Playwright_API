@@ -7,15 +7,20 @@ type OrderFixtures = {
 };
 
 /**
- * Extends Playwright's base test with an `orderFlow` fixture.
- * Automatically resolves CountryConfig and disposes the HTTP context after each test.
- *
- * Usage in test:
- *   import { test, expect } from '../fixtures/order.fixture.js';
- *   test('Place Order', async ({ orderFlow }) => { ... });
+ * Resolves COUNTRY from (priority high → low):
+ *   1. process.env.COUNTRY  — set manually or via CI
+ *   2. testInfo.project.name — set via --project=VN / --project=TH
+ *   3. 'VN'                  — default fallback
  */
 export const test = base.extend<OrderFixtures>({
-  orderFlow: async ({ request }, use) => {
+  orderFlow: async ({ request }, use, testInfo) => {
+    const country =
+      process.env.COUNTRY ||
+      testInfo.project.name ||
+      'VN';
+
+    process.env.COUNTRY = country;
+
     const cfg  = getCountryConfig();
     const flow = new OrderFlow(request, cfg);
     await use(flow);

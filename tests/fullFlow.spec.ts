@@ -67,7 +67,7 @@ test('Run Full Flow N times', async () => {
          * ORDER FLOW
          */
         const orderFlow = new OrderFlow(context, countryConfig);
-        const orderResult = await orderFlow.placeOrder();
+        const orderResult = await orderFlow.placeOrder_VN();
 
         orderId = orderResult.orderId;
         console.log("Order Created:", orderId);

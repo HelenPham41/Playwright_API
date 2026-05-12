@@ -67,13 +67,11 @@ export interface CountryConfig {
   endpoints: {
     checkCart: string;
     getCartInfo: string;
-    getCartInfoParams: Record<string, string>;
+    getCartInfoParams?: Record<string, string>;
     removeCart: string;
     addCart: string;
     updateCart: string;
     checkout: string;
     cancelOrder: string;
   };
-
-  orderData: OrderTestData;
 }

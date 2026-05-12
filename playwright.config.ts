@@ -1,21 +1,32 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-   testDir: './tests',
+  testDir: './tests',
 
   timeout: 80000,
 
-  workers: 1,   // ⭐ VERY IMPORTANT
+  workers: 1,
 
   reporter: [
     ['html', { open: 'never' }]
   ],
 
-  // reporter: [
-  //   ['list']
-  // ],
-
   use: {
     trace: 'off'
-  }
+  },
+
+  projects: [
+    {
+      name: 'VN',
+      testMatch: /^(?!.*\.(th|kh)\.spec\.ts).*\.spec\.ts$/,
+    },
+    {
+      name: 'TH',
+      testMatch: /.*\.th\.spec\.ts$/,
+    },
+    // {
+    //   name: 'KH',
+    //   testMatch: /.*\.kh\.spec\.ts$/,
+    // },
+  ],
 });

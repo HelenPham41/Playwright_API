@@ -1,9 +1,10 @@
 import type { CountryConfig } from './types.js';
 import { VN_CONFIG } from './countries/vn.js';
+import { TH_CONFIG } from './countries/th.js';
 
 const COUNTRY_MAP: Record<string, CountryConfig> = {
   VN: VN_CONFIG,
-  // TH: TH_CONFIG,
+  TH: TH_CONFIG,
   // KH: KH_CONFIG,
 };
 

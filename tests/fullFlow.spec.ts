@@ -7,7 +7,7 @@ import { PickFlow } from '../flows/pick.flow.js';
 import { QcFlow } from '../flows/qc.flow.js';
 import { PackFlow } from '../flows/pack.flow.js';
 
-import config from '../configs/index.js';
+import { getCountryConfig } from '../configs/country.factory.js';
 
 import { writeFullFlowSummary, generateHtmlReport } from '../utils/fullflow-summary.js';
 
@@ -43,8 +43,9 @@ test('Run Full Flow N times', async () => {
 
   fs.mkdirSync(reportDir, { recursive: true });
 
+  const countryConfig = getCountryConfig();
   const context = await request.newContext();
-  const basicToken = config.basicToken;
+  const basicToken = countryConfig.auth.basicToken;
 
   const summary: FlowResult[] = [];
 
@@ -65,8 +66,8 @@ test('Run Full Flow N times', async () => {
         /**
          * ORDER FLOW
          */
-        const orderFlow = new OrderFlow(context);
-        const orderResult = await orderFlow.run();
+        const orderFlow = new OrderFlow(context, countryConfig);
+        const orderResult = await orderFlow.placeOrder();
 
         orderId = orderResult.orderId;
         console.log("Order Created:", orderId);

@@ -1,4 +1,4 @@
-import { test, expect, request } from '@playwright/test';
+import { test, request } from '@playwright/test';
 import { OrderFlow } from '../flows/order.flow.js';
 
 test('Run Order Flow N times', async () => {
@@ -20,7 +20,7 @@ test('Run Order Flow N times', async () => {
     const flow =
       new OrderFlow(context);
 
-    await flow.run();
+    await flow.placeOrder();
 
   }
 

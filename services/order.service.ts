@@ -1,400 +1,204 @@
 import type { APIRequestContext } from '@playwright/test';
 import { createClient } from '../clients/apiClient.js';
-import config from '../configs/index.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError, assertStatus } from '../errors/api.error.js';
+
+export interface CartInfo {
+  cartNo: string | null;
+  skuCodes: string[];
+}
+
+export interface AddCartResult {
+  cartNo: string;
+}
+
+export interface CheckoutResult {
+  orderId: string;
+}
 
 export class OrderService {
 
-  constructor(private request: APIRequestContext) { }
+  private readonly cfg: CountryConfig;
 
-  /**
-   * Check Cart
-   * PASS if 200 or 404
-   */
-  async checkCart(token: string) {
-
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
-
-    const response = await client.put(
-      "/backend/marketplace/order/v2/cart/select",
-      {
-        data: {
-          isSelected: true,
-          isAppliedAll: true
-        }
-      }
-    );
-
-    return response;
+  constructor(_request: APIRequestContext, countryConfig?: CountryConfig) {
+    this.cfg = countryConfig ?? getCountryConfig();
   }
 
-  /**
-   * Get Cart Info
-   */
-  async getCartInfo(token: string) {
+  async checkCart(token: string): Promise<void> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const res = await client.put(this.cfg.endpoints.checkCart, {
+      data: { isSelected: true, isAppliedAll: true },
+    });
+    await assertStatus(res, [200, 404], 'checkCart');
+  }
 
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
+  async getCartInfo(token: string): Promise<CartInfo> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const res = await client.get(this.cfg.endpoints.getCartInfo, {
+      params: this.cfg.endpoints.getCartInfoParams,
+    });
+    await assertStatus(res, [200, 404], 'getCartInfo');
 
-    const response = await client.get(
-      "/backend/marketplace/frontend-apis/v2/screen/cart/info",
-      {
-        params: {
-          queryOption:
-            "price,consumedMaxQuantity,sellerInfo,isGetSKUReplace,cartPage",
-          getVoucherAuto: "true",
-          redeemCodeRemovedStr: "",
-          onSort: "false"
+    if (res.status() === 404) return { cartNo: null, skuCodes: [] };
+
+    const json = await res.json();
+    const carts: any[] = json?.data ?? [];
+    const cartNo: string | null = carts?.[0]?.cartNo ?? null;
+    const skuCodes: string[] = [];
+
+    carts.forEach(cart => {
+      cart?.cartItemGroups?.forEach((group: any) => {
+        if (group?.sellerGroup !== 'GIFT') {
+          group?.items?.forEach((item: any) => {
+            if (item?.skuCode) skuCodes.push(item.skuCode);
+          });
         }
-      }
-    );
-
-    let cartNo: string | null = null;
-    let skuCodes: string[] = [];
-
-    if (response.status() === 200) {
-
-      const json = await response.json();
-
-      const carts = json?.data ?? [];
-
-      // Extract cartNo safely
-      cartNo = carts?.[0]?.cartNo ?? null;
-
-      // Extract skuCodes safely
-      carts.forEach((cart: any) => {
-
-        cart?.cartItemGroups?.forEach((group: any) => {
-
-          if (group?.sellerGroup !== "GIFT") {
-
-            group?.items?.forEach((item: any) => {
-
-              if (item?.skuCode) {
-                skuCodes.push(item.skuCode);
-              }
-
-            });
-
-          }
-
-        });
-
       });
+    });
 
-    }
-
-    const selectedSkuCodes = skuCodes;
-
-    console.log("\n===== EXTRACTED DATA =====");
-
-    console.log("CartNo = " + cartNo);
-
-    console.log("skuCodes = " + skuCodes);
-
-    console.log("selectedSkuCodes = " + selectedSkuCodes);
-
-    console.log("Cart is empty = " + (skuCodes.length === 0));
-
-    return {
-      response,
-      cartNo,
-      skuCodes,
-      selectedSkuCodes
-    };
-
+    return { cartNo, skuCodes };
   }
 
-
-  /**
-   * Remove Cart
-   */
-  async removeCart(
-    token: string,
-    cartNo?: string | null,
-    skus?: string[]
-  ) {
-
-    // Skip if empty
-    if (!cartNo || !skus || skus.length === 0) {
-
-      console.log("\n===== REMOVE CART =====");
-
-      console.log("Skip RemoveCart → Cart Empty");
-
-      return {
-        status: () => 204
-      } as any;
-
-    }
-
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
-
-    const payload = {
-      cartNo: cartNo,
-      skus: skus,
-      source: "thuocsi-web"
-    };
-
-    const response = await client.put(
-      "/backend/marketplace/order/v2/cart/remove",
-      {
-        data: payload
-      }
-    );
-
-
-    console.log("\n===== REMOVE CART RESPONSE =====");
-
-    console.log("Status: " + response.status());
-
-    return response;
-
+  async removeCart(token: string, cartNo: string, skus: string[]): Promise<void> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const res = await client.put(this.cfg.endpoints.removeCart, {
+      data: { cartNo, skus, source: this.cfg.orderData.source },
+    });
+    await assertStatus(res, [200, 204], 'removeCart');
   }
-  /**
- * Add Cart
- * Equivalent to JMeter Add Cart
- */
-  async addCart(
-    token: string,
-    cartNo: string | null
-  ) {
 
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
+  async addCart(token: string, cartNo: string | null): Promise<AddCartResult> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const d = this.cfg.orderData;
 
-    const payload = {
-
-      sku: "MEDX.Y4XP61PG",
-
-      type: "NORMAL",
-
-      isDeal: false,
-
-      name: "Tinh dầu đuổi muỗi và côn trùng, khử khuẩn Thảo Nguyên hương sả chanh – Nhà Thuốc Helios",
-
-      price: 1084400,
-
-      quantity: 2,
-
-      cartNo: cartNo ?? null,   // same as ${CartNo_1}
-
-      page: "product/[slug]",
-
-      sellerID: 1,
-
-      sellerCode: "MEDX",
-
-      productId: 2431073,
-
-      eventSource: "product-detail",
-
-      eventScreen: "product-detail",
-
-      host: "web.v2-stg.thuocsi.vn",
-
-      recommendSKUs: "",
-
-      metadata: {
-        price_display: "1084400"
+    const res = await client.post(this.cfg.endpoints.addCart, {
+      data: {
+        sku:          d.sku,
+        type:         d.type,
+        isDeal:       d.isDeal,
+        name:         d.productName,
+        price:        d.price,
+        quantity:     d.quantity,
+        cartNo:       cartNo ?? null,
+        page:         d.page,
+        sellerID:     d.sellerID,
+        sellerCode:   d.sellerCode,
+        productId:    d.productId,
+        eventSource:  d.eventSource,
+        eventScreen:  d.eventScreen,
+        host:         d.host,
+        recommendSKUs: d.recommendSKUs,
+        metadata:     { price_display: String(d.price) },
+        source:       d.source,
       },
+    });
 
-      source: "thuocsi-web"
+    await assertStatus(res, [200, 201], 'addCart');
 
-    };
-    const response = await client.post(
-      "/backend/marketplace/order/v2/cart/add",
-      {
-        data: payload
-      }
-    );
+    const json = await res.json();
+    const newCartNo: string | undefined = json?.data?.[0]?.cartNo;
 
-
-    console.log("===== ADD CART RESPONSE =====");
-
-    console.log("Status: " + response.status());
-
-    const text = await response.text();
-
-    let cartNoNew: string | null = null;
-
-    try {
-
-      const json = JSON.parse(text);
-
-      cartNoNew =
-        json?.data?.[0]?.cartNo ?? null;
-
-    } catch (e) {
-
-      console.log("Cannot parse AddCart JSON");
-
+    if (!newCartNo) {
+      throw new ApiError('addCart', res.status(), res.url(), 'cartNo missing in response');
     }
-    console.log("New CartNo = " + cartNoNew);
-    return {
-      response,
-      cartNo: cartNoNew
-    };
 
-  }
-  async updateCart(
-    token: string,
-    cartNo: string
-  ) {
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
-
-    const response = await client.put(
-      '/backend/marketplace/order/v2/cart',
-      {
-        data: {
-
-          customerName: "[Tech] Hanh Pham",
-          customerPhone: "0559948786",
-          customerEmail: "hanh.pham@buymed.com",
-          customerShippingAddress: "72 Le Thanh Ton",
-
-          customerDistrictCode: "765",
-          customerProvinceCode: "79",
-          customerWardCode: "26947",
-
-          customerAddressCode: "YFFPHGG3",
-          customerRegionCode: "107TQTAR1Y7G",
-
-          customerWardName: "Phường 03",
-          customerDistrictName: "Quận Bình Thạnh",
-          customerProvinceName: "Thành phố Hồ Chí Minh",
-
-          paymentMethod: "PAYMENT_METHOD_BANK",
-
-          deliveryMethod: "DELIVERY_PLATFORM_NORMAL",
-
-          cartNo: cartNo,
-
-          ordersCount: 151,
-
-          invoice: {
-            code: "RHGARL8C",
-            invoiceRequest: true,
-            companyName: "Công Ty TNHH CIRCA PHARMACY",
-            companyAddress:
-              "207 Lê Đại Hành, Phường 13, Q11, TP. HCM",
-            taxCode: "0317045088",
-            isSaveInvoiceInfo: false,
-            isUseCustom: false,
-            email: "lam.nguyen@buymed.com",
-            isValidated: true,
-            customerTaxGOVStatus: "DIFF_INFO",
-            isDefault: true
-          },
-
-          isRefuseSplitOrder: false,
-          acceptAdvancePolicies: false,
-
-          source: "thuocsi-web"
-
-        }
-      }
-    );
-    return response;
+    return { cartNo: newCartNo };
   }
 
-  /**
-  * Checkout Cart
-  */
-  async checkout(token: string) {
+  async updateCart(token: string, cartNo: string): Promise<void> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const d = this.cfg.orderData;
 
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
+    const res = await client.put(this.cfg.endpoints.updateCart, {
+      data: {
+        customerName:            d.customerName,
+        customerPhone:           d.customerPhone,
+        customerEmail:           d.customerEmail,
+        customerShippingAddress: d.customerShippingAddress,
+        customerDistrictCode:    d.customerDistrictCode,
+        customerProvinceCode:    d.customerProvinceCode,
+        customerWardCode:        d.customerWardCode,
+        customerAddressCode:     d.customerAddressCode,
+        customerRegionCode:      d.customerRegionCode,
+        customerWardName:        d.customerWardName,
+        customerDistrictName:    d.customerDistrictName,
+        customerProvinceName:    d.customerProvinceName,
+        paymentMethod:           d.paymentMethod,
+        deliveryMethod:          d.deliveryMethod,
+        cartNo,
+        ordersCount:             d.ordersCount,
+        invoice: {
+          code:                 d.invoiceCode,
+          invoiceRequest:       true,
+          companyName:          d.invoiceCompanyName,
+          companyAddress:       d.invoiceCompanyAddress,
+          taxCode:              d.invoiceTaxCode,
+          isSaveInvoiceInfo:    false,
+          isUseCustom:          false,
+          email:                d.invoiceEmail,
+          isValidated:          true,
+          customerTaxGOVStatus: 'DIFF_INFO',
+          isDefault:            true,
+        },
+        isRefuseSplitOrder:    false,
+        acceptAdvancePolicies: false,
+        source:                d.source,
+      },
+    });
 
-    const response = await client.put(
-      '/backend/marketplace/order/v2/cart/checkout',
-      {
-        data: {
-          customerName: "[Tech] Hanh Pham",
-          customerPhone: "0559948786",
-          customerEmail: "hanh.pham@buymed.com",
-
-          customerShippingAddress: "72 Le Thanh Ton",
-          customerDistrictCode: "765",
-          customerProvinceCode: "79",
-          customerWardCode: "26947",
-
-          customerAddressCode: "YFFPHGG3",
-          customerRegionCode: "107TQTAR1Y7G",
-
-          customerWardName: "Phường 03",
-          customerDistrictName: "Quận Bình Thạnh",
-          customerProvinceName: "Thành phố Hồ Chí Minh",
-
-          paymentMethods: [
-            {
-              cardList: "MOMO",
-              code: "MOMO",
-              customerTags: [
-                "13384",
-                "TESTCREDIT"
-              ],
-              description: "<p></p>"
-            }
-          ]
-        }
-      }
-    );
-
-    const body = await response.json();
-
-    const orderId =
-      body?.data?.[0]?.orderId ?? null;
-
-    return {
-      response,
-      orderId
-    };
+    await assertStatus(res, [200], 'updateCart');
   }
-  /**
-    * Cancel Order
-    * PASS if 200
-    */
-  async cancelOrder(basicToken: string, orderId: string, orderCode: string) {
 
-    const client = await createClient(
-      config.hostInternal,
-      basicToken,
-      "basic"
-    );
+  async checkout(token: string): Promise<CheckoutResult> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const d = this.cfg.orderData;
 
-    const response = await client.put(
-      "/backend/marketplace/order/v2/order/status",
-      {
-        data: {
-          orderCode: orderCode,
-          orderId: Number(orderId),
-          status: "CANCEL",
-          note: "Cancel order for testing purpose"
-        }
-      }
-    );
+    const res = await client.put(this.cfg.endpoints.checkout, {
+      data: {
+        customerName:            d.customerName,
+        customerPhone:           d.customerPhone,
+        customerEmail:           d.customerEmail,
+        customerShippingAddress: d.customerShippingAddress,
+        customerDistrictCode:    d.customerDistrictCode,
+        customerProvinceCode:    d.customerProvinceCode,
+        customerWardCode:        d.customerWardCode,
+        customerAddressCode:     d.customerAddressCode,
+        customerRegionCode:      d.customerRegionCode,
+        customerWardName:        d.customerWardName,
+        customerDistrictName:    d.customerDistrictName,
+        customerProvinceName:    d.customerProvinceName,
+        paymentMethods: [{
+          cardList:     d.checkoutPaymentCardList,
+          code:         d.checkoutPaymentCode,
+          customerTags: d.checkoutPaymentCustomerTags,
+          description:  '<p></p>',
+        }],
+      },
+    });
 
-    return response;
+    await assertStatus(res, [200, 201], 'checkout');
+
+    const json = await res.json();
+    const orderId: string | undefined = json?.data?.[0]?.orderId;
+
+    if (!orderId) {
+      throw new ApiError('checkout', res.status(), res.url(), 'orderId missing in response');
+    }
+
+    return { orderId };
+  }
+
+  async cancelOrder(basicToken: string, orderId: string, orderCode: string): Promise<void> {
+    const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const res = await client.put(this.cfg.endpoints.cancelOrder, {
+      data: {
+        orderCode,
+        orderId:  Number(orderId),
+        status:   'CANCEL',
+        note:     'Cancel order for testing purpose',
+      },
+    });
+    await assertStatus(res, [200], 'cancelOrder');
   }
 }

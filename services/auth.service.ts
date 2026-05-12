@@ -1,34 +1,37 @@
 import type { APIRequestContext } from '@playwright/test';
 import { createClient } from '../clients/apiClient.js';
-import config from '../configs/index.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError, assertStatus } from '../errors/api.error.js';
 
 export class AuthService {
 
-    constructor(private request: APIRequestContext) { }
+  private readonly cfg: CountryConfig;
 
-    async login(): Promise<string> {
-        const client = await createClient(config.hostOrder);
+  constructor(_request: APIRequestContext, countryConfig?: CountryConfig) {
+    this.cfg = countryConfig ?? getCountryConfig();
+  }
 
-        const response = await client.post(
-            "/marketplace/customer/v1/authentication",
-            {
-                data: {
-                    username: config.username,
-                    password: config.password,
-                    type: "CUSTOMER"
-                }
-            }
-        );
+  async login(): Promise<string> {
+    const client = await createClient(this.cfg.hosts.order);
 
-        if (response.status() !== 200) {
-            throw new Error("Login failed: " + response.status());
-        }
+    const response = await client.post(this.cfg.auth.loginEndpoint, {
+      data: {
+        username: this.cfg.auth.username,
+        password: this.cfg.auth.password,
+        type: 'CUSTOMER',
+      },
+    });
 
-        const json = await response.json();
+    await assertStatus(response, [200], 'login');
 
-        const token = json.data[0].bearerToken;
+    const json = await response.json();
+    const token: string | undefined = json?.data?.[0]?.bearerToken;
 
-        return token;
+    if (!token) {
+      throw new ApiError('login', 200, this.cfg.auth.loginEndpoint, 'bearerToken not found in response');
     }
 
+    return token;
+  }
 }

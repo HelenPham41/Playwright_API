@@ -1,19 +1,20 @@
-export interface OrderTestData {
+export interface ScenarioData {
   // Product
   sku: string;
   productName: string;
   price: number;
   quantity: number;
   type: string;
-  isDeal: boolean;
+  isDeal: boolean | null;
+  cartNo?: string;
   page: string;
   sellerID: number;
   sellerCode: string;
   productId: number;
   eventSource: string;
   eventScreen: string;
-  host: string;
-  recommendSKUs: string;
+  host?: string;
+  recommendSKUs?: string;
   source: string;
 
   // Customer & Shipping
@@ -46,6 +47,12 @@ export interface OrderTestData {
   checkoutPaymentCode: string;
   checkoutPaymentCardList: string;
   checkoutPaymentCustomerTags: string[];
+
+  // UpdateCart extras (country-specific)
+  invoiceRequest?: boolean;
+  totalWard?: number;
+  paymentMethods?: Record<string, unknown>[];
+  deliveryMethods?: Record<string, unknown>[];
 }
 
 export interface CountryConfig {
@@ -73,5 +80,45 @@ export interface CountryConfig {
     updateCart: string;
     checkout: string;
     cancelOrder: string;
+  };
+
+  qc?: {
+    warehouseCode: string;
+    zoneCode: string;
+    endpoints: {
+      staffZoneSession: string;
+      pickTicket: string;
+      getQrCode: string;
+      scanTicketItem: string;
+      doneQcMoveToPack: string;
+    };
+  };
+
+  pick?: {
+    warehouseCode: string;
+    employee: string;
+    employeeId: number;
+    confirmPayment: {
+      bankCode: string;
+      bankAccountNumber: string;
+      bankChannel: string;
+      bankingTransactionCode: string;
+      remarkTemplate: string;  // placeholder: {orderId}
+    };
+    endpoints: {
+      orderList:        string;
+      confirmOrder:     string;
+      saleOrders:       string;
+      checkPickTicket:  string;
+      activePickTicket: string;
+      pickTicketItem:   string;
+      staffZoneSession: string;
+      assignPickStaff:  string;
+      location:         string;
+      useBasket:        string;
+      pickItem:         string;
+      completePick:     string;
+      completePickSO:   string;
+    };
   };
 }

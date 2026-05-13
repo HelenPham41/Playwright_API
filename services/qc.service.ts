@@ -1,389 +1,156 @@
-import { createClient } from "../clients/apiClient.js";
-import config from "../configs/index.js";
-import type { APIResponse } from '@playwright/test';
-import { request } from '@playwright/test';
-import { PickService } from "./pick.service.js";
-import { PackService } from "./pack.service.js";
-import { handleApiResponse } from "../utils/api-helper.js";
+import type { APIRequestContext, APIResponse } from '@playwright/test';
+import { createClient } from '../clients/apiClient.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { assertStatus } from '../errors/api.error.js';
+import { HTTP_STATUS } from '../constants/status-code.js';
+import { QcPayloadBuilder, type SkuQrItem } from '../payloads/qc.payload.js';
 
+export interface QrLoopResult {
+  total: number;
+  scanned: number;
+  skipped: number;
+}
 
 export class QcService {
 
-    async getZoneCode(): Promise<string> {
-        const zoneCode = config.zoneCode;
-        return zoneCode;
-    }
-    async getLocation(): Promise<string> {
-        const location = config.location;
-        return location;
-    }
+  private readonly cfg:     CountryConfig;
+  private readonly payload: QcPayloadBuilder;
 
+  constructor(
+    _request: APIRequestContext,
+    countryConfig?: CountryConfig,
+  ) {
+    this.cfg     = countryConfig ?? getCountryConfig();
+    this.payload = new QcPayloadBuilder(this.qc);
+  }
 
-    /**
-     * Check in QC Zone
-     * POST /backend/warehouse/core/v1/staff-zone-session/check
-     */
-    async checkInQcZone(
-        location: string,
-        zoneCode: string
-    ) {
+  private get qc() {
+    if (!this.cfg.qc) throw new Error(`QC config not defined for country: ${this.cfg.countryCode}`);
+    return this.cfg.qc;
+  }
 
-        const client = await createClient(
-            config.hostWeb,
-            config.basicToken,
-            'basic'
-        );
+  /**
+   * POST /backend/warehouse/core/v1/staff-zone-session/check  (CHECK_IN_ZONE)
+   */
+  async checkInQcZone(basicToken: string): Promise<APIResponse> {
+    const client   = await createClient(this.cfg.hosts.web, basicToken, 'basic');
+    const response = await client.post(this.qc.endpoints.staffZoneSession, {
+      data: this.payload.checkInQcBody(this.qc.zoneCode),
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'checkInQcZone');
+    return response;
+  }
 
-        const url = `/backend/warehouse/core/v1/staff-zone-session/check`;
+  /**
+   * GET /backend/warehouse/picking/v1/pick-ticket
+   */
+  async pickTicket(basicToken: string, so: string): Promise<{ response: APIResponse; data: any }> {
+    const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const response = await client.get(this.qc.endpoints.pickTicket, {
+      params: this.payload.pickTicketParams(so),
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'pickTicket');
+    return { response, data: await response.json() };
+  }
 
-        const body = {
-            status: "CHECK_IN_ZONE",
-            jobType: "QC",
-            warehouseCode: location,
-            zoneCode: zoneCode
-        };
+  /**
+   * Loop: generate QR → GET /backend/operation/qr/v1/qrcode → PUT scan-ticket-item/scan
+   * Receives get_sku_codes from pick flow — does not call PickService.
+   */
+  async processSkuQrLoop(
+    basicToken: string,
+    so: string,
+    ticketId: string,
+    get_sku_codes: any[],
+  ): Promise<QrLoopResult> {
+    const internalClient = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const webClient      = await createClient(this.cfg.hosts.web, basicToken, 'basic');
 
-        console.log(`\n[QC] Check In QC Zone`);
+    const skuList = get_sku_codes as SkuQrItem[];
+    const maxFail = 2;
+    let failCount = 0;
+    let scanned   = 0;
+    let skipped   = 0;
 
-        const response = await client.post(url, {
-            data: body
+    for (let index = 0; index < skuList.length; index++) {
+      const item = skuList[index];
+
+      if (!item) { skipped++; continue; }
+
+      console.log(`processSkuQrLoop | SKU ${index + 1}/${skuList.length}: ${item.sku}`);
+
+      const qr = this.payload.generateQrCode(item);
+      console.log('processSkuQrLoop | QR:', qr);
+
+      let qrResponse: APIResponse;
+      try {
+        qrResponse = await internalClient.get(this.qc.endpoints.getQrCode, {
+          params:  this.payload.getQrCodeParams(qr),
+          timeout: 5000,
         });
-        return response;
-    }
+      } catch {
+        console.log('processSkuQrLoop | getQrCode failed, skip');
+        skipped++;
+        continue;
+      }
 
-    /**
-    * Pick Ticket
-    * GET /backend/warehouse/picking/v1/pick-ticket
-     */
-    async pickTicket(
-        so: string,
-        location: string
-    ) {
+      await assertStatus(qrResponse, [HTTP_STATUS.OK], 'getQrCode');
 
-        const client = await createClient(
-            config.hostInternal,
-            config.basicToken,
-            'basic'
-        );
+      const qrData = (await qrResponse.json())?.data?.[0];
+      if (!qrData) {
+        console.log('processSkuQrLoop | QR data empty, skip');
+        skipped++;
+        continue;
+      }
 
-        const url = `/backend/warehouse/picking/v1/pick-ticket`;
-
-        const query = {
-            statuses: [
-                "WAIT_QC_CONFIRM",
-                "QC_PROCESSING",
-                "WAIT_TO_PACK"
-            ],
-            so: so,
-            warehouseCode: location
-        };
-
-        console.log(`\n[QC] Pick Ticket`);
-
-        const response = await client.get(url, {
-            params: {
-                q: JSON.stringify(query)
-            }
+      try {
+        await webClient.put(this.qc.endpoints.scanTicketItem, {
+          data: this.payload.scanQrBody(ticketId, so, item, qrData),
         });
-
-        const responseBody = await response.json();
-        return {
-            response,
-            data: responseBody
-        };
-    }
-
-    /**
- * Process SKU QR Loop
- * GET QR code info and then call Scan QR API in loop with retry mechanism
- */
-    async processSkuQrLoop(
-        basicToken: string,
-        so: string,
-        ticketId: string,
-        location: string,
-    ) {
-
-        const internalClient = await createClient(
-            config.hostInternal,
-            basicToken,
-            "basic"
-        );
-
-        const webClient = await createClient(
-            config.hostWeb,
-            basicToken,
-            "basic"
-        );
-        const apiContext = await request.newContext();
-        const pickService = new PickService(apiContext);
-        const orderSkuData = await pickService.getOrderSku(basicToken, so);
-
-        const skuCodes = orderSkuData.get_sku_codes || [];
-
-        console.log("SKU list for next request:" + skuCodes);
-
-        const skuList = skuCodes as {
-            sku: string,
-            sellerCodeLength: number,
-            seller: string,
-            product_id: string,
-            reservedQuantity: number
-        }[];
-
-        let maxFail = 2;
-        let failCount = 0;
-
-        let scanned = 0;
-        let skipped = 0;
-
-        for (let index = 0; index < skuList.length; index++) {
-
-            const item = skuList[index];
-
-            if (!item) {
-                skipped++;
-                continue;
-            }
-
-            console.log(`\n▶ Processing SKU ${index + 1}/${skuList.length}`);
-            console.log("Item:", item);
-
-            /**
-             * Generate QR
-             */
-            const sellerLength = item.sellerCodeLength || 0;
-            const random = Math.floor(Math.random() * 9) + 1;
-            // const PO = Math.floor(Math.random() * 1000)
-            //     .toString()
-            //     .padStart(3, '0');
-
-            let qr: string;
-
-            if (sellerLength < 10) {
-                qr =
-                    `P07${item.product_id}S0${sellerLength}${item.seller}` +
-                    `L01AE06010130V01${random}` + `R06PO8998` + `U21T101770212989C01AI01${random}`;
-            } else {
-                qr =
-                    `P07${item.product_id}S${sellerLength}${item.seller}` +
-                    `L01AE06010130V01${random}` + `R06PO8998` + `U21T101770212989C01AI01${random}`;
-            }
-
-            console.log("Generated QR:", qr);
-            /**
-             * GET QR CODE API
-             */
-            let qrResponse;
-
-            try {
-
-                qrResponse = await internalClient.get(
-                    `/backend/operation/qr/v1/qrcode`,
-                    {
-                        params: {
-                            code: qr,
-                            warehouseCode: location
-                        }, timeout: 5000
-                    }
-                );
-
-            } catch (error) {
-
-                console.error("❌ Get QR request failed");
-                skipped++;
-                continue;
-
-            }
-
-            /**
-             * Check response status
-             */
-            await handleApiResponse(qrResponse, [200]);
-            /**
-             * Parse QR response
-             */
-            const qrJson = await qrResponse.json();
-            const qrData = qrJson?.data?.[0];
-
-            if (!qrData) {
-
-                console.log("⏭ Skip Scan because QR data empty");
-
-                skipped++;
-                continue;
-            }
-
-            /**
-             * Build scan request body
-             */
-            const scanBody = {
-
-                ticketId: ticketId,
-                so: so,
-                scannedQuantity: item.reservedQuantity,
-                isCheckUniqueId: true,
-
-                qr: {
-                    uniqueId: qrData.uniqueId,
-                    version_no: qrData.versionNo,
-                    status: qrData.status,
-                    lot: qrData.lot,
-                    poCode: qrData.receiptCode,
-                    index: qrData.index,
-                    prdId: qrData.productId,
-                    seller_code: qrData.sellerCode,
-                    last_updated_time: qrData.lastUpdatedTime,
-                    ex_date: qrData.expiredDate,
-                    logs: null,
-                    created_time: qrData.createdTime,
-                    generated_time: qrData.generatedTime,
-                    machine_code: qrData.machineCode,
-                    sku: qrData.sku,
-                    vat: qrData.vat
-                },
-
-                lot: qrData.lot,
-                ex_date: qrData.expiredDate,
-                sku: qrData.sku,
-                isExpired: false,
-                warehouseCode: location
-            };
-
-            /**
-             * SCAN QR API
-             */
-            try {
-
-                await webClient.put(
-                    `/backend/warehouse/picking/v1/scan-ticket-item/scan`,
-                    { data: scanBody }
-                );
-
-                console.log(`✅ Scan success SKU ${index + 1}`);
-
-                scanned++;
-                failCount = 0;
-
-            } catch (error) {
-
-                failCount++;
-
-                console.error(`❌ Scan failed (${failCount}/${maxFail})`);
-
-                if (failCount >= maxFail) {
-
-                    console.error("🛑 Max scan failures reached");
-
-                    break;
-                }
-
-                /**
-                 * Retry same SKU
-                 */
-                index--;
-            }
-
-            /**
-             * Same as JMeter Constant Timer
-             */
-            await new Promise(r => setTimeout(r, 2000));
+        console.log(`processSkuQrLoop | scan OK, SKU ${index + 1}`);
+        scanned++;
+        failCount = 0;
+      } catch {
+        failCount++;
+        console.log(`processSkuQrLoop | scan failed (${failCount}/${maxFail})`);
+        if (failCount >= maxFail) {
+          console.log('processSkuQrLoop | max failures, stop');
+          break;
         }
+        index--; // retry same SKU
+      }
 
-        console.log("\n========= QR LOOP SUMMARY =========");
-        console.log("Total:" + skuList.length);
-        console.log("Scanned:" + scanned);
-        console.log("Skipped:" + skipped);
-        console.log("===================================\n");
-
-        return {
-            total: skuList.length,
-            scanned,
-            skipped,
-        };
+      await new Promise(r => setTimeout(r, 2000));
     }
 
-    /**
-    * Done QC -> Move to Pack
-    * Same as JMeter "Done QC, move to Pack"
-    */
-    async doneQcMoveToPack(
-        basicToken: string,
-        ticketId: string,
-        so: string,
-        location: string
-    ) {
+    console.log(`processSkuQrLoop | done: total=${skuList.length}, scanned=${scanned}, skipped=${skipped}`);
+    return { total: skuList.length, scanned, skipped };
+  }
 
-        const client = await createClient(
-            config.hostInternal,
-            basicToken,
-            "basic"
-        );
+  /**
+   * PUT /backend/warehouse/picking/v1/pick-ticket/v2/update
+   */
+  async doneQcMoveToPack(basicToken: string, ticketId: string, so: string): Promise<APIResponse> {
+    const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const response = await client.put(this.qc.endpoints.doneQcMoveToPack, {
+      data:    this.payload.doneQcBody(ticketId, so),
+      timeout: 3000,
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'doneQcMoveToPack');
+    return response;
+  }
 
-        const url = `/backend/warehouse/picking/v1/pick-ticket/v2/update`;
-
-        console.log("\n📦 Move QC -> PACK");
-
-        const body = {
-            status: "WAIT_TO_PACK",
-            ticketId,
-            so,
-            warehouseCode: location
-        };
-
-        const response = await client.put(url, {
-            data: body,
-            timeout: 3000
-        });
-
-        // await new Promise(resolve => setTimeout(resolve, 3000));
-
-        // const resBody = await response.json();
-
-        // const ticketStatus = resBody?.data?.[0]?.status;
-
-        // if (ticketStatus !== "WAIT_TO_PACK") {
-        //     throw new Error(
-        //         `QC Step 4 failed | Message: ${resBody?.message} | URL: ${response.url()}`
-        //     );
-        // }
-
-        console.log("✅ QC Move to PACK success");
-
-        return response;
-    }
-    /**
-    * Checkout QC Zone
-    * Same as JMeter "Checkout QC"
-    */
-    async checkoutQc(
-        basicToken: string,
-        location: string,
-        zoneCode: string
-    ) {
-
-        const client = await createClient(
-            config.hostInternal,
-            basicToken,
-            "basic"
-        );
-
-        const url = `/backend/warehouse/core/v1/staff-zone-session/check`;
-
-        console.log("\n🚪 Checkout QC Zone");
-
-        const body = {
-            status: "CHECK_OUT_ZONE",
-            jobType: "QC",
-            warehouseCode: location,
-            zoneCode: zoneCode
-        };
-
-        const response = await client.post(url, {
-            data: body, timeout: 3000
-        });
-
-        return response;
-    }
-
+  /**
+   * POST /backend/warehouse/core/v1/staff-zone-session/check  (CHECK_OUT_ZONE)
+   */
+  async checkoutQc(basicToken: string): Promise<APIResponse> {
+    const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const response = await client.post(this.qc.endpoints.staffZoneSession, {
+      data:    this.payload.checkoutQcBody(this.qc.zoneCode),
+      timeout: 3000,
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'checkoutQc');
+    return response;
+  }
 }

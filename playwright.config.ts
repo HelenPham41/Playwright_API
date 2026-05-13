@@ -18,15 +18,12 @@ export default defineConfig({
   projects: [
     {
       name: 'VN',
-      testMatch: /^(?!.*\.(th|kh)\.spec\.ts).*\.spec\.ts$/,
     },
     {
       name: 'TH',
-      testMatch: /.*\.th\.spec\.ts$/,
     },
     // {
     //   name: 'KH',
-    //   testMatch: /.*\.kh\.spec\.ts$/,
     // },
   ],
 });

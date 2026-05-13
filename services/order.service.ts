@@ -5,7 +5,7 @@ import { getCountryConfig } from '../configs/country.factory.js';
 import { ApiError, assertStatus } from '../errors/api.error.js';
 import { HTTP_STATUS, ERROR_MSG } from '../constants/status-code.js';
 import { OrderPayloadBuilder } from '../payloads/order.payload.js';
-import { getOrderData } from '../test-data/order.data.factory.js';
+import { getScenarioData } from '../test-data/scenario.data.factory.js';
 
 export interface CartInfo       { cartNo: string | null; skuCodes: string[] }
 export interface AddCartResult  { cartNo: string }
@@ -22,7 +22,7 @@ export class OrderService {
     payloadBuilder?: OrderPayloadBuilder,
   ) {
     this.cfg     = countryConfig  ?? getCountryConfig();
-    this.payload = payloadBuilder ?? new OrderPayloadBuilder(getOrderData());
+    this.payload = payloadBuilder ?? new OrderPayloadBuilder(getScenarioData());
   }
 
   async checkCart(token: string): Promise<void> {
@@ -66,7 +66,7 @@ export class OrderService {
   async removeCart(token: string, cartNo: string, skus: string[]): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
     const res = await client.put(this.cfg.endpoints.removeCart, {
-      data: { cartNo, skus, source: getOrderData().source },
+      data: this.payload.removeCartBody(cartNo, skus),
     });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NO_CONTENT], 'removeCart');
   }
@@ -92,10 +92,10 @@ export class OrderService {
     await assertStatus(res, [HTTP_STATUS.OK], 'updateCart');
   }
 
-  async checkout(token: string): Promise<CheckoutResult> {
+  async checkout(token: string, cartNo: string): Promise<CheckoutResult> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
     const res = await client.put(this.cfg.endpoints.checkout, {
-      data: this.payload.checkoutBody(),
+      data: this.payload.checkoutBody(cartNo),
     });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'checkout');
 

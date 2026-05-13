@@ -1,906 +1,450 @@
-import { createClient } from "../clients/apiClient.js";
-import config from "../configs/index.js";
 import type { APIRequestContext, APIResponse } from '@playwright/test';
-import { request } from '@playwright/test';
-import { extractSkuCodes } from "../utils/sku.util.js";
-import { handleApiResponse } from "../utils/api-helper.js";
-import { PackService } from "./pack.service.js";
-import { OrderService } from "./order.service.js";
-import { teardownOrder } from "../utils/teardown.js";
-import { time } from "node:console";
+import { createClient } from '../clients/apiClient.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError, assertStatus } from '../errors/api.error.js';
+import { HTTP_STATUS } from '../constants/status-code.js';
+import { extractSkuCodes } from '../utils/sku.util.js';
+import { PickPayloadBuilder } from '../payloads/pick.payload.js';
+
+export interface SkuItem {
+  sku: string;
+  quantity: number;
+  saleOrderCode: string;
+}
+
+export interface OrderSkuResult {
+  ticketId: string;
+  so: string;
+  sku: string | undefined;
+  quantity: number | undefined;
+  skuList: SkuItem[];
+  get_sku_codes: any[];
+}
 
 export class PickService {
 
-    constructor(private request: APIRequestContext) { }
+  private readonly cfg:     CountryConfig;
+  private readonly payload: PickPayloadBuilder;
 
-    async getOrderInfo(
-        basicToken: string,
-        orderId: string
-    ) {
-        const client = await createClient(
-            config.hostInternal,
-            basicToken,
-            'basic'
-        );
+  constructor(
+    _request: APIRequestContext,
+    countryConfig?: CountryConfig,
+  ) {
+    this.cfg     = countryConfig ?? getCountryConfig();
+    this.payload = new PickPayloadBuilder(this.pick);
+  }
 
-        const params = {
-            q: JSON.stringify({
-                orderId: Number(orderId) 
-            })
-        };
+  private get pick() {
+    if (!this.cfg.pick) throw new Error(`Pick config not defined for country: ${this.cfg.countryCode}`);
+    return this.cfg.pick;
+  }
 
-        const url = `/backend/marketplace/order/v2/order/list`;
+  /**
+   * GET /backend/marketplace/order/v2/order/list
+   * Returns undefined values when order not found — does not throw.
+   */
+  async getOrderInfo(
+    basicToken: string,
+    orderId: string,
+  ): Promise<{ response: APIResponse | null; price: number | undefined; orderCode: string | undefined }> {
+    try {
+      const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+      const response = await client.get(this.pick.endpoints.orderList, {
+        params: this.payload.getOrderInfoParams(orderId),
+      });
+      await assertStatus(response, [HTTP_STATUS.OK], 'getOrderInfo');
 
-        try {
-            const response = await client.get(url, { params });
-            const body = await response.json();
+      const body = await response.json();
 
-            // console.log("📦 getOrderInfo response:", JSON.stringify(body, null, 2));
+      if (!body?.data?.length) {
+        console.warn('No order data for orderId:', orderId);
+        return { response, price: undefined, orderCode: undefined };
+      }
 
-            if (!body?.data || body.data.length === 0) {
-                console.warn("⚠️ No order data found for orderId:", orderId);
-                return {
-                    response,
-                    price: undefined,
-                    orderCode: undefined
-                };
-            }
+      const price     = body.data[0]?.totalPrice;
+      const orderCode = body.data[0]?.orderCode;
+      console.log('getOrderInfo | OrderCode:', orderCode, 'Price:', price);
+      return { response, price, orderCode };
 
-            const price = body?.data?.[0]?.totalPrice;
-            const orderCode = body?.data?.[0]?.orderCode;
+    } catch (error) {
+      console.error('getOrderInfo failed:', error);
+      return { response: null, price: undefined, orderCode: undefined };
+    }
+  }
 
-            console.log("✅ Extracted - OrderCode:", orderCode, "Price:", price);
+  /**
+   * GET /backend/marketplace/order/v2/order/list
+   * Polls until saleOrderCode appears (max 10 attempts × 3s).
+   */
+  async getSO(basicToken: string, orderId: string): Promise<string> {
+    const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
 
-            return {
-                response,
-                price,
-                orderCode
-            };
-        } catch (error) {
-            console.error("❌ getOrderInfo failed:", error);
-            return {
-                response: null,
-                price: undefined,
-                orderCode: undefined
-            };
+    for (let i = 1; i <= 10; i++) {
+      const response = await client.get(this.pick.endpoints.orderList, {
+        params: this.payload.getSOParams(orderId),
+      });
+
+      console.log(`getSO attempt ${i} | status:`, response.status());
+
+      const json = await response.json();
+      const so: string | undefined = json?.data?.[0]?.saleOrderCode;
+
+      if (so) {
+        console.log('getSO | SO ready:', so);
+        return so;
+      }
+
+      console.log('getSO | not ready, wait 3s');
+      await new Promise(r => setTimeout(r, 3000));
+    }
+
+    throw new Error('SO not found after retry for orderId: ' + orderId);
+  }
+
+  /**
+   * GET /warehouse/core/v1/sale-orders
+   * Polls until pick ticket and order lines are ready (max 6 attempts × 3s).
+   */
+  async getOrderSku(basicToken: string, so: string): Promise<OrderSkuResult> {
+    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+
+    let jsonData: any;
+    let firstOrder: any;
+    let get_sku_codes: any[] = [];
+
+    for (let i = 1; i <= 6; i++) {
+      const response = await client.get(this.pick.endpoints.saleOrders, {
+        params: this.payload.getSaleOrdersParams(so),
+      });
+
+      const status = response.status();
+      const text   = await response.text();
+
+      if (status !== HTTP_STATUS.OK) {
+        console.log('getOrderSku | error status:', status, text);
+        await new Promise(r => setTimeout(r, 3000));
+        continue;
+      }
+
+      if (!text.startsWith('{')) {
+        throw new Error('getOrderSku returned HTML instead of JSON');
+      }
+
+      jsonData      = JSON.parse(text);
+      get_sku_codes = extractSkuCodes(jsonData);
+      firstOrder    = jsonData?.data?.[0];
+
+      const ready =
+        firstOrder?.pickTicketInfos?.length > 0 &&
+        firstOrder?.orderLines?.length > 0 &&
+        firstOrder?.orderLines?.some((line: any) => line.pickItems?.length > 0);
+
+      if (ready) break;
+
+      console.log(`getOrderSku | not ready, wait 3s (attempt ${i})`);
+      await new Promise(r => setTimeout(r, 3000));
+    }
+
+    if (!firstOrder?.pickTicketInfos?.length) {
+      throw new Error('Pick ticket not ready');
+    }
+
+    const skuList: SkuItem[] = [];
+    for (const line of firstOrder.orderLines ?? []) {
+      for (const item of line.pickItems ?? []) {
+        skuList.push({ sku: item.sku, quantity: item.quantity, saleOrderCode: line.saleOrderCode });
+      }
+    }
+
+    return {
+      ticketId:     firstOrder.pickTicketInfos[0].pickTicketId,
+      so:           firstOrder.orderLines[0].saleOrderCode,
+      sku:          skuList[0]?.sku,
+      quantity:     skuList[0]?.quantity,
+      skuList,
+      get_sku_codes,
+    };
+  }
+
+  /**
+   * PUT /marketplace/order/v2/order/note-plf
+   */
+  async confirmOrder(orderId: string, price: number): Promise<APIResponse> {
+    const client   = await createClient(this.cfg.hosts.order, this.cfg.auth.basicToken, 'basic');
+    const response = await client.put(this.pick.endpoints.confirmOrder, {
+      data: this.payload.confirmOrderBody(orderId, price),
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'confirmOrder');
+    return response;
+  }
+
+  /**
+   * POST /backend/warehouse/picking/v1/pick-ticket/active/check
+   */
+  async checkPickTicket(basicToken: string, ticketId: string): Promise<APIResponse> {
+    const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const response = await client.post(this.pick.endpoints.checkPickTicket, {
+      data: this.payload.checkPickTicketBody(ticketId),
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'checkPickTicket');
+    return response;
+  }
+
+  /**
+   * PUT /warehouse/picking/v1/pick-ticket/active
+   */
+  async activePickTicket(
+    basicToken: string,
+    ticketId: string,
+  ): Promise<{ response: APIResponse; message: string; url: string }> {
+    console.log('activePickTicket | waiting 8s...');
+    await new Promise(r => setTimeout(r, 8000));
+
+    const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+    const response = await client.put(this.pick.endpoints.activePickTicket, {
+      data: this.payload.activePickTicketBody(ticketId),
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'activePickTicket');
+
+    const json = await response.json();
+    console.log('activePickTicket | message:', json.message);
+    return { response, message: json.message, url: response.url() };
+  }
+
+  /**
+   * GET /backend/warehouse/picking/v1/pick-ticket-item
+   * Polls until locationDetails appear (max 5 attempts × 3s).
+   */
+  async getZoneAndLocation(
+    basicToken: string,
+    so: string,
+  ): Promise<{ response: APIResponse; zone: string; locationCode: string }> {
+    const client  = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const params  = this.payload.getZoneLocationParams(so);
+    const headers = this.payload.getZoneLocationHeaders(basicToken, this.cfg.hosts.internal);
+
+    let response!: APIResponse;
+
+    for (let i = 1; i <= 5; i++) {
+      console.log(`getZoneAndLocation | attempt ${i}`);
+      response = await client.get(this.pick.endpoints.pickTicketItem, { params, headers });
+
+      const json            = await response.json();
+      const locationDetails = json?.data?.[0]?.locationDetails;
+      console.log('getZoneAndLocation | reserveStatus:', json?.data?.[0]?.reserveStatus);
+
+      if (locationDetails?.length) {
+        const zone         = locationDetails[0]?.zone;
+        const locationCode = locationDetails[0]?.locationCode;
+        console.log('getZoneAndLocation | zone:', zone, 'locationCode:', locationCode);
+        return { response, zone, locationCode };
+      }
+
+      await new Promise(r => setTimeout(r, 3000));
+    }
+
+    throw new Error(`Timeout: locationDetails not generated for SO ${so}`);
+  }
+
+  /**
+   * POST /warehouse/core/v1/staff-zone-session/check  (CHECK_IN_ZONE)
+   * Handles PACK session conflict — see CLAUDE.md "API Business Logic" for message handling.
+   */
+  async checkInPick(basicToken: string, zone: string): Promise<APIResponse> {
+    const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+    const response = await client.post(this.pick.endpoints.staffZoneSession, {
+      data: this.payload.checkInPickBody(zone),
+    });
+    console.log('checkInPick | status:', response.status());
+    return response;
+  }
+
+  /**
+   * PUT /warehouse/picking/v1/pick-ticket/assign-manual  (max 3 retries)
+   */
+  async assignPickStaff(basicToken: string, ticketId: string, so: string): Promise<string> {
+    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+    const body   = this.payload.assignPickStaffBody(ticketId, so);
+
+    console.log('assignPickStaff | start');
+
+    for (let retry = 1; retry <= 3; retry++) {
+      console.log(`assignPickStaff | attempt ${retry}`);
+      const response   = await client.put(this.pick.endpoints.assignPickStaff, { data: body });
+      const statusCode = response.status();
+      console.log('assignPickStaff | status:', statusCode);
+
+      if (statusCode === HTTP_STATUS.OK) {
+        const json        = await response.json();
+        const subTicketId = json?.data?.[0]?.ticketId;
+        if (!subTicketId) throw new Error('subTicketId not found in response');
+        console.log('assignPickStaff | OK, subTicketId:', subTicketId);
+        return subTicketId;
+      }
+
+      if (retry === 3) {
+        throw new Error(`assignPickStaff failed after 3 attempts. Last status: ${statusCode}`);
+      }
+
+      await new Promise(res => setTimeout(res, 2000));
+    }
+
+    throw new Error('Unexpected error in assignPickStaff');
+  }
+
+  /**
+   * GET /warehouse/inventory/v1/location  (first available OTL)
+   */
+  async getOTL(basicToken: string): Promise<{ firstOTL: string; response: APIResponse }> {
+    const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+    const response = await client.get(this.pick.endpoints.location, {
+      params: this.payload.getOTLParams(),
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'getOTL');
+
+    const body     = await response.json();
+    const firstOTL = body?.data?.[0]?.code;
+    if (!firstOTL) throw new ApiError('getOTL', response.status(), response.url(), 'OTL list is EMPTY');
+
+    console.log('getOTL | firstOTL:', firstOTL);
+    return { firstOTL, response };
+  }
+
+  /**
+   * POST /warehouse/picking/v1/sub-pick-ticket/basket/use
+   */
+  async useBasket(
+    basicToken: string,
+    subTicketId: number,
+    otlCode: string,
+  ): Promise<{ response: APIResponse; message: string; url: string }> {
+    const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+    const response = await client.post(this.pick.endpoints.useBasket, {
+      data: this.payload.useBasketBody(subTicketId, otlCode),
+    });
+    await assertStatus(response, [HTTP_STATUS.OK], 'useBasket');
+    return { response, message: await response.text(), url: response.url() };
+  }
+
+  /**
+   * POST /warehouse/picking/v1/sub-pick-ticket-item/pick
+   * Loops through SKU list; each item retries up to 3 times.
+   */
+  async checkPickItems(
+    basicToken: string,
+    subTicketId: string,
+    locationCode: string,
+    so: string,
+  ): Promise<{ response: APIResponse | null }> {
+    console.log('checkPickItems | start');
+
+    const client      = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+    const { skuList } = await this.getOrderSku(basicToken, so);
+    let lastResponse: APIResponse | null = null;
+
+    for (const item of skuList) {
+      const payload = this.payload.pickItemBody(subTicketId, item.sku, item.quantity ?? 0, locationCode);
+
+      let response: APIResponse | null = null;
+
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        console.log(`checkPickItems | sku=${item.sku} attempt ${attempt}`);
+        response = await client.post(this.pick.endpoints.pickItem, { data: payload });
+        console.log('checkPickItems | status:', response.status());
+
+        if (response.status() === HTTP_STATUS.OK) {
+          console.log('checkPickItems | item OK');
+          break;
         }
+
+        if (attempt < 3) await new Promise(r => setTimeout(r, 2000));
+      }
+
+      if (!response) throw new Error('No response returned from API');
+
+      lastResponse = response;
+
+      if (response.status() !== HTTP_STATUS.OK) {
+        console.log('checkPickItems | item failed, stopping loop');
+        return { response };
+      }
     }
 
-    async getWarehouseCode(): Promise<string> {
-        const wareHouseCode = config.location;
-        return wareHouseCode;
-    }
-    /**
-    * Confirm Order
-    * PUT /marketplace/order/v2/order/note-plf
-    */
-    async confirmOrder(
-        orderId: string,
-        price: number
-    ) {
+    console.log('checkPickItems | done');
+    return { response: lastResponse };
+  }
 
-        const client = await createClient(
-            config.hostOrder,
-            config.basicToken,
-            'basic'
-        );
+  /**
+   * PUT /warehouse/picking/v1/sub-pick-ticket/complete  (max 3 retries)
+   */
+  async completePick(basicToken: string, subTicketId: number): Promise<APIResponse> {
+    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic');
 
-        const body = {
-            BankCode: "333",
-            BankAccountNumber: "0314758651",
-            Remark: `NHAN TU 104866682689 TRACE 237883 ND QR - ${orderId} - Nguyen Huu Tho - MD`,
-            Amount: price,
-            BankChannel: "OCB",
-            BankingTransactionCode: "Ma transaction"
-        };
-
-        const response = await client.put(
-            "/marketplace/order/v2/order/note-plf",
-            {
-                data: body
-            }
-        );
-
-        return response;
-    }
-    /**
-    * Get SO
-    * GET /backend/marketplace/order/v2/order/list
-    */
-    async getSO(
-        basicToken: string,
-        orderId: string
-    ) {
-
-        const client = await createClient(
-            config.hostInternal,
-            basicToken,
-            "basic"
-        );
-
-        let so: string | undefined;
-
-        for (let i = 1; i <= 10; i++) {
-
-            const params = {
-                q: JSON.stringify({
-                    orderId: orderId
-                })
-            };
-
-            const response = await client.get(
-                "/backend/marketplace/order/v2/order/list",
-                { params }
-            );
-
-            console.log("Get SO Status: " + response.status());
-
-            const json = await response.json();
-
-            so = json?.data?.[0]?.saleOrderCode;
-
-            if (so) {
-
-                console.log("SO ready on attempt " + i);
-                return so;
-            }
-
-            console.log("SO not ready → wait 3s");
-
-            await new Promise(r =>
-                setTimeout(r, 3000)
-            );
-        }
-
-        throw new Error(
-            "SO not found after retry for orderId: " + orderId
-        );
-    }
-
-    /**
-     * Get Order SKU
-     * GET /warehouse/core/v1/sale-orders
-     */
-    async getOrderSku(
-        basicToken: string,
-        so: string
-    ) {
-
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            "basic"
-        );
-
-        const wareHouseCode = await this.getWarehouseCode();
-        const url = "/warehouse/core/v1/sale-orders";
-
-        let jsonData: any;
-        let firstOrder: any;
-        let get_sku_codes: any[] = [];
-
-        for (let i = 1; i <= 6; i++) {
-            const response = await client.get(url, {
-                params: {
-                    saleOrderCode: so,
-                    warehouseCode: wareHouseCode
-                }
-            });
-
-            const status = response.status();
-
-            const text = await response.text();
-
-            if (status !== 200) {
-                console.log("❌ API returned error");
-                console.log(text);
-                await new Promise(r => setTimeout(r, 3000));
-                continue;
-            }
-
-            // Ensure JSON response
-            if (!text.startsWith("{")) {
-                console.log("\n❌ Response is NOT JSON");
-                console.log(text.substring(0, 300));
-                throw new Error("Get Order SKU returned HTML instead of JSON");
-            }
-
-            jsonData = JSON.parse(text);
-
-            // Same as JMeter vars.put("get_sku_codes")
-            get_sku_codes = extractSkuCodes(jsonData);
-
-            firstOrder = jsonData?.data?.[0];
-
-            const ready =
-                firstOrder?.pickTicketInfos?.length > 0 &&
-                firstOrder?.orderLines?.length > 0 &&
-                firstOrder?.orderLines?.some((line: any) => line.pickItems?.length > 0);
-
-            if (ready) {
-                break;
-            }
-
-            console.log("⏳ Waiting 3s after Get Order SKU...");
-            await new Promise(r => setTimeout(r, 3000));
-        }
-
-        if (!firstOrder?.pickTicketInfos?.length) {
-
-            console.log("\n❌ Pick Ticket not ready");
-            console.log(JSON.stringify(jsonData, null, 2));
-
-            throw new Error("Pick ticket not ready");
-        }
-
-        const skuList: any[] = [];
-
-        for (const line of firstOrder.orderLines ?? []) {
-            for (const item of line.pickItems ?? []) {
-                skuList.push({
-                    sku: item.sku,
-                    quantity: item.quantity,
-                    saleOrderCode: line.saleOrderCode
-                });
-            }
-        }
-        return {
-            ticketId: firstOrder.pickTicketInfos[0].pickTicketId,
-            so: firstOrder.orderLines[0].saleOrderCode,
-            sku: skuList[0]?.sku,
-            quantity: skuList[0]?.quantity,
-            skuList,
-            get_sku_codes
-        };
-    }
-
-    /**
-    * Check Pick Ticket
-    * POST /backend/warehouse/picking/v1/pick-ticket/active/check
-    */
-    async checkPickTicket(
-        basicToken: string,
-        ticketId: string,
-    ) {
-
-        const client = await createClient(
-            config.hostInternal,
-            basicToken,
-            "basic"
-        );
-        const wareHouseCode = await this.getWarehouseCode();
-        const response = await client.post(
-            "/backend/warehouse/picking/v1/pick-ticket/active/check",
-            {
-                data: {
-                    ticketIdList: [Number(ticketId)],
-                    warehouseCode: wareHouseCode
-                }
-            }
-        );
-        return response;
-    }
-
-
-    /**
-    * Active Pick Ticket
-    * PUT /warehouse/picking/v1/pick-ticket/active
-    */
-    async activePickTicket(
-        basicToken: string,
-        ticketId: string,
-    ) {
-
-        console.log("Waiting 8s before Active Pick Ticket...");
-        await new Promise(r => setTimeout(r, 8000));
-
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            "basic"
-        );
-        const wareHouseCode = await this.getWarehouseCode();
-
-        const url =
-            "/warehouse/picking/v1/pick-ticket/active";
-
-        const body = {
-            ticketId: Number(ticketId),
-            isManualActive: true,
-            warehouseCode: wareHouseCode
-        };
-
-        const response = await client.put(url, {
-            data: body
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await client.put(this.pick.endpoints.completePick, {
+          data: this.payload.completePickBody(subTicketId),
         });
-
-        const json = await response.json();
-
-        console.log("Message: " + json.message);
-
-        console.log("=======================================\n");
-
-        return { response, message: json.message, url };
-    }
-    /**
-    * Get Zone and Location
-    * GET /backend/warehouse/picking/v1/pick-ticket-item
-    */
-    async getZoneAndLocation(
-        basicToken: string,
-        so: string
-    ): Promise<{
-        response: APIResponse;
-        zone: string;
-        locationCode: string;
-    }> {
-
-        const endpoint = "/backend/warehouse/picking/v1/pick-ticket-item";
-
-        const headers = {
-            Authorization: `Basic ${basicToken}`,
-            Referer: 'https://internal.v2-stg.thuocsi.vn/wms/',
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-            'Content-Type': 'text/plain;charset=UTF-8'
-        };
-        const wareHouseCode = await this.getWarehouseCode();
-        const params = {
-            saleOrderCode: so,
-            warehouseCode: wareHouseCode
-        };
-
-        const client = await createClient(
-            config.hostInternal,
-            basicToken,
-            "basic"
-        );
-
-
-        let response!: APIResponse;
-
-        for (let i = 1; i <= 5; i++) {
-
-            console.log(`Get Zone and Location Attempt ${i}...`);
-
-            response = await client.get(endpoint, {
-                params,
-                headers
-            });
-
-            const json = await response.json();
-
-            const locationDetails = json?.data?.[0]?.locationDetails;
-
-            console.log("ReserveStatus:" + json?.data?.[0]?.reserveStatus);
-
-            if (locationDetails?.length) {
-
-                const zone = locationDetails[0]?.zone;
-                const locationCode = locationDetails[0]?.locationCode;
-
-                console.log("✅ Zone:" + zone);
-                console.log("✅ Location:" + locationCode);
-
-                return {
-                    response,
-                    zone,
-                    locationCode,
-                };
-            }
-
-            // wait 3 seconds before next attempt
-            await new Promise(r => setTimeout(r, 3000));
-        }
-
-        throw new Error(
-            `Timeout: locationDetails not generated for SO ${so}`
-        );
-
-    }
-    /**
-    * Check in Pick
-    * POST /warehouse/core/v1/staff-zone-session/check
-    */
-    async checkInPick(
-        basicToken: string,
-        zone: string,
-    ): Promise<APIResponse> {
-
-        const endpoint = '/warehouse/core/v1/staff-zone-session/check';
-
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            'basic'
-        );
-
-        const wareHouseCode = await this.getWarehouseCode();
-
-        const body = {
-            zoneCode: zone,
-            status: 'CHECK_IN_ZONE',
-            jobType: 'PICK',
-            wareHouseCode
-        };
-
-        console.log('===== CHECK IN PICK =====');
-
-        let response = await client.post(endpoint, { data: body });
-
-        console.log('Status:', response.status());
-
-        // 🔥 Handle special business case
-        if (response.status() === 400) {
-
-            let message = "";
-
-            try {
-                const json = await response.json();
-                message = json?.message || "";
-            } catch {
-                message = await response.text();
-            }
-
-            console.log("⚠️ CheckIn failed message:", message);
-
-            // ✅ Detect PACK conflict
-            if (message.includes('công việc PACK')) {
-
-                console.log("👉 Detected PACK session → calling PackService.checkout...");
-
-                // 🔥 CALL PACK SERVICE
-                const packService = new PackService();
-                const packCheckinResponse = await packService.packCheckout();
-
-                // ✅ Read response FIRST before validation
-                const responseBody = await packCheckinResponse.json().catch(() => ({}));
-                const checkoutMessage: string = responseBody?.message || "";
-
-                console.log("Pack checkout response:", checkoutMessage);
-
-                // Check for specific error message (unfinished orders)
-                if (checkoutMessage.includes("Nhân viên còn phiếu")) {
-                    // Extract SOBD code using regex
-                    const match = checkoutMessage.match(/SOBD\d+/);
-
-                    if (match) {
-                        const sobdCode = match[0];
-
-                        // Convert SOBD -> orderId
-                        const orderIdOld = Number(sobdCode.replace("SOBD", ""));
-
-                        console.log("Detected unfinished order:", orderIdOld);
-
-                        // Call API to get order info
-                        const orderInfo = await this.getOrderInfo(basicToken, String(orderIdOld));
-                        const orderCodeOld = orderInfo.orderCode;
-
-                        console.log("Order code for teardown:", orderCodeOld);
-                        //console.log("Full orderInfo object:", JSON.stringify(orderInfo, null, 2));
-                        
-                        const orderService = new OrderService(this.request);
-                        let ticketIdOld: string | undefined;
-                        
-                        try {
-                            const ticketData = await this.getOrderSku(basicToken, sobdCode);
-                            ticketIdOld = ticketData.ticketId;
-                        } catch (error) {
-                            console.warn("⚠️ Failed to get order SKU for teardown:", error);
-                            // Continue without ticket ID - teardown might still work
-                        }
-                        
-                        console.log("Ticket ID for teardown:", ticketIdOld);
-                        const location = await this.getWarehouseCode();
-
-                        if (orderCodeOld && ticketIdOld) {
-                            console.log("Teardown order:", orderCodeOld);
-                            await teardownOrder(
-                                orderService,
-                                packService,
-                                basicToken,
-                                String(orderIdOld),
-                                location,
-                                orderCodeOld
-                            );
-                        } else {
-                            console.warn("⚠️ Cannot teardown - missing orderCode or ticketId:", { orderCodeOld, ticketIdOld });
-                        }
-                    }
-                } else {
-                    // ✅ Only validate if not error message
-                    await handleApiResponse(packCheckinResponse, [200]);
-                }
-
-                console.log("🔁 Retry Check in PICK...");
-
-                response = await client.post(endpoint, { data: body });
-
-                console.log('Retry Status:', response.status());
-            }
-        }
-
+        console.log(`completePick | attempt ${attempt} status:`, response.status());
+        await assertStatus(response, [HTTP_STATUS.OK], 'completePick');
         return response;
-    }
-    /**
-    * Assign Pick Staff (Retry Max 3)
-    * PUT /warehouse/picking/v1/pick-ticket/assign-manual
-    */
-    async assignPickStaff(
-        basicToken: string,
-        ticketId: string,
-        so: string
-    ): Promise<string> {
-
-        const endpoint = '/warehouse/picking/v1/pick-ticket/assign-manual';
-
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            'basic'
-        );
-        const wareHouseCode = await this.getWarehouseCode();
-
-        const body = {
-            ticketId,
-            wareHouseCode,
-            so,
-            employee: 'seller.core',
-            employeeId: 100000039
-        };
-
-        console.log('===== ASSIGN PICK STAFF =====');
-
-        for (let retry = 1; retry <= 3; retry++) {
-
-            console.log(`🔁 Attempt #${retry}`);
-
-            const response = await client.put(endpoint, {
-                data: body
-            });
-
-            const statusCode = response.status();
-            console.log('Status:' + statusCode);
-
-            if (statusCode === 200) {
-
-                const json = await response.json();
-                const subTicketId = json?.data?.[0]?.ticketId;
-
-                if (!subTicketId) {
-                    throw new Error('subTicketId not found in response');
-                }
-
-                console.log('✅ Assign Pick Staff Success');
-                return subTicketId;
-            }
-
-            if (retry === 3) {
-                throw new Error(
-                    `Assign Pick Staff failed after 3 attempts. Last status: ${statusCode}`
-                );
-            }
-
-            // Wait 2 seconds before retry
-            await new Promise(res => setTimeout(res, 2000));
-        }
-
-        throw new Error('Unexpected error in assignPickStaff');
+      } catch (error) {
+        console.log(`completePick | attempt ${attempt} failed`);
+        if (attempt === 3) throw error;
+        await new Promise(r => setTimeout(r, 2000));
+      }
     }
 
-    /**
-    * Get OTL (First Available)
-    * GET /warehouse/inventory/v1/location
-    */
-    async getOTL(basicToken: string) {
+    throw new Error('completePick failed after 3 attempts');
+  }
 
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            'basic'
-        );
+  /**
+   * PUT /warehouse/picking/v1/pick-ticket/pick-quantity  (max 3 retries)
+   */
+  async completePickForSO(basicToken: string, so: string): Promise<APIResponse> {
+    const client    = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+    const orderInfo = await this.getOrderSku(basicToken, so);
 
-        const wareHouseCode = await this.getWarehouseCode();
-
-        const response = await client.get(`/warehouse/inventory/v1/location`, {
-            params: {
-                q: JSON.stringify({
-                    warehouseCode: wareHouseCode,
-                    type: "OTL",
-                    isUsed: false
-                })
-            }
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await client.put(this.pick.endpoints.completePickSO, {
+          data: this.payload.completePickSOBody(so, orderInfo.ticketId),
         });
-
-        const body = await response.json();
-
-        const firstOTL = body?.data?.[0]?.code;
-
-        if (!firstOTL) {
-            throw new Error("❌ OTL list is EMPTY");
-        }
-
-        console.log("✅ First OTL:" + firstOTL);
-
-        return { firstOTL, response };
-    }
-    /**
-    * Use Basket
-    * POST /warehouse/picking/v1/sub-pick-ticket/basket/use
-    */
-    async useBasket(
-        basicToken: string,
-        subTicketId: number,
-        otlCode: string
-    ) {
-
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            'basic'
-        );
-
-        const wareHouseCode = await this.getWarehouseCode();
-
-        const response = await client.post(
-            `/warehouse/picking/v1/sub-pick-ticket/basket/use`,
-            {
-                data: {
-                    basketCode: otlCode,
-                    ticketId: subTicketId,
-                    warehouseCode: wareHouseCode
-                }
-            }
-        );
-        return { response, message: await response.text(), url: response.url() };
-    }
-    /**
-    * Check Pick Items
-    * Loop through SKU list and call Pick API
-    */
-    async checkPickItems(
-        basicToken: string,
-        subTicketId: string,
-        locationCode: string,
-        so: string
-    ) {
-
-        console.log("\n======= START CHECK PICK ITEMS =======");
-
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            "basic"
-        );
-
-        // Get SKU list from order
-        const orderInfo = await this.getOrderSku(basicToken, so);
-        const skuList = orderInfo.skuList;
-
-        const warehouseCode = await this.getWarehouseCode();
-
-        let lastResponse: APIResponse | null = null;
-
-        for (let index = 0; index < skuList.length; index++) {
-
-            const currentItem = skuList[index];
-
-            const sku = currentItem.sku;
-            const quantity = currentItem.quantity ?? 0;
-
-            const payload = {
-                warehouseCode: warehouseCode,
-                name: "",
-                ticketId: Number(subTicketId),
-                sku: sku,
-                pickedQuantity: quantity,
-                location: locationCode
-            };
-
-            const url = "/warehouse/picking/v1/sub-pick-ticket-item/pick";
-
-            let response: APIResponse | null = null;
-
-            for (let attempt = 1; attempt <= 3; attempt++) {
-
-                console.log(`Attempt ${attempt}`);
-
-                response = await client.post(url, {
-                    data: payload
-                });
-
-                console.log("Status:" + response.status());
-
-                const responseText = await response.text();
-
-                if (response.status() === 200) {
-                    console.log("✅ Pick item success");
-                    break;
-                }
-
-                if (attempt < 3) {
-                    console.log("Retry after 2s...");
-                    await new Promise(r => setTimeout(r, 2000));
-                }
-            }
-
-            if (!response) {
-                throw new Error("No response returned from API");
-            }
-
-            lastResponse = response;
-
-            // Stop loop if failed
-            if (response.status() !== 200) {
-                console.log("❌ Pick item failed → stop loop");
-                return { response };
-            }
-        }
-
-        console.log("\n======= CHECK PICK ITEMS DONE =======");
-
-        return { response: lastResponse };
+        console.log(`completePickForSO | attempt ${attempt} status:`, response.status());
+        await assertStatus(response, [HTTP_STATUS.OK], 'completePickForSO');
+        return response;
+      } catch (error) {
+        console.log(`completePickForSO | attempt ${attempt} failed`);
+        if (attempt === 3) throw error;
+        await new Promise(r => setTimeout(r, 2000));
+      }
     }
 
-    /**
-    * Complete Pick
-    * PUT /warehouse/picking/v1/sub-pick-ticket/complete
-    */
+    throw new Error('completePickForSO failed after 3 attempts');
+  }
 
-    async completePick(
-        basicToken: string,
-        subTicketId: number,
-    ): Promise<APIResponse> {
+  /**
+   * POST /warehouse/core/v1/staff-zone-session/check  (CHECK_OUT_ZONE, max 3 retries)
+   */
+  async checkoutPick(basicToken: string, zone: string): Promise<APIResponse> {
+    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic');
 
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            "basic"
-        );
-
-        const url = `/warehouse/picking/v1/sub-pick-ticket/complete`;
-        const wareHouseCode = await this.getWarehouseCode();
-        const payload = {
-            warehouseCode: wareHouseCode,
-            ticketId: subTicketId
-        };
-        for (let attempt = 1; attempt <= 3; attempt++) {
-
-            try {
-
-                const response = await client.put(url, {
-                    data: payload
-                });
-
-                console.log(
-                    `Complete Pick response attempt ${attempt}:`,
-                    response.status()
-                );
-
-                return response;
-
-            } catch (error) {
-
-                console.log(`❌ Complete Pick retry ${attempt} failed`);
-
-                if (attempt === 3) {
-                    throw error;
-                }
-
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-        }
-
-        throw new Error("Complete Pick failed after 3 attempts");
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await client.post(this.pick.endpoints.staffZoneSession, {
+          data: this.payload.checkoutPickBody(zone),
+        });
+        console.log(`checkoutPick | attempt ${attempt} status:`, response.status());
+        await assertStatus(response, [HTTP_STATUS.OK], 'checkoutPick');
+        return response;
+      } catch (error) {
+        console.log(`checkoutPick | attempt ${attempt} failed`);
+        if (attempt === 3) throw error;
+        await new Promise(r => setTimeout(r, 2000));
+      }
     }
 
-    /**
-    * Complete Pick for SO
-    * PUT /warehouse/picking/v1/pick-ticket/pick-quantity
-    */
-    async completePickForSO(
-        basicToken: string,
-        so: string,
-    ): Promise<APIResponse> {
-
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            "basic"
-        );
-        const orderInfo = await this.getOrderSku(basicToken, so);
-        const ticketId = orderInfo.ticketId;
-
-        const url = `/warehouse/picking/v1/pick-ticket/pick-quantity`;
-        const wareHouseCode = await this.getWarehouseCode();
-        const payload = {
-            warehouseCode: wareHouseCode,
-            so: so,
-            ticketId: ticketId
-        };
-
-        for (let attempt = 1; attempt <= 3; attempt++) {
-
-            try {
-
-                const response = await client.put(url, {
-                    data: payload
-                });
-
-                console.log(
-                    `Complete Pick SO attempt ${attempt}:`,
-                    response.status()
-                );
-
-                return response;
-
-            } catch (error) {
-
-                console.log(`❌ Complete Pick SO retry ${attempt} failed`);
-
-                if (attempt === 3) {
-                    throw error;
-                }
-
-                await new Promise(r => setTimeout(r, 2000));
-            }
-        }
-
-        throw new Error("Complete Pick SO failed after 3 attempts");
-    }
-
-    /**
-  * Step: Checkout Pick
-  * POST /warehouse/core/v1/staff-zone-session/check
-  */
-    async checkoutPick(
-        basicToken: string,
-        zone: string,
-    ): Promise<APIResponse> {
-
-        const client = await createClient(
-            config.hostOrder,
-            basicToken,
-            "basic"
-        );
-
-        const url = `/warehouse/core/v1/staff-zone-session/check`;
-        const wareHouseCode = await this.getWarehouseCode();
-        const payload = {
-            zoneCode: zone,
-            status: "CHECK_OUT_ZONE",
-            jobType: "PICK",
-            warehouseCode: wareHouseCode
-        };
-
-        for (let attempt = 1; attempt <= 3; attempt++) {
-            try {
-
-                const response = await client.post(url, {
-                    data: payload
-                });
-
-                console.log(
-                    `Checkout Pick response attempt ${attempt}:`,
-                    response.status()
-                );
-
-                return response;
-
-            } catch (error) {
-
-                console.log(`Checkout Pick failed attempt ${attempt}`);
-
-                if (attempt === 3) {
-                    throw error;
-                }
-
-                console.log("Retrying checkout pick in 2s...");
-                await new Promise(r => setTimeout(r, 2000));
-            }
-        }
-
-        throw new Error("Checkout Pick failed after retries");
-    }
+    throw new Error('checkoutPick failed after retries');
+  }
 }
-

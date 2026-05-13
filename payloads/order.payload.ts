@@ -1,8 +1,8 @@
-import type { OrderTestData } from '../configs/types.js';
+import type { ScenarioData } from '../configs/types.js';
 
 export class OrderPayloadBuilder {
 
-  constructor(private readonly data: OrderTestData) {}
+  constructor(private readonly data: ScenarioData) {}
 
   private customerInfo() {
     const d = this.data;
@@ -22,58 +22,95 @@ export class OrderPayloadBuilder {
     };
   }
 
+  removeCartBody(cartNo: string, skus: string[]) {
+    return {
+      cartNo,
+      skus,
+      source: this.data.source,
+    };
+  }
+
   addCartBody(cartNo: string | null) {
     const d = this.data;
     return {
-      sku:           d.sku,
-      type:          d.type,
-      isDeal:        d.isDeal,
-      name:          d.productName,
-      price:         d.price,
-      quantity:      d.quantity,
-      cartNo:        cartNo ?? null,
-      page:          d.page,
-      sellerID:      d.sellerID,
-      sellerCode:    d.sellerCode,
-      productId:     d.productId,
-      eventSource:   d.eventSource,
-      eventScreen:   d.eventScreen,
-      host:          d.host,
-      recommendSKUs: d.recommendSKUs,
-      metadata:      { price_display: String(d.price) },
-      source:        d.source,
+      sku:         d.sku,
+      type:        d.type,
+      isDeal:      d.isDeal,
+      name:        d.productName,
+      price:       d.price,
+      quantity:    d.quantity,
+      cartNo:      cartNo ?? d.cartNo ?? null,
+      page:        d.page,
+      sellerID:    d.sellerID,
+      sellerCode:  d.sellerCode,
+      productId:   d.productId,
+      eventSource: d.eventSource,
+      eventScreen: d.eventScreen,
+      source:      d.source,
+      ...(d.host          !== undefined ? { host: d.host }                                 : {}),
+      ...(d.recommendSKUs !== undefined ? { recommendSKUs: d.recommendSKUs }               : {}),
+      ...(d.host          !== undefined ? { metadata: { price_display: String(d.price) } } : {}),
     };
   }
 
   updateCartBody(cartNo: string) {
     const d = this.data;
+    const invoiceRequest = d.invoiceRequest ?? true;
+
+    const invoice = invoiceRequest
+      ? {
+          code:                 d.invoiceCode,
+          invoiceRequest:       true,
+          companyName:          d.invoiceCompanyName,
+          companyAddress:       d.invoiceCompanyAddress,
+          taxCode:              d.invoiceTaxCode,
+          isSaveInvoiceInfo:    false,
+          isUseCustom:          false,
+          email:                d.invoiceEmail,
+          isValidated:          true,
+          customerTaxGOVStatus: 'DIFF_INFO',
+          isDefault:            true,
+        }
+      : {
+          invoiceRequest:    false,
+          companyName:       d.invoiceCompanyName,
+          companyAddress:    d.invoiceCompanyAddress,
+          taxCode:           d.invoiceTaxCode,
+          isSaveInvoiceInfo: false,
+          isUseCustom:       false,
+          email:             d.invoiceEmail,
+          postCode:          0,
+          code:              '',
+          province:          '',
+          district:          '',
+          ward:              '',
+          streetAddress:     '',
+        };
+
     return {
       ...this.customerInfo(),
+      ...(d.paymentMethods  !== undefined ? { paymentMethods:  d.paymentMethods  } : {}),
       paymentMethod:  d.paymentMethod,
+      ...(d.deliveryMethods !== undefined ? { deliveryMethods: d.deliveryMethods } : {}),
       deliveryMethod: d.deliveryMethod,
+      ...(d.totalWard       !== undefined ? { totalWard:       d.totalWard       } : {}),
+      ordersCount: d.ordersCount,
+      invoice,
       cartNo,
-      ordersCount:    d.ordersCount,
-      invoice: {
-        code:                 d.invoiceCode,
-        invoiceRequest:       true,
-        companyName:          d.invoiceCompanyName,
-        companyAddress:       d.invoiceCompanyAddress,
-        taxCode:              d.invoiceTaxCode,
-        isSaveInvoiceInfo:    false,
-        isUseCustom:          false,
-        email:                d.invoiceEmail,
-        isValidated:          true,
-        customerTaxGOVStatus: 'DIFF_INFO',
-        isDefault:            true,
-      },
-      isRefuseSplitOrder:    false,
-      acceptAdvancePolicies: false,
-      source:                d.source,
+      ...(invoiceRequest ? { isRefuseSplitOrder: false, acceptAdvancePolicies: false } : {}),
+      source: d.source,
     };
   }
 
-  checkoutBody() {
+  checkoutBody(cartNo: string) {
     const d = this.data;
+
+    // TH: checkout body is structurally identical to updateCart body
+    if ((d.invoiceRequest ?? true) === false) {
+      return this.updateCartBody(cartNo);
+    }
+
+    // VN: minimal checkout body
     return {
       ...this.customerInfo(),
       paymentMethods: [{

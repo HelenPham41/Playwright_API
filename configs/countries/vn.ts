@@ -32,4 +32,46 @@ export const VN_CONFIG: CountryConfig = {
     cancelOrder: '/backend/marketplace/order/v2/order/status',
   },
 
+  qc: {
+    warehouseCode: process.env.LOCATION  || 'BD',
+    zoneCode:      process.env.ZONE_CODE || 'QC-01',
+    endpoints: {
+      staffZoneSession: '/backend/warehouse/core/v1/staff-zone-session/check',
+      pickTicket:       '/backend/warehouse/picking/v1/pick-ticket',
+      getQrCode:        '/backend/operation/qr/v1/qrcode',
+      scanTicketItem:   '/backend/warehouse/picking/v1/scan-ticket-item/scan',
+      doneQcMoveToPack: '/backend/warehouse/picking/v1/pick-ticket/v2/update',
+    },
+  },
+
+  pick: {
+    warehouseCode: process.env.LOCATION || 'BD',
+    employee:      'seller.core',
+    employeeId:    100000039,
+
+    confirmPayment: {
+      bankCode:              '333',
+      bankAccountNumber:     '0314758651',
+      bankChannel:           'OCB',
+      bankingTransactionCode:'Ma transaction',
+      remarkTemplate:        'NHAN TU 104866682689 TRACE 237883 ND QR - {orderId} - Nguyen Huu Tho - MD',
+    },
+
+    endpoints: {
+      orderList:        '/backend/marketplace/order/v2/order/list',
+      confirmOrder:     '/marketplace/order/v2/order/note-plf',
+      saleOrders:       '/warehouse/core/v1/sale-orders',
+      checkPickTicket:  '/backend/warehouse/picking/v1/pick-ticket/active/check',
+      activePickTicket: '/warehouse/picking/v1/pick-ticket/active',
+      pickTicketItem:   '/backend/warehouse/picking/v1/pick-ticket-item',
+      staffZoneSession: '/warehouse/core/v1/staff-zone-session/check',
+      assignPickStaff:  '/warehouse/picking/v1/pick-ticket/assign-manual',
+      location:         '/warehouse/inventory/v1/location',
+      useBasket:        '/warehouse/picking/v1/sub-pick-ticket/basket/use',
+      pickItem:         '/warehouse/picking/v1/sub-pick-ticket-item/pick',
+      completePick:     '/warehouse/picking/v1/sub-pick-ticket/complete',
+      completePickSO:   '/warehouse/picking/v1/pick-ticket/pick-quantity',
+    },
+  },
+
 };

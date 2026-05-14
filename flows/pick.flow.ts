@@ -1,4 +1,3 @@
-import type { APIRequestContext } from '@playwright/test';
 import { PickService } from '../services/pick.service.js';
 import { QcService } from '../services/qc.service.js';
 import { OrderService } from '../services/order.service.js';
@@ -24,11 +23,11 @@ export class PickFlow {
   private readonly orderService: OrderService;
   private readonly cfg:          CountryConfig;
 
-  constructor(request: APIRequestContext, countryConfig?: CountryConfig) {
+  constructor(countryConfig?: CountryConfig) {
     this.cfg          = countryConfig ?? getCountryConfig();
-    this.pickService  = new PickService(request, this.cfg);
-    this.qcService    = new QcService(request, this.cfg);
-    this.orderService = new OrderService(request, this.cfg);
+    this.pickService  = new PickService(this.cfg);
+    this.qcService    = new QcService(this.cfg);
+    this.orderService = new OrderService(this.cfg);
   }
 
   async pickOrder(orderId: string): Promise<PickResult> {

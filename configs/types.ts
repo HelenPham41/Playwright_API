@@ -82,6 +82,17 @@ export interface CountryConfig {
     cancelOrder: string;
   };
 
+  pack?: {
+    warehouseCode: string;
+    zoneCode: string;
+    endpoints: {
+      staffZoneSession: string;
+      updateTicket: string;
+      getBin: string;
+      addBasket: string;
+    };
+  };
+
   qc?: {
     warehouseCode: string;
     zoneCode: string;

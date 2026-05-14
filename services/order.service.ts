@@ -1,5 +1,4 @@
-import type { APIRequestContext } from '@playwright/test';
-import { createClient } from '../clients/apiClient.js';
+import { createClient, requestLog } from '../clients/apiClient.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 import { ApiError, assertStatus } from '../errors/api.error.js';
@@ -17,7 +16,6 @@ export class OrderService {
   private readonly payload: OrderPayloadBuilder;
 
   constructor(
-    _request: APIRequestContext,
     countryConfig?: CountryConfig,
     payloadBuilder?: OrderPayloadBuilder,
   ) {
@@ -27,10 +25,10 @@ export class OrderService {
 
   async checkCart(token: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const res = await client.put(this.cfg.endpoints.checkCart, {
-      data: { isSelected: true, isAppliedAll: true },
-    });
+    const body   = { isSelected: true, isAppliedAll: true };
+    const res    = await client.put(this.cfg.endpoints.checkCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NOT_FOUND], 'checkCart');
+    requestLog.push({ step: 'checkCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
 
   async getCartInfo(token: string): Promise<CartInfo> {
@@ -60,25 +58,27 @@ export class OrderService {
       });
     });
 
+    requestLog.push({ step: 'getCartInfo', method: 'GET', url: res.url(), requestBody: null, responseStatus: res.status(), responseBody: { cartNo, skuCodes } });
     return { cartNo, skuCodes };
   }
 
   async removeCart(token: string, cartNo: string, skus: string[]): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const res = await client.put(this.cfg.endpoints.removeCart, {
-      data: this.payload.removeCartBody(cartNo, skus),
-    });
+    const body   = this.payload.removeCartBody(cartNo, skus);
+    const res    = await client.put(this.cfg.endpoints.removeCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NO_CONTENT], 'removeCart');
+    requestLog.push({ step: 'removeCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
 
   async addCart(token: string, cartNo: string | null): Promise<AddCartResult> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const res = await client.post(this.cfg.endpoints.addCart, {
-      data: this.payload.addCartBody(cartNo),
-    });
+    const body   = this.payload.addCartBody(cartNo);
+    const res    = await client.post(this.cfg.endpoints.addCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'addCart');
 
-    const newCartNo: string | undefined = (await res.json())?.data?.[0]?.cartNo;
+    const json = await res.json();
+    requestLog.push({ step: 'addCart', method: 'POST', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json });
+    const newCartNo: string | undefined = json?.data?.[0]?.cartNo;
     if (!newCartNo) throw new ApiError('addCart', res.status(), res.url(), ERROR_MSG.CART_NO_MISSING);
 
     return { cartNo: newCartNo };
@@ -86,20 +86,21 @@ export class OrderService {
 
   async updateCart(token: string, cartNo: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const res = await client.put(this.cfg.endpoints.updateCart, {
-      data: this.payload.updateCartBody(cartNo),
-    });
+    const body   = this.payload.updateCartBody(cartNo);
+    const res    = await client.put(this.cfg.endpoints.updateCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK], 'updateCart');
+    requestLog.push({ step: 'updateCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
 
   async checkout(token: string, cartNo: string): Promise<CheckoutResult> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const res = await client.put(this.cfg.endpoints.checkout, {
-      data: this.payload.checkoutBody(cartNo),
-    });
+    const body   = this.payload.checkoutBody(cartNo);
+    const res    = await client.put(this.cfg.endpoints.checkout, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'checkout');
 
-    const orderId: string | undefined = (await res.json())?.data?.[0]?.orderId;
+    const json = await res.json();
+    requestLog.push({ step: 'checkout', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json });
+    const orderId: string | undefined = json?.data?.[0]?.orderId;
     if (!orderId) throw new ApiError('checkout', res.status(), res.url(), ERROR_MSG.ORDER_ID_MISSING);
 
     return { orderId };
@@ -107,9 +108,9 @@ export class OrderService {
 
   async cancelOrder(basicToken: string, orderId: string, orderCode: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
-    const res = await client.put(this.cfg.endpoints.cancelOrder, {
-      data: { orderCode, orderId: Number(orderId), status: 'CANCEL', note: 'Cancel order for testing purpose' },
-    });
+    const body   = { orderCode, orderId: Number(orderId), status: 'CANCEL', note: 'Cancel order for testing purpose' };
+    const res    = await client.put(this.cfg.endpoints.cancelOrder, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK], 'cancelOrder');
+    requestLog.push({ step: 'cancelOrder', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
 }

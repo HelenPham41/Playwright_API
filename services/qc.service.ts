@@ -1,5 +1,5 @@
-import type { APIRequestContext, APIResponse } from '@playwright/test';
-import { createClient } from '../clients/apiClient.js';
+import type { APIResponse } from '@playwright/test';
+import { createClient, requestLog } from '../clients/apiClient.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 import { assertStatus } from '../errors/api.error.js';
@@ -17,10 +17,7 @@ export class QcService {
   private readonly cfg:     CountryConfig;
   private readonly payload: QcPayloadBuilder;
 
-  constructor(
-    _request: APIRequestContext,
-    countryConfig?: CountryConfig,
-  ) {
+  constructor(countryConfig?: CountryConfig) {
     this.cfg     = countryConfig ?? getCountryConfig();
     this.payload = new QcPayloadBuilder(this.qc);
   }
@@ -35,10 +32,10 @@ export class QcService {
    */
   async checkInQcZone(basicToken: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.web, basicToken, 'basic');
-    const response = await client.post(this.qc.endpoints.staffZoneSession, {
-      data: this.payload.checkInQcBody(this.qc.zoneCode),
-    });
+    const body     = this.payload.checkInQcBody(this.qc.zoneCode);
+    const response = await client.post(this.qc.endpoints.staffZoneSession, { data: body });
     await assertStatus(response, [HTTP_STATUS.OK], 'checkInQcZone');
+    requestLog.push({ step: 'checkInQcZone', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;
   }
 
@@ -47,11 +44,12 @@ export class QcService {
    */
   async pickTicket(basicToken: string, so: string): Promise<{ response: APIResponse; data: any }> {
     const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
-    const response = await client.get(this.qc.endpoints.pickTicket, {
-      params: this.payload.pickTicketParams(so),
-    });
+    const params   = this.payload.pickTicketParams(so);
+    const response = await client.get(this.qc.endpoints.pickTicket, { params });
     await assertStatus(response, [HTTP_STATUS.OK], 'pickTicket');
-    return { response, data: await response.json() };
+    const data = await response.json();
+    requestLog.push({ step: 'pickTicket', method: 'GET', url: response.url(), requestBody: params, responseStatus: response.status(), responseBody: data });
+    return { response, data };
   }
 
   /**
@@ -125,6 +123,7 @@ export class QcService {
     }
 
     console.log(`processSkuQrLoop | done: total=${skuList.length}, scanned=${scanned}, skipped=${skipped}`);
+    requestLog.push({ step: 'processSkuQrLoop', method: 'LOOP', url: this.qc.endpoints.scanTicketItem, requestBody: { skuCount: skuList.length }, responseStatus: 200, responseBody: { total: skuList.length, scanned, skipped } });
     return { total: skuList.length, scanned, skipped };
   }
 
@@ -133,11 +132,10 @@ export class QcService {
    */
   async doneQcMoveToPack(basicToken: string, ticketId: string, so: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
-    const response = await client.put(this.qc.endpoints.doneQcMoveToPack, {
-      data:    this.payload.doneQcBody(ticketId, so),
-      timeout: 3000,
-    });
+    const body     = this.payload.doneQcBody(ticketId, so);
+    const response = await client.put(this.qc.endpoints.doneQcMoveToPack, { data: body, timeout: 3000 });
     await assertStatus(response, [HTTP_STATUS.OK], 'doneQcMoveToPack');
+    requestLog.push({ step: 'doneQcMoveToPack', method: 'PUT', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;
   }
 
@@ -146,11 +144,10 @@ export class QcService {
    */
   async checkoutQc(basicToken: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
-    const response = await client.post(this.qc.endpoints.staffZoneSession, {
-      data:    this.payload.checkoutQcBody(this.qc.zoneCode),
-      timeout: 3000,
-    });
+    const body     = this.payload.checkoutQcBody(this.qc.zoneCode);
+    const response = await client.post(this.qc.endpoints.staffZoneSession, { data: body, timeout: 3000 });
     await assertStatus(response, [HTTP_STATUS.OK], 'checkoutQc');
+    requestLog.push({ step: 'checkoutQc', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;
   }
 }

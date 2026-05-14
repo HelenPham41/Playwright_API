@@ -32,6 +32,17 @@ export const VN_CONFIG: CountryConfig = {
     cancelOrder: '/backend/marketplace/order/v2/order/status',
   },
 
+  pack: {
+    warehouseCode: process.env.LOCATION  || 'BD',
+    zoneCode:      'PACK-RFID-01',
+    endpoints: {
+      staffZoneSession: '/warehouse/core/v1/staff-zone-session/check',
+      updateTicket:     '/warehouse/picking/v1/pick-ticket/v2/update',
+      getBin:           '/warehouse/inventory/v1/location',
+      addBasket:        '/warehouse/picking/v1/basket/use',
+    },
+  },
+
   qc: {
     warehouseCode: process.env.LOCATION  || 'BD',
     zoneCode:      process.env.ZONE_CODE || 'QC-01',

@@ -1,10 +1,9 @@
-import type { APIRequestContext, APIResponse } from '@playwright/test';
-import { createClient } from '../clients/apiClient.js';
+import type { APIResponse } from '@playwright/test';
+import { createClient, requestLog } from '../clients/apiClient.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 import { ApiError, assertStatus } from '../errors/api.error.js';
 import { HTTP_STATUS } from '../constants/status-code.js';
-import { extractSkuCodes } from '../utils/sku.util.js';
 import { PickPayloadBuilder } from '../payloads/pick.payload.js';
 
 export interface SkuItem {
@@ -27,10 +26,7 @@ export class PickService {
   private readonly cfg:     CountryConfig;
   private readonly payload: PickPayloadBuilder;
 
-  constructor(
-    _request: APIRequestContext,
-    countryConfig?: CountryConfig,
-  ) {
+  constructor(countryConfig?: CountryConfig) {
     this.cfg     = countryConfig ?? getCountryConfig();
     this.payload = new PickPayloadBuilder(this.pick);
   }
@@ -65,6 +61,7 @@ export class PickService {
       const price     = body.data[0]?.totalPrice;
       const orderCode = body.data[0]?.orderCode;
       console.log('getOrderInfo | OrderCode:', orderCode, 'Price:', price);
+      requestLog.push({ step: 'getOrderInfo', method: 'GET', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: { orderCode, price } });
       return { response, price, orderCode };
 
     } catch (error) {
@@ -92,6 +89,7 @@ export class PickService {
 
       if (so) {
         console.log('getSO | SO ready:', so);
+        requestLog.push({ step: 'getSO', method: 'GET', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: { saleOrderCode: so } });
         return so;
       }
 
@@ -140,7 +138,10 @@ export class PickService {
         firstOrder?.orderLines?.length > 0 &&
         firstOrder?.orderLines?.some((line: any) => line.pickItems?.length > 0);
 
-      if (ready) break;
+      if (ready) {
+        requestLog.push({ step: 'getOrderSku', method: 'GET', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: { so: firstOrder?.orderLines?.[0]?.saleOrderCode, ticketId: firstOrder?.pickTicketInfos?.[0]?.pickTicketId } });
+        break;
+      }
 
       console.log(`getOrderSku | not ready, wait 3s (attempt ${i})`);
       await new Promise(r => setTimeout(r, 3000));
@@ -172,10 +173,10 @@ export class PickService {
    */
   async confirmOrder(orderId: string, price: number): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.order, this.cfg.auth.basicToken, 'basic');
-    const response = await client.put(this.pick.endpoints.confirmOrder, {
-      data: this.payload.confirmOrderBody(orderId, price),
-    });
+    const body     = this.payload.confirmOrderBody(orderId, price);
+    const response = await client.put(this.pick.endpoints.confirmOrder, { data: body });
     await assertStatus(response, [HTTP_STATUS.OK], 'confirmOrder');
+    requestLog.push({ step: 'confirmOrder', method: 'PUT', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;
   }
 
@@ -184,10 +185,10 @@ export class PickService {
    */
   async checkPickTicket(basicToken: string, ticketId: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
-    const response = await client.post(this.pick.endpoints.checkPickTicket, {
-      data: this.payload.checkPickTicketBody(ticketId),
-    });
+    const body     = this.payload.checkPickTicketBody(ticketId);
+    const response = await client.post(this.pick.endpoints.checkPickTicket, { data: body });
     await assertStatus(response, [HTTP_STATUS.OK], 'checkPickTicket');
+    requestLog.push({ step: 'checkPickTicket', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;
   }
 
@@ -209,6 +210,7 @@ export class PickService {
 
     const json = await response.json();
     console.log('activePickTicket | message:', json.message);
+    requestLog.push({ step: 'activePickTicket', method: 'PUT', url: response.url(), requestBody: this.payload.activePickTicketBody(''), responseStatus: response.status(), responseBody: { message: json.message } });
     return { response, message: json.message, url: response.url() };
   }
 
@@ -238,6 +240,7 @@ export class PickService {
         const zone         = locationDetails[0]?.zone;
         const locationCode = locationDetails[0]?.locationCode;
         console.log('getZoneAndLocation | zone:', zone, 'locationCode:', locationCode);
+        requestLog.push({ step: 'getZoneAndLocation', method: 'GET', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: { zone, locationCode } });
         return { response, zone, locationCode };
       }
 
@@ -253,10 +256,10 @@ export class PickService {
    */
   async checkInPick(basicToken: string, zone: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic');
-    const response = await client.post(this.pick.endpoints.staffZoneSession, {
-      data: this.payload.checkInPickBody(zone),
-    });
+    const body     = this.payload.checkInPickBody(zone);
+    const response = await client.post(this.pick.endpoints.staffZoneSession, { data: body });
     console.log('checkInPick | status:', response.status());
+    requestLog.push({ step: 'checkInPick', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;
   }
 
@@ -280,6 +283,7 @@ export class PickService {
         const subTicketId = json?.data?.[0]?.ticketId;
         if (!subTicketId) throw new Error('subTicketId not found in response');
         console.log('assignPickStaff | OK, subTicketId:', subTicketId);
+        requestLog.push({ step: 'assignPickStaff', method: 'PUT', url: response.url(), requestBody: body, responseStatus: statusCode, responseBody: json });
         return subTicketId;
       }
 
@@ -308,6 +312,7 @@ export class PickService {
     if (!firstOTL) throw new ApiError('getOTL', response.status(), response.url(), 'OTL list is EMPTY');
 
     console.log('getOTL | firstOTL:', firstOTL);
+    requestLog.push({ step: 'getOTL', method: 'GET', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: { firstOTL } });
     return { firstOTL, response };
   }
 
@@ -324,7 +329,9 @@ export class PickService {
       data: this.payload.useBasketBody(subTicketId, otlCode),
     });
     await assertStatus(response, [HTTP_STATUS.OK], 'useBasket');
-    return { response, message: await response.text(), url: response.url() };
+    const msg = await response.text();
+    requestLog.push({ step: 'useBasket', method: 'POST', url: response.url(), requestBody: this.payload.useBasketBody(subTicketId, otlCode), responseStatus: response.status(), responseBody: msg });
+    return { response, message: msg, url: response.url() };
   }
 
   /**
@@ -372,6 +379,7 @@ export class PickService {
     }
 
     console.log('checkPickItems | done');
+    requestLog.push({ step: 'checkPickItems', method: 'LOOP', url: this.pick.endpoints.pickItem, requestBody: { skuCount: skuList.length }, responseStatus: lastResponse?.status() ?? 0, responseBody: { done: true } });
     return { response: lastResponse };
   }
 
@@ -388,6 +396,7 @@ export class PickService {
         });
         console.log(`completePick | attempt ${attempt} status:`, response.status());
         await assertStatus(response, [HTTP_STATUS.OK], 'completePick');
+        requestLog.push({ step: 'completePick', method: 'PUT', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
         return response;
       } catch (error) {
         console.log(`completePick | attempt ${attempt} failed`);
@@ -413,6 +422,7 @@ export class PickService {
         });
         console.log(`completePickForSO | attempt ${attempt} status:`, response.status());
         await assertStatus(response, [HTTP_STATUS.OK], 'completePickForSO');
+        requestLog.push({ step: 'completePickForSO', method: 'PUT', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
         return response;
       } catch (error) {
         console.log(`completePickForSO | attempt ${attempt} failed`);
@@ -429,14 +439,14 @@ export class PickService {
    */
   async checkoutPick(basicToken: string, zone: string): Promise<APIResponse> {
     const client = await createClient(this.cfg.hosts.order, basicToken, 'basic');
+    const body   = this.payload.checkoutPickBody(zone);
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        const response = await client.post(this.pick.endpoints.staffZoneSession, {
-          data: this.payload.checkoutPickBody(zone),
-        });
+        const response = await client.post(this.pick.endpoints.staffZoneSession, { data: body });
         console.log(`checkoutPick | attempt ${attempt} status:`, response.status());
         await assertStatus(response, [HTTP_STATUS.OK], 'checkoutPick');
+        requestLog.push({ step: 'checkoutPick', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
         return response;
       } catch (error) {
         console.log(`checkoutPick | attempt ${attempt} failed`);
@@ -447,4 +457,24 @@ export class PickService {
 
     throw new Error('checkoutPick failed after retries');
   }
+}
+
+function extractSkuCodes(jsonData: any): any[] {
+  const result: any[] = [];
+  if (!jsonData?.data?.length) return result;
+  for (const order of jsonData.data) {
+    for (const line of order?.orderLines ?? []) {
+      const items = line.subItems?.length ? line.subItems : [line];
+      for (const item of items) {
+        result.push({
+          sku:              item.sku,
+          seller:           item.sellerCode,
+          product_id:       item.adminProductId,
+          reservedQuantity: item.quantity,
+          sellerCodeLength: item.sellerCode?.length ?? 0,
+        });
+      }
+    }
+  }
+  return result;
 }

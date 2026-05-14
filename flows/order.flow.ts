@@ -1,4 +1,3 @@
-import type { APIRequestContext } from '@playwright/test';
 import { AuthService } from '../services/auth.service.js';
 import { OrderService } from '../services/order.service.js';
 import type { CountryConfig } from '../configs/types.js';
@@ -16,10 +15,10 @@ export class OrderFlow {
   private readonly authService: AuthService;
   private readonly orderService: OrderService;
 
-  constructor(request: APIRequestContext, countryConfig?: CountryConfig) {
+  constructor(countryConfig?: CountryConfig) {
     const cfg = countryConfig ?? getCountryConfig();
-    this.authService  = new AuthService(request, cfg);
-    this.orderService = new OrderService(request, cfg);
+    this.authService  = new AuthService(cfg);
+    this.orderService = new OrderService(cfg);
   }
 
   async placeOrder(): Promise<OrderResult> {

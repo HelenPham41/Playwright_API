@@ -1,163 +1,90 @@
-import { expect, request } from "@playwright/test";
-import type { APIRequestContext } from "@playwright/test";
-import config from "../configs/index.js";
-import { PackService } from "../services/pack.service.js";
-import { OrderService } from "../services/order.service.js";
-import { PickService } from "../services/pick.service.js";
-import { teardownOrder } from "../utils/teardown.js";
-import { handleApiResponse } from '../utils/api-helper.js';
+import { PackService } from '../services/pack.service.js';
+import { OrderService } from '../services/order.service.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError } from '../errors/api.error.js';
+
+export interface PackInput {
+  so: string;
+  ticketId: string;
+  orderId: string;
+  orderCode: string | undefined;
+}
+
+export interface PackResult {
+  so: string;
+  bin: string | null;
+}
 
 export class PackFlow {
 
-    private packService = new PackService();
+  private readonly packService:  PackService;
+  private readonly orderService: OrderService;
+  private readonly cfg:          CountryConfig;
 
-    async run(
-        request: APIRequestContext,
-        basicToken: string,
-        input: {
-            so: string;
-            ticketId: string;
-            orderId: string;
-        }
-    ) {
+  constructor(countryConfig?: CountryConfig) {
+    this.cfg          = countryConfig ?? getCountryConfig();
+    this.packService  = new PackService(this.cfg);
+    this.orderService = new OrderService(this.cfg);
+  }
 
-        console.log("\n==============================");
-        console.log("========== PACK FLOW =========");
-        console.log("==============================");
+  async packOrder(input: PackInput): Promise<PackResult> {
+    const basicToken = this.cfg.auth.basicToken;
+    const country    = process.env.COUNTRY ?? 'UNKNOWN';
+    console.log(`===== PACK FLOW ${country} START =====`);
 
-        const location = await config.location;
-        const { so, ticketId, orderId } = input;
+    const { so, ticketId, orderId, orderCode } = input;
+    let checkedIn = false;
 
-        console.log("SO:", so);
-        console.log("TicketId:", ticketId);
+    try {
+      // Step 1 — Check In Pack Zone
+      await this.packService.packCheckin(basicToken);
+      checkedIn = true;
+      console.log('Step 1 | Check In Pack     : OK');
 
-        const packService = new PackService();
-        const pickService = new PickService(request);
-        const orderService = new OrderService(request);
+      // Step 2 — Update Ticket → PACKING
+      await this.packService.packPacking(basicToken, ticketId);
+      console.log('Step 2 | Pack Packing      : OK');
 
-        const orderInfo = await pickService.getOrderInfo(basicToken, orderId);
-        const orderCode = orderInfo.orderCode;
+      // Step 3 — Get BIN
+      const { bin } = await this.packService.getBin(basicToken);
+      if (!bin) throw new Error('No BIN available');
+      console.log(`Step 3 | Get BIN           : bin=${bin}`);
 
-        /**
-         * PACK-01 Checkin pack zone
-         */
-        const packCheckinResponse =
-            await this.packService.packCheckin();
+      // Step 4 — Add Basket
+      await this.packService.addBasket(basicToken, ticketId, bin);
+      console.log('Step 4 | Add Basket        : OK');
 
-        await handleApiResponse(packCheckinResponse, [200]);
+      // Step 5 — Update Ticket → WAIT_TO_DELIVERY
+      await this.packService.updateTicket(basicToken, ticketId, so);
+      console.log('Step 5 | Update Ticket     : OK');
 
-        console.log("Pack Checkin PASS:", packCheckinResponse.status());
+      // Step 6 — Pack Complete
+      await this.packService.packComplete(basicToken, ticketId);
+      console.log('Step 6 | Pack Complete     : OK');
 
+      // Step 7 — Checkout Pack
+      await this.packService.packCheckout(basicToken);
+      checkedIn = false;
+      console.log('Step 7 | Checkout Pack     : OK');
 
-        /**
-         * PACK-02 Update ticket status to PACKING
-         */
-        const packPackingResponse =
-            await this.packService.packPacking(ticketId);
+      console.log(`===== PACK FLOW ${country} END =====`);
+      return { so, bin };
 
-        await handleApiResponse(packPackingResponse, [200]);
+    } catch (error) {
+      if (error instanceof ApiError) console.error(`Pack flow failed at: ${error.message}`);
 
-        console.log("Pack Packing PASS:", packPackingResponse.status());
-
-
-        /**
-         * PACK-03 Get BIN
-         */
-        const getBinResult =
-            await this.packService.getBin();
-
-        await handleApiResponse(getBinResult.response, [200]);
-
-        const bin = getBinResult.bin;
-
-        console.log("BIN:", bin);
-
-
-        /**
-         * PACK-04 Add Basket
-         */
-        const addBasketResponse =
-            await this.packService.addBasket(ticketId, bin);
-
-        // ✅ ALWAYS extract status first
-        const status = addBasketResponse.status();
-
-        if (status !== 200) {
-
-            let mainError: any;
-
-            try {
-                await handleApiResponse(addBasketResponse, [200]);
-            } catch (err) {
-                mainError = err;
-            }
-
-            // Run teardown safely (never override main error)
-            try {
-                await teardownOrder(
-                    orderService,
-                    this.packService,
-                    basicToken,
-                    orderId,
-                    location,
-                    orderCode
-                );
-            } catch (teardownError) {
-                console.error("⚠️ Teardown failed:", teardownError);
-            }
-
-            // ✅ Correct status usage
-            throw mainError || new Error(
-                `PACK-04 failed | Status: ${status}`
-            );
-        }
-
-        console.log("Add Basket PASS:", status);
-
-
-        /**
-         * PACK-05 Update Ticket
-         */
-        const updateTicketResponse =
-            await this.packService.updateTicket(
-                ticketId,
-                so,
-            );
-
+      if (checkedIn) {
+        try { await this.packService.packCheckout(basicToken); } catch {}
+      }
+      if (orderCode) {
         try {
-            await handleApiResponse(updateTicketResponse, [200]);
-            console.log("Update Ticket PASS:", updateTicketResponse.status());
-        } catch (err: any) {
-            console.error("❌ Update Ticket failed:", {
-                status: err.status,
-                message: err.body || err.message
-            });
-            throw err;
-        }
+          await this.orderService.cancelOrder(basicToken, orderId, orderCode);
+          console.log(`Pack flow cleanup: cancelled order ${orderId}`);
+        } catch {}
+      }
 
-
-        /**
-         * PACK-06 Pack Complete
-         */
-        const packCompleteResponse =
-            await this.packService.packComplete(
-                ticketId,
-            );
-
-        await handleApiResponse(packCompleteResponse, [200, 403]);
-
-        console.log("Pack Complete PASS:", packCompleteResponse.status());
-
-
-        /**
-         * PACK-07 Pack Checkout
-         */
-        const packCheckoutResponse =
-            await this.packService.packCheckout();
-
-        await handleApiResponse(packCheckoutResponse, [200]);
-
-        console.log("Pack Checkout PASS:", packCheckoutResponse.status());
-
+      throw error;
     }
+  }
 }

@@ -7,12 +7,16 @@ export default defineConfig({
 
   workers: 1,
 
+  repeatEach: parseInt(process.env.RUN_TIMES ?? '1'),
+
   reporter: [
-    ['html', { open: 'never' }]
+    ['list'],
+    ['html',                                { open: 'never' }],
+    ['./reporters/html-summary.reporter.ts'],
   ],
 
   use: {
-    trace: 'off'
+    trace: 'retain-on-failure',
   },
 
   projects: [

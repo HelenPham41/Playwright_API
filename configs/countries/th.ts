@@ -6,7 +6,7 @@ export const TH_CONFIG: CountryConfig = {
   hosts: {
     order:    process.env.BASE_URL     || 'https://internal.stg.th.buymed.tech',
     internal: process.env.INTERNAL_URL || 'https://internal.stg.th.buymed.tech',
-    web:      process.env.WEB_URL      || 'https://internal.stg.th.buymed.tech',
+    web:      process.env.WEB_URL      || 'https://stg.th.buymed.tech',
   },
 
   auth: {

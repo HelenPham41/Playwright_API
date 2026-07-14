@@ -4,7 +4,7 @@ type PickCfg = NonNullable<CountryConfig['pick']>;
 
 export class PickPayloadBuilder {
 
-  constructor(private readonly pick: PickCfg) {}
+  constructor(private readonly pick: PickCfg) { }
 
   getOrderInfoParams(orderId: string) {
     return { q: JSON.stringify({ orderId: Number(orderId) }) };
@@ -18,18 +18,24 @@ export class PickPayloadBuilder {
     return { saleOrderCode: so, warehouseCode: this.pick.warehouseCode };
   }
 
-  confirmOrderBody(orderId: string, price: number) {
+  confirmPaymentBody(orderId: string, price: number) {
     const p = this.pick.confirmPayment;
     return {
-      BankCode:               p.bankCode,
-      BankAccountNumber:      p.bankAccountNumber,
-      Remark:                 p.remarkTemplate.replace('{orderId}', orderId),
-      Amount:                 price,
-      BankChannel:            p.bankChannel,
+      BankCode: p.bankCode,
+      BankAccountNumber: p.bankAccountNumber,
+      Remark: p.remarkTemplate.replace('{orderId}', orderId),
+      Amount: price,
+      BankChannel: p.bankChannel,
       BankingTransactionCode: p.bankingTransactionCode,
     };
   }
-
+  confirmOrderBody(orderId: string, orderCode: string) {
+    return {
+      orderCode,
+      orderId: Number(orderId),
+      status: 'CONFIRMED',
+    };
+  }
   checkPickTicketBody(ticketId: string) {
     return { ticketIdList: [Number(ticketId)], warehouseCode: this.pick.warehouseCode };
   }
@@ -46,9 +52,9 @@ export class PickPayloadBuilder {
   getZoneLocationHeaders(basicToken: string, internalHost: string) {
     return {
       Authorization: `Basic ${basicToken}`,
-      Referer:       `${internalHost}/wms/`,
-      'User-Agent':  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-      'Content-Type':'text/plain;charset=UTF-8',
+      Referer: `${internalHost}/wms/`,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
+      'Content-Type': 'text/plain;charset=UTF-8',
     };
   }
 
@@ -63,8 +69,8 @@ export class PickPayloadBuilder {
       ticketId,
       wareHouseCode: this.pick.warehouseCode,
       so,
-      employee:      this.pick.employee,
-      employeeId:    this.pick.employeeId,
+      employee: this.pick.employee,
+      employeeId: this.pick.employeeId,
     };
   }
 
@@ -78,12 +84,12 @@ export class PickPayloadBuilder {
 
   pickItemBody(subTicketId: string, sku: string, quantity: number, locationCode: string) {
     return {
-      warehouseCode:  this.pick.warehouseCode,
-      name:           '',
-      ticketId:       Number(subTicketId),
+      warehouseCode: this.pick.warehouseCode,
+      name: '',
+      ticketId: Number(subTicketId),
       sku,
       pickedQuantity: quantity,
-      location:       locationCode,
+      location: locationCode,
     };
   }
 

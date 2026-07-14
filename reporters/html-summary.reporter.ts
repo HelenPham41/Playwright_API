@@ -18,6 +18,7 @@ interface RunRecord {
   index:        number;
   testName:     string;
   country:      string;
+  baseUrl:      string;
   status:       'PASS' | 'FAIL';
   orderId:      string;
   so:           string;
@@ -71,6 +72,7 @@ export default class HtmlSummaryReporter implements Reporter {
       index:        this.runIndex,
       testName:     test.title,
       country:      ann('country'),
+      baseUrl:      ann('baseUrl'),
       status,
       orderId:      ann('orderId'),
       so:           ann('so'),
@@ -90,13 +92,14 @@ export default class HtmlSummaryReporter implements Reporter {
     if (!fs.existsSync(REPORT_DIR)) fs.mkdirSync(REPORT_DIR, { recursive: true });
 
     const country      = this.records[0]?.country ?? process.env.COUNTRY ?? 'VN';
+    const baseUrl      = this.records[0]?.baseUrl || 'N/A';
     const iso          = new Date().toISOString().slice(0, 19);
     const fileStamp    = iso.replace(/[-T:]/g, '');
     const display      = iso.replace('T', ' ');
     const totalSeconds = Math.round(result.duration / 1000);
     const filepath     = path.join(REPORT_DIR, `${fileStamp}-${country}.html`);
 
-    fs.writeFileSync(filepath, this.buildHtml(display, country, totalSeconds), 'utf8');
+    fs.writeFileSync(filepath, this.buildHtml(display, country, baseUrl, totalSeconds), 'utf8');
     console.log(`\nReport saved: ${filepath}`);
 
     this.rotateOldReports();
@@ -133,7 +136,7 @@ export default class HtmlSummaryReporter implements Reporter {
     return `${m}m ${s}s`;
   }
 
-  private buildHtml(datetime: string, country: string, totalSeconds: number): string {
+  private buildHtml(datetime: string, country: string, baseUrl: string, totalSeconds: number): string {
     const total    = this.records.length;
     const pass     = this.records.filter(r => r.status === 'PASS').length;
     const fail     = total - pass;
@@ -163,7 +166,6 @@ export default class HtmlSummaryReporter implements Reporter {
     // ── Section 2: Execution Environment ───────────────────────────────────
     const osName   = process.platform === 'win32' ? `Windows ${os.release()}` :
                      process.platform === 'darwin' ? `macOS ${os.release()}` : `Linux ${os.release()}`;
-    const baseUrl  = process.env.BASE_URL ?? 'https://api.v2-stg.thuocsi.vn';
     const runTimes = process.env.RUN_TIMES ?? '1';
 
     const envSection = `

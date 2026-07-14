@@ -128,10 +128,10 @@ Hai factory song song, cùng đọc `process.env.COUNTRY`:
 | `configs/country.factory.ts` → `getCountryConfig()` | `CountryConfig` | hosts, auth, endpoints |
 | `test-data/scenario.data.factory.ts` → `getScenarioData()` | `ScenarioData` | SKU, customer, invoice, payment |
 
-File config và test-data đi theo cặp theo từng country:
-- `configs/countries/vn.ts` + `test-data/vn/scenario.data.ts`
-- `configs/countries/th.ts` + `test-data/th/scenario.data.ts`
-- `configs/countries/kh.ts` + `test-data/kh/scenario.data.ts` *(chưa tạo)*
+File config và test-data đi theo cặp theo từng country (đặt thẳng trong `test-data/`, không có subfolder):
+- `configs/countries/vn.ts` + `test-data/vn.scenario.data.ts`
+- `configs/countries/th.ts` + `test-data/th.scenario.data.ts`
+- `configs/countries/kh.ts` + `test-data/kh.scenario.data.ts`
 
 ### Quy ước test file
 
@@ -423,11 +423,17 @@ Sau khi hoàn thành refactor:
 
 ## Khu vực chưa hoàn thiện
 
-- `flows/pack.flow.ts`, `services/pack.service.ts` — chưa refactor sang `CountryConfig`. Vẫn dùng `configs/stg.env.ts` trực tiếp.
-- `configs/stg.env.ts` — legacy env file còn được giữ vì pack chưa refactor.
-- `core/apiRequest.ts` — dead code, đã bị thay thế bởi `clients/apiClient.ts`. Có thể xóa an toàn.
-- `OrderFlow.placeOrder()` hiện dùng chung cho VN và TH (cùng 7 bước). Nếu KH có flow khác, cần thêm dispatch logic trong `placeOrder()`.
-- Chưa có teardown tự động cho QC flow — khi test fail giữa chừng phải xử lý stale state thủ công.
+- `OrderFlow.placeOrder()` hiện dùng chung cho VN, TH và KH (cùng 7 bước). Nếu KH cần flow khác về sau, thêm dispatch logic trong `placeOrder()`.
+- `configs/countries/th.ts` — `auth.basicToken` và một số endpoint còn TODO chưa confirm; chưa có section `pick`/`qc`/`pack` nên warehouse flow (pick/qc/pack) chưa chạy được cho TH.
+- `test-data/th.scenario.data.ts` — `checkoutPaymentCode`/`checkoutPaymentCardList` còn để trống, cần bổ sung khi có dữ liệu thật.
+- `configs/countries/kh.ts` — `auth.username`/`auth.password` đang fallback đúng y hệt giá trị của TH (copy-paste sót) → login KH hiện fail "Wrong password" vì tài khoản đó không hợp lệ cho môi trường KH. Cần credential thật cho KH (qua env `API_USERNAME`/`API_PASSWORD` hoặc sửa fallback). `basicToken` và các endpoint cũng còn TODO chưa confirm; chưa có section `pick`/`qc`/`pack`.
+- `test-data/kh.scenario.data.ts` — `customerRegionCode` để trống (chưa có giá trị thật, xem TODO trong file); `checkoutPaymentCode`/`checkoutPaymentCardList` cũng còn để trống.
+- `clients/apiClient.ts` — mỗi lần gọi `createClient()` đều tạo `APIRequestContext` mới qua `request.newContext()` và không bao giờ `dispose()`, kể cả trong các polling loop (`getSO`, `getOrderSku`, `getZoneAndLocation` trong `pick.service.ts`). Không gây lỗi với test run ngắn nhưng là resource leak cần lưu ý nếu tăng quy mô.
+- `services/pack.service.ts` `packComplete()` chấp nhận cả `HTTP_STATUS.FORBIDDEN` (403) như status hợp lệ — cần confirm lại đây có phải là idempotency workaround chủ đích hay không trước khi coi là chuẩn.
+
+> Đã xử lý gần đây: KH đã được đăng ký đầy đủ trong cả `country.factory.ts` và `scenario.data.factory.ts`, project `KH` đã uncomment trong `playwright.config.ts` — `npx playwright test tests/placeOrder.spec.ts --project=KH` chạy được tới tận API thật (dừng ở bước login do credential sai, không phải lỗi code/data).
+
+> Đã xử lý (không còn là "chưa hoàn thiện" nữa): `pack.flow.ts`/`pack.service.ts` đã refactor xong sang `CountryConfig`; `configs/stg.env.ts` và `core/apiRequest.ts` đã bị xóa khỏi repo; QC flow đã có teardown tự động (catch block trong `qc.flow.ts` gọi `checkoutQc()` + `cancelOrder()`); `checkInPick` trong `pick.flow.ts` giờ tự xử lý conflict cho cả session QC và PACK (gọi `qcService.checkoutQc()`/`packService.packCheckout()`, tự cancel đơn cũ nếu bị block bởi phiếu SOBD dang dở, rồi retry).
 
 ---
 
@@ -549,17 +555,16 @@ HTTP status không đủ để phân biệt lỗi — phải đọc `message` tr
 
 Logic xử lý nằm ở **flow layer** (`pick.flow.ts`), không phải service. `PickService.checkInPick()` chỉ thực hiện HTTP call đơn thuần và trả về response thô.
 
-**Khi `packCheckout()` trả về message chứa `'Nhân viên còn phiếu'`:**
+**Khi `packCheckout()` trả về message chứa SOBD code (phiếu PACK dang dở):**
 
-Nhân viên còn đơn PACK chưa hoàn thành. Response chứa SOBD code (ví dụ: `SOBD123456`).
+Nhân viên còn đơn PACK chưa hoàn thành. Response chứa SOBD code (ví dụ: `SOBD123456`). Xử lý bằng chung một helper với nhánh QC (`PickFlow.checkoutZoneWithRetry()` trong `pick.flow.ts`):
 
-Quy trình xử lý:
-1. Extract SOBD code bằng regex `/SOBD\d+/`
-2. Convert `SOBD123456` → `orderId = 123456` (bỏ prefix `SOBD`)
-3. Gọi `getOrderInfo(basicToken, orderId)` để lấy `orderCode`
-4. Gọi `getOrderSku(basicToken, sobdCode)` để lấy `ticketId`
-5. Gọi `teardownOrder(...)` để cancel đơn cũ
-6. Retry `checkInPick`
+1. Extract SOBD code từ error message bằng regex `/SOBD\d+/`
+2. Convert `SOBD123456` → `orderIdOld = '123456'`
+3. Gọi `pickService.getOrderInfo(basicToken, orderIdOld)` để lấy `orderCode`
+4. Gọi `orderService.cancelOrder(basicToken, orderIdOld, orderCode)` → cancel đơn bị kẹt
+5. Retry `packCheckout` → 200 OK
+6. Retry `checkInPick` → tiếp tục flow bình thường
 
 ---
 

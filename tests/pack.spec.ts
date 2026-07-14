@@ -20,7 +20,6 @@ test('Pack Order', async ({ orderFlow, pickFlow, qcFlow, packFlow }, testInfo) =
 
   // Xóa HTTP log trước mỗi run — cần thiết khi repeatEach > 1 để tránh log bị cộng dồn
   clearRequestLog();
-  testInfo.annotations.push({ type: 'country', description: process.env.COUNTRY ?? 'VN' });
 
   // ── Step 1: Place Order ──────────────────────────────────────────────────
   // Login → AddCart → Checkout → trả về orderId

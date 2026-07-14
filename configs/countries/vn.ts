@@ -11,7 +11,7 @@ export const VN_CONFIG: CountryConfig = {
 
   auth: {
     username:      process.env.API_USERNAME || '0559948786',
-    password:      process.env.API_PASSWORD || 'H12345678h*',
+    password:      process.env.API_PASSWORD || 'Hanh12345$$',
     basicToken:    process.env.BASIC_TOKEN  || 'UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU=',
     loginEndpoint: '/marketplace/customer/v1/authentication',
   },
@@ -70,7 +70,7 @@ export const VN_CONFIG: CountryConfig = {
 
     endpoints: {
       orderList:        '/backend/marketplace/order/v2/order/list',
-      confirmOrder:     '/marketplace/order/v2/order/note-plf',
+      confirmOrder:     '/backend/marketplace/order/v2/order/status',
       saleOrders:       '/warehouse/core/v1/sale-orders',
       checkPickTicket:  '/backend/warehouse/picking/v1/pick-ticket/active/check',
       activePickTicket: '/warehouse/picking/v1/pick-ticket/active',

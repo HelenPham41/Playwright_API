@@ -25,7 +25,7 @@ export class OrderService {
 
   async checkCart(token: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const body   = { isSelected: true, isAppliedAll: true };
+    const body   = this.payload.checkCartBody();
     const res    = await client.put(this.cfg.endpoints.checkCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NOT_FOUND], 'checkCart');
     requestLog.push({ step: 'checkCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
@@ -95,11 +95,12 @@ export class OrderService {
   async checkout(token: string, cartNo: string): Promise<CheckoutResult> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
     const body   = this.payload.checkoutBody(cartNo);
+    console.log('checkout | request body:', JSON.stringify(body));
     const res    = await client.put(this.cfg.endpoints.checkout, { data: body });
+    const json   = await res.json().catch(() => null);
+    requestLog.push({ step: 'checkout', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'checkout');
 
-    const json = await res.json();
-    requestLog.push({ step: 'checkout', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json });
     const orderId: string | undefined = json?.data?.[0]?.orderId;
     if (!orderId) throw new ApiError('checkout', res.status(), res.url(), ERROR_MSG.ORDER_ID_MISSING);
 
@@ -108,7 +109,7 @@ export class OrderService {
 
   async cancelOrder(basicToken: string, orderId: string, orderCode: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
-    const body   = { orderCode, orderId: Number(orderId), status: 'CANCEL', note: 'Cancel order for testing purpose' };
+    const body   = this.payload.cancelOrderBody(orderId, orderCode);
     const res    = await client.put(this.cfg.endpoints.cancelOrder, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK], 'cancelOrder');
     requestLog.push({ step: 'cancelOrder', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });

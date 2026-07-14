@@ -26,8 +26,8 @@ export default defineConfig({
     {
       name: 'TH',
     },
-    // {
-    //   name: 'KH',
-    // },
+    {
+      name: 'KH',
+    },
   ],
 });

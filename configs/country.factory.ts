@@ -1,11 +1,12 @@
 import type { CountryConfig } from './types.js';
 import { VN_CONFIG } from './countries/vn.js';
 import { TH_CONFIG } from './countries/th.js';
+import { KH_CONFIG } from './countries/kh.js';
 
 const COUNTRY_MAP: Record<string, CountryConfig> = {
   VN: VN_CONFIG,
   TH: TH_CONFIG,
-  // KH: KH_CONFIG,
+  KH: KH_CONFIG,
 };
 
 export function getCountryConfig(): CountryConfig {

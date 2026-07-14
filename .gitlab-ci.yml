@@ -27,7 +27,7 @@ run_fullflow_tests:
     # Run tests and capture exit code
     - |
       echo Starting Playwright tests
-      npx playwright test tests/fullflow.spec.ts
+      npx playwright test tests/pack.spec.ts
       EXIT_CODE=$?
 
       echo Playwright exit code: $EXIT_CODE
@@ -44,5 +44,4 @@ run_fullflow_tests:
     paths:
       - playwright-report
       - test-results
-      - reports/fullflow-summary.html
-      - reports/fullflow-summary.json
+      - reports/*.html

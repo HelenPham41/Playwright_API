@@ -169,11 +169,11 @@ export class PickService {
   }
 
   /**
-   * PUT /marketplace/order/v2/order/note-plf
+   * PUT /backend/marketplace/order/v2/order/status
    */
-  async confirmOrder(orderId: string, price: number): Promise<APIResponse> {
-    const client   = await createClient(this.cfg.hosts.order, this.cfg.auth.basicToken, 'basic');
-    const body     = this.payload.confirmOrderBody(orderId, price);
+  async confirmOrder(orderId: string, orderCode: string): Promise<APIResponse> {
+    const client   = await createClient(this.cfg.hosts.internal, this.cfg.auth.basicToken, 'basic');
+    const body     = this.payload.confirmOrderBody(orderId, orderCode);
     const response = await client.put(this.pick.endpoints.confirmOrder, { data: body });
     await assertStatus(response, [HTTP_STATUS.OK], 'confirmOrder');
     requestLog.push({ step: 'confirmOrder', method: 'PUT', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });

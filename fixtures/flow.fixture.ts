@@ -22,25 +22,33 @@ export const test = base.extend<FlowFixtures>({
   orderFlow: async ({}, use, testInfo) => {
     const country = process.env.COUNTRY || testInfo.project.name || 'VN';
     process.env.COUNTRY = country;
-    await use(new OrderFlow(getCountryConfig()));
+    const cfg = getCountryConfig();
+    testInfo.annotations.push({ type: 'country', description: country }, { type: 'baseUrl', description: cfg.hosts.order });
+    await use(new OrderFlow(cfg));
   },
 
   pickFlow: async ({}, use, testInfo) => {
     const country = process.env.COUNTRY || testInfo.project.name || 'VN';
     process.env.COUNTRY = country;
-    await use(new PickFlow(getCountryConfig()));
+    const cfg = getCountryConfig();
+    testInfo.annotations.push({ type: 'country', description: country }, { type: 'baseUrl', description: cfg.hosts.order });
+    await use(new PickFlow(cfg));
   },
 
   qcFlow: async ({}, use, testInfo) => {
     const country = process.env.COUNTRY || testInfo.project.name || 'VN';
     process.env.COUNTRY = country;
-    await use(new QcFlow(getCountryConfig()));
+    const cfg = getCountryConfig();
+    testInfo.annotations.push({ type: 'country', description: country }, { type: 'baseUrl', description: cfg.hosts.order });
+    await use(new QcFlow(cfg));
   },
 
   packFlow: async ({}, use, testInfo) => {
     const country = process.env.COUNTRY || testInfo.project.name || 'VN';
     process.env.COUNTRY = country;
-    await use(new PackFlow(getCountryConfig()));
+    const cfg = getCountryConfig();
+    testInfo.annotations.push({ type: 'country', description: country }, { type: 'baseUrl', description: cfg.hosts.order });
+    await use(new PackFlow(cfg));
   },
 });
 

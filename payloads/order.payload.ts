@@ -22,6 +22,10 @@ export class OrderPayloadBuilder {
     };
   }
 
+  checkCartBody() {
+    return { isSelected: true, isAppliedAll: true };
+  }
+
   removeCartBody(cartNo: string, skus: string[]) {
     return {
       cartNo,
@@ -119,6 +123,15 @@ export class OrderPayloadBuilder {
         customerTags: d.checkoutPaymentCustomerTags,
         description:  '<p></p>',
       }],
+    };
+  }
+
+  cancelOrderBody(orderId: string, orderCode: string) {
+    return {
+      orderCode,
+      orderId: Number(orderId),
+      status:  'CANCEL',
+      note:    'Cancel order for testing purpose',
     };
   }
 }

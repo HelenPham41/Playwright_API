@@ -1,5 +1,7 @@
+import type { APIResponse } from '@playwright/test';
 import { PickService } from '../services/pick.service.js';
 import { QcService } from '../services/qc.service.js';
+import { PackService } from '../services/pack.service.js';
 import { OrderService } from '../services/order.service.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
@@ -20,6 +22,7 @@ export class PickFlow {
 
   private readonly pickService:  PickService;
   private readonly qcService:    QcService;
+  private readonly packService:  PackService;
   private readonly orderService: OrderService;
   private readonly cfg:          CountryConfig;
 
@@ -27,7 +30,36 @@ export class PickFlow {
     this.cfg          = countryConfig ?? getCountryConfig();
     this.pickService  = new PickService(this.cfg);
     this.qcService    = new QcService(this.cfg);
+    this.packService  = new PackService(this.cfg);
     this.orderService = new OrderService(this.cfg);
+  }
+
+  /**
+   * checkout bị block bởi phiếu (SOBD) dang dở của lượt chạy trước — auto-cancel đơn đó rồi retry checkout.
+   */
+  private async checkoutZoneWithRetry(
+    basicToken: string,
+    label: string,
+    checkout: (basicToken: string) => Promise<APIResponse>,
+  ): Promise<void> {
+    try {
+      await checkout(basicToken);
+    } catch (checkoutError) {
+      const errMsg = checkoutError instanceof ApiError ? checkoutError.message : String(checkoutError);
+      const match  = errMsg.match(/SOBD\d+/);
+      if (!match) throw checkoutError;
+
+      const sobdCode   = match[0];
+      const orderIdOld = sobdCode.replace('SOBD', '');
+      console.log(`Step 9  | ${label} blocked by ${sobdCode}, cancelling stuck order...`);
+
+      const info = await this.pickService.getOrderInfo(basicToken, orderIdOld);
+      if (info.orderCode) {
+        await this.orderService.cancelOrder(basicToken, orderIdOld, info.orderCode);
+        console.log(`Step 9  | Cancelled ${sobdCode} OK, retry ${label}...`);
+      }
+      await checkout(basicToken);
+    }
   }
 
   async pickOrder(orderId: string): Promise<PickResult> {
@@ -39,10 +71,11 @@ export class PickFlow {
       // Step 1 — Get Order Info
       const orderInfo = await this.pickService.getOrderInfo(basicToken, orderId);
       if (orderInfo.price === undefined) throw new Error('price not found in order info');
-      console.log(`Step 1  | Get Order Info   : OK, price=${orderInfo.price}`);
+      if (!orderInfo.orderCode) throw new Error('orderCode not found in order info');
+      console.log(`Step 1  | Get Order Info   : OK, price=${orderInfo.price}, orderCode=${orderInfo.orderCode}`);
 
       // Step 2 — Confirm Order
-      await this.pickService.confirmOrder(orderId, orderInfo.price);
+      await this.pickService.confirmOrder(orderId, orderInfo.orderCode);
       console.log('Step 2  | Confirm Order    : OK');
 
       // Step 3 — Wait before Get SO
@@ -69,7 +102,7 @@ export class PickFlow {
       const { zone, locationCode } = await this.pickService.getZoneAndLocation(basicToken, so);
       console.log(`Step 8  | Zone & Location  : zone=${zone}, location=${locationCode}`);
 
-      // Step 9 — Check In Pick (handles QC session conflict automatically)
+      // Step 9 — Check In Pick (handles QC/PACK session conflict automatically)
       let checkInResponse = await this.pickService.checkInPick(basicToken, zone);
 
       if (checkInResponse.status() === HTTP_STATUS.BAD_REQUEST) {
@@ -78,25 +111,11 @@ export class PickFlow {
 
         if (message.includes('công việc QC')) {
           console.log('Step 9  | QC session detected, checking out QC first...');
-          try {
-            await this.qcService.checkoutQc(basicToken);
-          } catch (checkoutError) {
-            // checkoutQc bị block bởi phiếu QC dang dở — auto-cancel đơn đó rồi retry
-            const errMsg = checkoutError instanceof ApiError ? checkoutError.message : String(checkoutError);
-            const match  = errMsg.match(/SOBD\d+/);
-            if (!match) throw checkoutError;
-
-            const sobdCode   = match[0];
-            const orderIdOld = sobdCode.replace('SOBD', '');
-            console.log(`Step 9  | checkoutQc blocked by ${sobdCode}, cancelling stuck order...`);
-
-            const info = await this.pickService.getOrderInfo(basicToken, orderIdOld);
-            if (info.orderCode) {
-              await this.orderService.cancelOrder(basicToken, orderIdOld, info.orderCode);
-              console.log(`Step 9  | Cancelled ${sobdCode} OK, retry checkoutQc...`);
-            }
-            await this.qcService.checkoutQc(basicToken);
-          }
+          await this.checkoutZoneWithRetry(basicToken, 'checkoutQc', bt => this.qcService.checkoutQc(bt));
+          checkInResponse = await this.pickService.checkInPick(basicToken, zone);
+        } else if (message.includes('công việc PACK')) {
+          console.log('Step 9  | PACK session detected, checking out PACK first...');
+          await this.checkoutZoneWithRetry(basicToken, 'packCheckout', bt => this.packService.packCheckout(bt));
           checkInResponse = await this.pickService.checkInPick(basicToken, zone);
         }
       }

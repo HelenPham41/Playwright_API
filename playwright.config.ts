@@ -1,21 +1,33 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-   testDir: './tests',
+  testDir: './tests',
 
   timeout: 80000,
 
-  workers: 1,   // ⭐ VERY IMPORTANT
+  workers: 1,
+
+  repeatEach: parseInt(process.env.RUN_TIMES ?? '1'),
 
   reporter: [
-    ['html', { open: 'never' }]
+    ['list'],
+    ['html',                                { open: 'never' }],
+    ['./reporters/html-summary.reporter.ts'],
   ],
 
-  // reporter: [
-  //   ['list']
-  // ],
-
   use: {
-    trace: 'off'
-  }
+    trace: 'retain-on-failure',
+  },
+
+  projects: [
+    {
+      name: 'VN',
+    },
+    {
+      name: 'TH',
+    },
+    // {
+    //   name: 'KH',
+    // },
+  ],
 });

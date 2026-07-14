@@ -1,34 +1,34 @@
-import type { APIRequestContext } from '@playwright/test';
-import { createClient } from '../clients/apiClient.js';
-import config from '../configs/index.js';
+import { createClient, requestLog } from '../clients/apiClient.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError, assertStatus } from '../errors/api.error.js';
+import { HTTP_STATUS, ERROR_MSG } from '../constants/status-code.js';
 
 export class AuthService {
 
-    constructor(private request: APIRequestContext) { }
+  private readonly cfg: CountryConfig;
 
-    async login(): Promise<string> {
-        const client = await createClient(config.hostOrder);
+  constructor(countryConfig?: CountryConfig) {
+    this.cfg = countryConfig ?? getCountryConfig();
+  }
 
-        const response = await client.post(
-            "/marketplace/customer/v1/authentication",
-            {
-                data: {
-                    username: config.username,
-                    password: config.password,
-                    type: "CUSTOMER"
-                }
-            }
-        );
+  async login(): Promise<string> {
+    const client    = await createClient(this.cfg.hosts.order);
+    const body      = { username: this.cfg.auth.username, password: '***', type: 'CUSTOMER' };
+    const response  = await client.post(this.cfg.auth.loginEndpoint, {
+      data: { ...body, password: this.cfg.auth.password },
+    });
 
-        if (response.status() !== 200) {
-            throw new Error("Login failed: " + response.status());
-        }
+    await assertStatus(response, [HTTP_STATUS.OK], 'login');
 
-        const json = await response.json();
+    const json  = await response.json();
+    const token: string | undefined = json?.data?.[0]?.bearerToken;
+    requestLog.push({ step: 'login', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: { bearerToken: token ? '[token]' : null } });
 
-        const token = json.data[0].bearerToken;
-
-        return token;
+    if (!token) {
+      throw new ApiError('login', HTTP_STATUS.OK, this.cfg.auth.loginEndpoint, ERROR_MSG.TOKEN_MISSING);
     }
 
+    return token;
+  }
 }

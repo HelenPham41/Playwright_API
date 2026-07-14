@@ -1,1 +1,1 @@
-{"name":"playwright-api","version":"1.0.0","type":"module","scripts":{"test":"playwright test"},"devDependencies":{"@playwright/test":"latest","@types/node":"latest","typescript":"latest"}}
+{"name":"playwright-api","version":"1.0.0","type":"module","scripts":{"test":"playwright test","e2e":"playwright test tests/pack.spec.ts","report:open":"powershell -Command \"Start-Process (Get-ChildItem reports\\*.html | Sort-Object Name -Descending | Select-Object -First 1).FullName\""},"devDependencies":{"@playwright/test":"latest","@types/node":"latest","typescript":"latest"}}

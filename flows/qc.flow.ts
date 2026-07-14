@@ -1,126 +1,83 @@
-import type { APIRequestContext } from '@playwright/test';
-import { QcService } from "../services/qc.service.js";
-import { handleApiResponse } from '../utils/api-helper.js';
-import { teardownQC } from '../utils/teardown.js';
+import { QcService } from '../services/qc.service.js';
 import { OrderService } from '../services/order.service.js';
-import { PickService } from '../services/pick.service.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError } from '../errors/api.error.js';
 
+export interface QcInput {
+  so: string;
+  ticketId: string;
+  get_sku_codes: any[];
+  orderId: string;
+  orderCode: string | undefined;
+}
 
+export interface QcResult {
+  so: string;
+  scanned: number;
+  skipped: number;
+}
 
 export class QcFlow {
 
-    private qcService = new QcService();
-    private orderService: OrderService;
-    private pickService: PickService;
+  private readonly qcService:    QcService;
+  private readonly orderService: OrderService;
+  private readonly cfg:          CountryConfig;
 
+  constructor(countryConfig?: CountryConfig) {
+    this.cfg          = countryConfig ?? getCountryConfig();
+    this.qcService    = new QcService(this.cfg);
+    this.orderService = new OrderService(this.cfg);
+  }
 
-     constructor(private request: APIRequestContext) {
-        this.orderService = new OrderService(request);
-        this.pickService = new PickService(request); 
-    }
+  async qcOrder(input: QcInput): Promise<QcResult> {
+    const basicToken = this.cfg.auth.basicToken;
+    const country    = process.env.COUNTRY ?? 'UNKNOWN';
+    console.log(`===== QC FLOW ${country} START =====`);
 
+    const { so, ticketId, get_sku_codes, orderId, orderCode } = input;
+    let checkedIn = false;
 
-    async run(
-        basicToken: string,
-        pickResult: {
-            so: string
-            ticketId: string
-            orderId?: string   // ✅ optional (better)
-        }
-    ) {
+    try {
+      // Step 1 — Check In QC Zone
+      await this.qcService.checkInQcZone(basicToken);
+      checkedIn = true;
+      console.log('Step 1 | Check In QC Zone  : OK');
 
-        console.log("\n==============================");
-        console.log("========== QC FLOW ==========");
-        console.log("==============================");
+      // Step 2 — Pick Ticket
+      await this.qcService.pickTicket(basicToken, so);
+      console.log(`Step 2 | Pick Ticket       : OK, so=${so}`);
 
-        const { so, ticketId, orderId = "" } = pickResult;
+      // Step 3 — Scan QR Loop
+      const qrResult = await this.qcService.processSkuQrLoop(basicToken, so, ticketId, get_sku_codes);
+      console.log(`Step 3 | Scan QR Loop      : total=${qrResult.total}, scanned=${qrResult.scanned}, skipped=${qrResult.skipped}`);
 
-        let location = "";
-        let zoneCode = "";
-        let orderCode = so; // ✅ fallback
+      // Step 4 — Done QC → Move to Pack
+      await this.qcService.doneQcMoveToPack(basicToken, ticketId, so);
+      console.log('Step 4 | Done QC -> Pack   : OK');
 
+      // Step 5 — Checkout QC
+      await this.qcService.checkoutQc(basicToken);
+      console.log('Step 5 | Checkout QC       : OK');
+
+      console.log(`===== QC FLOW ${country} END =====`);
+      return { so, scanned: qrResult.scanned, skipped: qrResult.skipped };
+
+    } catch (error) {
+      if (error instanceof ApiError) console.error(`QC flow failed at: ${error.message}`);
+
+      // Auto-cleanup: giải phóng zone và cancel order để lần chạy sau không bị block
+      if (checkedIn) {
+        try { await this.qcService.checkoutQc(basicToken); } catch {}
+      }
+      if (orderCode) {
         try {
-            location = await this.qcService.getLocation();
-            zoneCode = await this.qcService.getZoneCode();
+          await this.orderService.cancelOrder(basicToken, orderId, orderCode);
+          console.log(`QC flow cleanup: cancelled order ${orderId} (${orderCode})`);
+        } catch {}
+      }
 
-            console.log("SO from PickFlow:" + so);
-            console.log("Location:" + location);
-            console.log("Zone Code:" + zoneCode);
-
-       
-                const orderInfo = await this.pickService.getOrderInfo(basicToken, orderId);
-                orderCode = orderInfo.orderCode;
-  
-
-            /**
-             * Step 1 - Check In QC Zone
-             */
-            const checkIn = await this.qcService.checkInQcZone(location, zoneCode);
-            console.log("Status:" + checkIn.status());
-            await handleApiResponse(checkIn, [200]);
-
-            /**
-             * Step 2 - Pick Ticket
-             */
-            const ticket = await this.qcService.pickTicket(so, location);
-            await handleApiResponse(ticket.response, [200]);
-
-            /**
-             * Step 3 - Scan QR
-             */
-            const result = await this.qcService.processSkuQrLoop(
-                basicToken,
-                so,
-                ticketId,
-                location,
-            );
-
-            console.log(`
-                Total SKU: ${result.total}
-                Scanned: ${result.scanned}
-                Skipped: ${result.skipped}
-            `);
-
-            /**
-             * Step 4 - Done QC
-             */
-            const qcResult = await this.qcService.doneQcMoveToPack(
-                basicToken,
-                ticketId,
-                so,
-                location
-            );
-            await handleApiResponse(qcResult, [200]);
-
-            /**
-             * Step 5 - Checkout QC
-             */
-            const checkout = await this.qcService.checkoutQc(
-                basicToken,
-                location,
-                zoneCode
-            );
-            await handleApiResponse(checkout, [200]);
-
-            console.log("======= QC FLOW DONE ========");
-
-        } catch (error: any) {
-
-            console.error("❌ QC flow failed:", error?.message);
-
-            // ✅ teardown ALWAYS safe now
-            await teardownQC(
-                this.orderService,
-                this.qcService,
-                basicToken,
-                orderId,
-                ticketId,
-                orderCode,
-                location,
-                zoneCode
-            );
-
-            throw error;
-        }
+      throw error;
     }
+  }
 }

@@ -1,319 +1,148 @@
-import { expect } from '@playwright/test';
-import type { APIRequestContext } from '@playwright/test';
-import { PickService } from "../services/pick.service.js";
-import { PackService } from "../services/pack.service.js";
-import { handleApiResponse } from '../utils/api-helper.js';
+import { PickService } from '../services/pick.service.js';
+import { QcService } from '../services/qc.service.js';
+import { OrderService } from '../services/order.service.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError, assertStatus } from '../errors/api.error.js';
+import { HTTP_STATUS } from '../constants/status-code.js';
 
+export interface PickResult {
+  so: string;
+  orderCode: string | undefined;
+  zone: string;
+  subTicketId: string;
+  otlCode: string;
+  ticketId: string;
+  get_sku_codes: any[];
+}
 
 export class PickFlow {
-    private otlCode!: string;
-    private pickService: PickService;
-    private packService = new PackService();
-    constructor(private request: APIRequestContext) {
-        this.pickService = new PickService(request);
-    }
 
-    async run(
-        basicToken: string,
-        orderId: string
-    ) {
+  private readonly pickService:  PickService;
+  private readonly qcService:    QcService;
+  private readonly orderService: OrderService;
+  private readonly cfg:          CountryConfig;
 
-        console.log("\n==============================");
-        console.log("========= PICK FLOW =========");
-        console.log("==============================");
-        const warehouseCode = await this.pickService.getWarehouseCode();
+  constructor(countryConfig?: CountryConfig) {
+    this.cfg          = countryConfig ?? getCountryConfig();
+    this.pickService  = new PickService(this.cfg);
+    this.qcService    = new QcService(this.cfg);
+    this.orderService = new OrderService(this.cfg);
+  }
 
-        /**
-         * Step 1 - Get Order Info
-         */
-        console.log("\nStep 1: Get Order Info");
+  async pickOrder(orderId: string): Promise<PickResult> {
+    const basicToken = this.cfg.auth.basicToken;
+    const country    = process.env.COUNTRY ?? 'UNKNOWN';
+    console.log(`===== PICK FLOW ${country} START =====`);
 
-        const orderInfo = await this.pickService.getOrderInfo(
-            basicToken,
-            orderId
-        );
+    try {
+      // Step 1 — Get Order Info
+      const orderInfo = await this.pickService.getOrderInfo(basicToken, orderId);
+      if (orderInfo.price === undefined) throw new Error('price not found in order info');
+      console.log(`Step 1  | Get Order Info   : OK, price=${orderInfo.price}`);
 
-        console.log("OrderId: " + orderId);
-        console.log("Price: " + orderInfo.price);
-        await handleApiResponse(orderInfo.response, [200]);
+      // Step 2 — Confirm Order
+      await this.pickService.confirmOrder(orderId, orderInfo.price);
+      console.log('Step 2  | Confirm Order    : OK');
 
-        console.log("\nStep 1: Get Order Info success");
+      // Step 3 — Wait before Get SO
+      console.log('Step 3  | Wait 5s for SO...');
+      await new Promise(r => setTimeout(r, 5000));
 
-        /**
-         * Step 2 - Confirm Order
-         */
-        console.log("\nStep 2: Confirm Order");
+      // Step 4 — Get SO
+      const so = await this.pickService.getSO(basicToken, orderId);
+      console.log(`Step 4  | Get SO           : SO=${so}`);
 
-        const confirmResult = await this.pickService.confirmOrder(
-            orderId,
-            orderInfo.price
-        );
+      // Step 5 — Get Order SKU
+      const skuInfo = await this.pickService.getOrderSku(basicToken, so);
+      console.log(`Step 5  | Get Order SKU    : ticketId=${skuInfo.ticketId}, skus=${skuInfo.skuList.length}`);
 
-        console.log(
-            "Confirm Order Status: " +
-            confirmResult.status()
-        );
+      // Step 6 — Check Pick Ticket
+      await this.pickService.checkPickTicket(basicToken, skuInfo.ticketId);
+      console.log('Step 6  | Check Pick Ticket: OK');
 
-        await handleApiResponse(confirmResult, [200]);
+      // Step 7 — Active Pick Ticket
+      const activeResult = await this.pickService.activePickTicket(basicToken, skuInfo.ticketId);
+      console.log(`Step 7  | Active Ticket    : message=${activeResult.message}`);
 
+      // Step 8 — Get Zone and Location
+      const { zone, locationCode } = await this.pickService.getZoneAndLocation(basicToken, so);
+      console.log(`Step 8  | Zone & Location  : zone=${zone}, location=${locationCode}`);
 
-        /**
-         * Step 3 - Wait before Get SO
-         */
-        console.log("\nWaiting 5s before Get SO...");
-        await new Promise(r => setTimeout(r, 5000));
+      // Step 9 — Check In Pick (handles QC session conflict automatically)
+      let checkInResponse = await this.pickService.checkInPick(basicToken, zone);
 
+      if (checkInResponse.status() === HTTP_STATUS.BAD_REQUEST) {
+        const message = await checkInResponse.json().then((j: any) => j?.message ?? '').catch(() => '');
+        console.log('Step 9  | Check In Pick    : 400, message:', message);
 
-        /**
-         * Step 4 - Get SO
-         */
-        console.log("\nStep 4: Get SO");
+        if (message.includes('công việc QC')) {
+          console.log('Step 9  | QC session detected, checking out QC first...');
+          try {
+            await this.qcService.checkoutQc(basicToken);
+          } catch (checkoutError) {
+            // checkoutQc bị block bởi phiếu QC dang dở — auto-cancel đơn đó rồi retry
+            const errMsg = checkoutError instanceof ApiError ? checkoutError.message : String(checkoutError);
+            const match  = errMsg.match(/SOBD\d+/);
+            if (!match) throw checkoutError;
 
-        const so = await this.pickService.getSO(
-            basicToken,
-            orderId
-        );
+            const sobdCode   = match[0];
+            const orderIdOld = sobdCode.replace('SOBD', '');
+            console.log(`Step 9  | checkoutQc blocked by ${sobdCode}, cancelling stuck order...`);
 
-        console.log("SO: " + so);
-
-        expect(so)
-            .toBeTruthy();
-
-
-        /**
-         * Step 5 - Get Order SKU
-         */
-        console.log("\nStep 5: Get Order SKU");
-
-        const skuInfo = await this.pickService.getOrderSku(
-            basicToken,
-            so
-        );
-
-        console.log("TicketId: " + skuInfo.ticketId);
-        console.log("SKU: " + skuInfo.sku);
-        console.log("Quantity: " + skuInfo.quantity);
-        console.log("SKU Count: " + skuInfo.skuList.length);
-
-        expect(skuInfo.ticketId)
-            .toBeTruthy();
-
-        expect(skuInfo.sku)
-            .toBeTruthy();
-
-        expect(skuInfo.quantity)
-            .toBeGreaterThan(0);
-
-        /**
-         * Step 6 - Check Pick Ticket
-         */
-        console.log("\nStep 6: Check Pick Ticket");
-
-        const checkTicketResult =
-            await this.pickService.checkPickTicket(
-                basicToken,
-                skuInfo.ticketId,
-            );
-
-        console.log(
-            "Check Pick Ticket Status: " +
-            checkTicketResult.status()
-        );
-        await handleApiResponse(checkTicketResult, [200]);
-
-
-
-        /**
-         * Step 7 - Active Pick Ticket
-         */
-        console.log("\nStep 7: Active Pick Ticket");
-
-        const activeTicketResult =
-            await this.pickService.activePickTicket(
-                basicToken,
-                skuInfo.ticketId,
-            );
-
-        console.log(
-            "Active Pick Ticket: " +
-            skuInfo.ticketId +
-            " - Status " +
-            activeTicketResult.response.status()
-        );
-
-        await handleApiResponse(activeTicketResult.response, [200]);
-        /**
-        * Step 8 - Get Zone and Location
-        */
-        console.log("\nStep 8: Get Zone and Location");
-
-        const zoneAndLocationResponse =
-            await this.pickService.getZoneAndLocation(
-                basicToken,
-                so
-            );
-
-        // ✅ Log Status
-        console.log(
-            "Get Zone and Location Status:" + zoneAndLocationResponse.response.status()
-        );
-
-        // ✅ Check Status Code
-        await handleApiResponse(zoneAndLocationResponse.response, [200]);
-
-        const zone =
-            zoneAndLocationResponse.zone;
-
-        const locationItemCode =
-            zoneAndLocationResponse.locationCode;
-
-        console.log("Zone:" + zone);
-        console.log("Location Item Code:" + locationItemCode);
-
-        // ✅ Validate Data
-        expect(zone).toBeTruthy();
-        expect(locationItemCode).toBeTruthy();
-
-        /**
-        * Step 9: Check in Pick
-        */
-        console.log('Step 9: Check in Pick');
-
-        const checkInPickResponse =
-            await this.pickService.checkInPick(
-                basicToken,
-                zone,
-            );
-
-        // optional wait
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        try {
-
-            // ✅ validate response
-            await handleApiResponse(checkInPickResponse, [200]);
-
-            console.log('✅ Check in Pick Success');
-
-        } catch (error: any) {
-
-            console.error('❌ Check in Pick Failed:', {
-                message: error?.body || error?.message,
-                code: error?.status,
-                url: error?.url
-            });
-
-            throw error;
+            const info = await this.pickService.getOrderInfo(basicToken, orderIdOld);
+            if (info.orderCode) {
+              await this.orderService.cancelOrder(basicToken, orderIdOld, info.orderCode);
+              console.log(`Step 9  | Cancelled ${sobdCode} OK, retry checkoutQc...`);
+            }
+            await this.qcService.checkoutQc(basicToken);
+          }
+          checkInResponse = await this.pickService.checkInPick(basicToken, zone);
         }
+      }
 
-        /**
-        * Step 10: Assign Pick Staff
-        */
-        const subTicketId =
-            await this.pickService.assignPickStaff(
-                basicToken,
-                skuInfo.ticketId,
-                so
-            );
+      await new Promise(r => setTimeout(r, 3000));
+      await assertStatus(checkInResponse, [HTTP_STATUS.OK], 'checkInPick');
+      console.log('Step 9  | Check In Pick    : OK');
 
-        expect(subTicketId).toBeTruthy();
+      // Step 10 — Assign Pick Staff
+      const subTicketId = await this.pickService.assignPickStaff(basicToken, skuInfo.ticketId, so);
+      console.log(`Step 10 | Assign Staff     : subTicketId=${subTicketId}`);
 
-        console.log('subTicketId:' + subTicketId);
-        /**
-        * Step 11: Get OTL
-        * GET /warehouse/inventory/v1/location
-        */
-        const result = await this.pickService.getOTL(basicToken);
+      // Step 11 — Get OTL
+      const { firstOTL: otlCode } = await this.pickService.getOTL(basicToken);
+      console.log(`Step 11 | Get OTL          : otlCode=${otlCode}`);
 
-        const otlCode = result.firstOTL;
+      // Step 12 — Use Basket
+      await this.pickService.useBasket(basicToken, Number(subTicketId), otlCode);
+      console.log('Step 12 | Use Basket       : OK');
 
-        console.log("Step 11 - OTL Code:" + otlCode);
+      // Step 13 — Check Pick Items
+      const { response: pickItemsRes } = await this.pickService.checkPickItems(basicToken, subTicketId, locationCode, so);
+      if (!pickItemsRes) throw new Error('checkPickItems returned null response');
+      await assertStatus(pickItemsRes, [HTTP_STATUS.OK], 'checkPickItems');
+      console.log('Step 13 | Check Pick Items : OK');
 
-        // ✅ Check Status Code
-        await handleApiResponse(result.response, [200]);
+      // Step 14 — Complete Pick
+      await this.pickService.completePick(basicToken, Number(subTicketId));
+      console.log('Step 14 | Complete Pick    : OK');
 
-        /**
-        * Step 12: Use Basket
-        * POST /warehouse/picking/v1/sub-pick-ticket/basket/use
-        */
-        const useBasketResponse = await this.pickService.useBasket(
-            basicToken,
-            Number(subTicketId),
-            otlCode
-        );
+      // Step 15 — Complete Pick for SO
+      await this.pickService.completePickForSO(basicToken, so);
+      console.log('Step 15 | Complete Pick SO : OK');
 
-        await handleApiResponse(useBasketResponse.response, [200]);
+      // Step 16 — Checkout Pick
+      await this.pickService.checkoutPick(basicToken, zone);
+      console.log('Step 16 | Checkout Pick    : OK');
 
-        console.log("Step 12 - Use Basket success");
+      console.log(`===== PICK FLOW ${country} END =====`);
+      return { so, orderCode: orderInfo.orderCode, zone, subTicketId, otlCode, ticketId: skuInfo.ticketId, get_sku_codes: skuInfo.get_sku_codes };
 
-        /**
-        * Step 13: Check Pick Items
-        */
-        const checkPickItemsResult = await this.pickService.checkPickItems(
-            basicToken,
-            subTicketId,
-            locationItemCode,
-            so
-        );
-
-        // validate response
-        if (!checkPickItemsResult.response) {
-            throw new Error("Check Pick Items response is null");
-        }
-
-        await handleApiResponse(checkPickItemsResult.response, [200]);
-
-        console.log("Step 13 - Check Pick Items done");
-
-        /**
-        * Step 14: Complete Pick
-        */
-
-        const completePickResult = await this.pickService.completePick(
-            basicToken,
-            Number(subTicketId),
-        );
-
-        await handleApiResponse(completePickResult, [200]);
-
-        console.log("Step 14 - Complete Pick success");
-
-        /**
-        * Step 15: Complete Pick for SO
-        */
-
-        const completePickSOResult = await this.pickService.completePickForSO(
-            basicToken,
-            so,
-        );
-
-        await handleApiResponse(completePickSOResult, [200]);
-
-        console.log("Step 15 - Complete Pick for SO success");
-
-        /**
-        * Step 16: Checkout Pick
-        */
-
-        const checkoutPickResult = await this.pickService.checkoutPick(
-            basicToken,
-            zone,
-        );
-
-        await handleApiResponse(checkoutPickResult, [200]);
-
-        console.log("Step 16 - Checkout Pick success");
-        console.log("\n========= PICK FLOW DONE =========\n");
-
-        return {
-            orderInfo,
-            confirmResult,
-            so,
-            skuInfo,
-            zone,
-            subTicketId,
-            otlCode,
-            orderCode: orderInfo.orderCode
-        };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        console.error(`Pick flow failed at: ${error.message}`);
+      }
+      throw error;
     }
+  }
 }

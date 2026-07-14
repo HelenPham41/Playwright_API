@@ -1,400 +1,116 @@
-import type { APIRequestContext } from '@playwright/test';
-import { createClient } from '../clients/apiClient.js';
-import config from '../configs/index.js';
+import { createClient, requestLog } from '../clients/apiClient.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError, assertStatus } from '../errors/api.error.js';
+import { HTTP_STATUS, ERROR_MSG } from '../constants/status-code.js';
+import { OrderPayloadBuilder } from '../payloads/order.payload.js';
+import { getScenarioData } from '../test-data/scenario.data.factory.js';
+
+export interface CartInfo       { cartNo: string | null; skuCodes: string[] }
+export interface AddCartResult  { cartNo: string }
+export interface CheckoutResult { orderId: string }
 
 export class OrderService {
 
-  constructor(private request: APIRequestContext) { }
+  private readonly cfg:     CountryConfig;
+  private readonly payload: OrderPayloadBuilder;
 
-  /**
-   * Check Cart
-   * PASS if 200 or 404
-   */
-  async checkCart(token: string) {
-
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
-
-    const response = await client.put(
-      "/backend/marketplace/order/v2/cart/select",
-      {
-        data: {
-          isSelected: true,
-          isAppliedAll: true
-        }
-      }
-    );
-
-    return response;
+  constructor(
+    countryConfig?: CountryConfig,
+    payloadBuilder?: OrderPayloadBuilder,
+  ) {
+    this.cfg     = countryConfig  ?? getCountryConfig();
+    this.payload = payloadBuilder ?? new OrderPayloadBuilder(getScenarioData());
   }
 
-  /**
-   * Get Cart Info
-   */
-  async getCartInfo(token: string) {
+  async checkCart(token: string): Promise<void> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const body   = { isSelected: true, isAppliedAll: true };
+    const res    = await client.put(this.cfg.endpoints.checkCart, { data: body });
+    await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NOT_FOUND], 'checkCart');
+    requestLog.push({ step: 'checkCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
+  }
 
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
+  async getCartInfo(token: string): Promise<CartInfo> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const res = await client.get(
+      this.cfg.endpoints.getCartInfo,
+      this.cfg.endpoints.getCartInfoParams
+        ? { params: this.cfg.endpoints.getCartInfoParams }
+        : undefined
     );
+    await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NOT_FOUND], 'getCartInfo');
 
-    const response = await client.get(
-      "/backend/marketplace/frontend-apis/v2/screen/cart/info",
-      {
-        params: {
-          queryOption:
-            "price,consumedMaxQuantity,sellerInfo,isGetSKUReplace,cartPage",
-          getVoucherAuto: "true",
-          redeemCodeRemovedStr: "",
-          onSort: "false"
+    if (res.status() === HTTP_STATUS.NOT_FOUND) return { cartNo: null, skuCodes: [] };
+
+    const json = await res.json();
+    const carts: any[] = json?.data ?? [];
+    const cartNo: string | null = carts?.[0]?.cartNo ?? null;
+    const skuCodes: string[] = [];
+
+    carts.forEach(cart => {
+      cart?.cartItemGroups?.forEach((group: any) => {
+        if (group?.sellerGroup !== 'GIFT') {
+          group?.items?.forEach((item: any) => {
+            if (item?.skuCode) skuCodes.push(item.skuCode);
+          });
         }
-      }
-    );
-
-    let cartNo: string | null = null;
-    let skuCodes: string[] = [];
-
-    if (response.status() === 200) {
-
-      const json = await response.json();
-
-      const carts = json?.data ?? [];
-
-      // Extract cartNo safely
-      cartNo = carts?.[0]?.cartNo ?? null;
-
-      // Extract skuCodes safely
-      carts.forEach((cart: any) => {
-
-        cart?.cartItemGroups?.forEach((group: any) => {
-
-          if (group?.sellerGroup !== "GIFT") {
-
-            group?.items?.forEach((item: any) => {
-
-              if (item?.skuCode) {
-                skuCodes.push(item.skuCode);
-              }
-
-            });
-
-          }
-
-        });
-
       });
+    });
 
-    }
-
-    const selectedSkuCodes = skuCodes;
-
-    console.log("\n===== EXTRACTED DATA =====");
-
-    console.log("CartNo = " + cartNo);
-
-    console.log("skuCodes = " + skuCodes);
-
-    console.log("selectedSkuCodes = " + selectedSkuCodes);
-
-    console.log("Cart is empty = " + (skuCodes.length === 0));
-
-    return {
-      response,
-      cartNo,
-      skuCodes,
-      selectedSkuCodes
-    };
-
+    requestLog.push({ step: 'getCartInfo', method: 'GET', url: res.url(), requestBody: null, responseStatus: res.status(), responseBody: { cartNo, skuCodes } });
+    return { cartNo, skuCodes };
   }
 
-
-  /**
-   * Remove Cart
-   */
-  async removeCart(
-    token: string,
-    cartNo?: string | null,
-    skus?: string[]
-  ) {
-
-    // Skip if empty
-    if (!cartNo || !skus || skus.length === 0) {
-
-      console.log("\n===== REMOVE CART =====");
-
-      console.log("Skip RemoveCart → Cart Empty");
-
-      return {
-        status: () => 204
-      } as any;
-
-    }
-
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
-
-    const payload = {
-      cartNo: cartNo,
-      skus: skus,
-      source: "thuocsi-web"
-    };
-
-    const response = await client.put(
-      "/backend/marketplace/order/v2/cart/remove",
-      {
-        data: payload
-      }
-    );
-
-
-    console.log("\n===== REMOVE CART RESPONSE =====");
-
-    console.log("Status: " + response.status());
-
-    return response;
-
-  }
-  /**
- * Add Cart
- * Equivalent to JMeter Add Cart
- */
-  async addCart(
-    token: string,
-    cartNo: string | null
-  ) {
-
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
-
-    const payload = {
-
-      sku: "MEDX.Y4XP61PG",
-
-      type: "NORMAL",
-
-      isDeal: false,
-
-      name: "Tinh dầu đuổi muỗi và côn trùng, khử khuẩn Thảo Nguyên hương sả chanh – Nhà Thuốc Helios",
-
-      price: 1084400,
-
-      quantity: 2,
-
-      cartNo: cartNo ?? null,   // same as ${CartNo_1}
-
-      page: "product/[slug]",
-
-      sellerID: 1,
-
-      sellerCode: "MEDX",
-
-      productId: 2431073,
-
-      eventSource: "product-detail",
-
-      eventScreen: "product-detail",
-
-      host: "web.v2-stg.thuocsi.vn",
-
-      recommendSKUs: "",
-
-      metadata: {
-        price_display: "1084400"
-      },
-
-      source: "thuocsi-web"
-
-    };
-    const response = await client.post(
-      "/backend/marketplace/order/v2/cart/add",
-      {
-        data: payload
-      }
-    );
-
-
-    console.log("===== ADD CART RESPONSE =====");
-
-    console.log("Status: " + response.status());
-
-    const text = await response.text();
-
-    let cartNoNew: string | null = null;
-
-    try {
-
-      const json = JSON.parse(text);
-
-      cartNoNew =
-        json?.data?.[0]?.cartNo ?? null;
-
-    } catch (e) {
-
-      console.log("Cannot parse AddCart JSON");
-
-    }
-    console.log("New CartNo = " + cartNoNew);
-    return {
-      response,
-      cartNo: cartNoNew
-    };
-
-  }
-  async updateCart(
-    token: string,
-    cartNo: string
-  ) {
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
-
-    const response = await client.put(
-      '/backend/marketplace/order/v2/cart',
-      {
-        data: {
-
-          customerName: "[Tech] Hanh Pham",
-          customerPhone: "0559948786",
-          customerEmail: "hanh.pham@buymed.com",
-          customerShippingAddress: "72 Le Thanh Ton",
-
-          customerDistrictCode: "765",
-          customerProvinceCode: "79",
-          customerWardCode: "26947",
-
-          customerAddressCode: "YFFPHGG3",
-          customerRegionCode: "107TQTAR1Y7G",
-
-          customerWardName: "Phường 03",
-          customerDistrictName: "Quận Bình Thạnh",
-          customerProvinceName: "Thành phố Hồ Chí Minh",
-
-          paymentMethod: "PAYMENT_METHOD_BANK",
-
-          deliveryMethod: "DELIVERY_PLATFORM_NORMAL",
-
-          cartNo: cartNo,
-
-          ordersCount: 151,
-
-          invoice: {
-            code: "RHGARL8C",
-            invoiceRequest: true,
-            companyName: "Công Ty TNHH CIRCA PHARMACY",
-            companyAddress:
-              "207 Lê Đại Hành, Phường 13, Q11, TP. HCM",
-            taxCode: "0317045088",
-            isSaveInvoiceInfo: false,
-            isUseCustom: false,
-            email: "lam.nguyen@buymed.com",
-            isValidated: true,
-            customerTaxGOVStatus: "DIFF_INFO",
-            isDefault: true
-          },
-
-          isRefuseSplitOrder: false,
-          acceptAdvancePolicies: false,
-
-          source: "thuocsi-web"
-
-        }
-      }
-    );
-    return response;
+  async removeCart(token: string, cartNo: string, skus: string[]): Promise<void> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const body   = this.payload.removeCartBody(cartNo, skus);
+    const res    = await client.put(this.cfg.endpoints.removeCart, { data: body });
+    await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NO_CONTENT], 'removeCart');
+    requestLog.push({ step: 'removeCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
 
-  /**
-  * Checkout Cart
-  */
-  async checkout(token: string) {
+  async addCart(token: string, cartNo: string | null): Promise<AddCartResult> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const body   = this.payload.addCartBody(cartNo);
+    const res    = await client.post(this.cfg.endpoints.addCart, { data: body });
+    await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'addCart');
 
-    const client = await createClient(
-      config.hostWeb,
-      token,
-      'bearer'
-    );
+    const json = await res.json();
+    requestLog.push({ step: 'addCart', method: 'POST', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json });
+    const newCartNo: string | undefined = json?.data?.[0]?.cartNo;
+    if (!newCartNo) throw new ApiError('addCart', res.status(), res.url(), ERROR_MSG.CART_NO_MISSING);
 
-    const response = await client.put(
-      '/backend/marketplace/order/v2/cart/checkout',
-      {
-        data: {
-          customerName: "[Tech] Hanh Pham",
-          customerPhone: "0559948786",
-          customerEmail: "hanh.pham@buymed.com",
-
-          customerShippingAddress: "72 Le Thanh Ton",
-          customerDistrictCode: "765",
-          customerProvinceCode: "79",
-          customerWardCode: "26947",
-
-          customerAddressCode: "YFFPHGG3",
-          customerRegionCode: "107TQTAR1Y7G",
-
-          customerWardName: "Phường 03",
-          customerDistrictName: "Quận Bình Thạnh",
-          customerProvinceName: "Thành phố Hồ Chí Minh",
-
-          paymentMethods: [
-            {
-              cardList: "MOMO",
-              code: "MOMO",
-              customerTags: [
-                "13384",
-                "TESTCREDIT"
-              ],
-              description: "<p></p>"
-            }
-          ]
-        }
-      }
-    );
-
-    const body = await response.json();
-
-    const orderId =
-      body?.data?.[0]?.orderId ?? null;
-
-    return {
-      response,
-      orderId
-    };
+    return { cartNo: newCartNo };
   }
-  /**
-    * Cancel Order
-    * PASS if 200
-    */
-  async cancelOrder(basicToken: string, orderId: string, orderCode: string) {
 
-    const client = await createClient(
-      config.hostInternal,
-      basicToken,
-      "basic"
-    );
+  async updateCart(token: string, cartNo: string): Promise<void> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const body   = this.payload.updateCartBody(cartNo);
+    const res    = await client.put(this.cfg.endpoints.updateCart, { data: body });
+    await assertStatus(res, [HTTP_STATUS.OK], 'updateCart');
+    requestLog.push({ step: 'updateCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
+  }
 
-    const response = await client.put(
-      "/backend/marketplace/order/v2/order/status",
-      {
-        data: {
-          orderCode: orderCode,
-          orderId: Number(orderId),
-          status: "CANCEL",
-          note: "Cancel order for testing purpose"
-        }
-      }
-    );
+  async checkout(token: string, cartNo: string): Promise<CheckoutResult> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const body   = this.payload.checkoutBody(cartNo);
+    const res    = await client.put(this.cfg.endpoints.checkout, { data: body });
+    await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'checkout');
 
-    return response;
+    const json = await res.json();
+    requestLog.push({ step: 'checkout', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json });
+    const orderId: string | undefined = json?.data?.[0]?.orderId;
+    if (!orderId) throw new ApiError('checkout', res.status(), res.url(), ERROR_MSG.ORDER_ID_MISSING);
+
+    return { orderId };
+  }
+
+  async cancelOrder(basicToken: string, orderId: string, orderCode: string): Promise<void> {
+    const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const body   = { orderCode, orderId: Number(orderId), status: 'CANCEL', note: 'Cancel order for testing purpose' };
+    const res    = await client.put(this.cfg.endpoints.cancelOrder, { data: body });
+    await assertStatus(res, [HTTP_STATUS.OK], 'cancelOrder');
+    requestLog.push({ step: 'cancelOrder', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
 }

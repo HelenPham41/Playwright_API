@@ -1,195 +1,70 @@
-import { expect } from '@playwright/test';
-import type { APIRequestContext } from '@playwright/test';
 import { AuthService } from '../services/auth.service.js';
 import { OrderService } from '../services/order.service.js';
+import type { CountryConfig } from '../configs/types.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { ApiError } from '../errors/api.error.js';
+
+export interface OrderResult {
+  tokenWeb: string;
+  orderId: string;
+  cartNo: string;
+}
 
 export class OrderFlow {
 
-  private authService: AuthService;
-  private orderService: OrderService;
+  private readonly authService: AuthService;
+  private readonly orderService: OrderService;
 
-  constructor(private request: APIRequestContext) {
-    this.authService = new AuthService(request);
-    this.orderService = new OrderService(request);
+  constructor(countryConfig?: CountryConfig) {
+    const cfg = countryConfig ?? getCountryConfig();
+    this.authService  = new AuthService(cfg);
+    this.orderService = new OrderService(cfg);
   }
 
-  async run() {
+  async placeOrder(): Promise<OrderResult> {
+    const country = process.env.COUNTRY ?? 'UNKNOWN';
+    console.log(`===== ORDER FLOW ${country} START =====`);
 
-    console.log("===== ORDER FLOW START =====");
     try {
-      /**
-       * Step 1 — Login
-       */
+      // Step 1 — Login
       const tokenWeb = await this.authService.login();
-      console.log("Login success");
+      console.log('Step 1 | Login            : OK');
 
+      // Step 2 — Check Cart
+      await this.orderService.checkCart(tokenWeb);
+      console.log('Step 2 | Check Cart        : OK');
 
-      /**
-       * Step 2 — Check Cart
-       */
-      const checkCartResponse =
-        await this.orderService.checkCart(tokenWeb);
+      // Step 3 — Get Cart Info
+      const { cartNo, skuCodes } = await this.orderService.getCartInfo(tokenWeb);
+      console.log(`Step 3 | Get Cart Info     : cartNo=${cartNo ?? 'null'}, skus=${skuCodes.length}`);
 
-      expect([200, 404])
-        .toContain(checkCartResponse.status());
-
-      console.log(
-        "Check Cart PASS:" +
-        checkCartResponse.status()
-      );
-
-
-      /**
-       * Step 3 — Get Cart Info
-       */
-      const cartResult =
-        await this.orderService.getCartInfo(tokenWeb);
-
-      expect([200, 404])
-        .toContain(cartResult.response.status());
-
-      console.log(
-        "Get Cart Info PASS: " +
-        cartResult.response.status()
-      );
-
-      console.log("===== EXTRACTED DATA =====");
-
-      console.log("CartNo = " + cartResult.cartNo);
-      console.log("skuCodes = " + cartResult.skuCodes);
-
-
-      const cartNo =
-        cartResult?.cartNo ?? null;
-
-      const selectedSkuCodes =
-        Array.isArray(cartResult?.skuCodes)
-          ? cartResult.skuCodes
-          : [];
-
-
-      /**
-       * Step 4 — Remove Cart
-       */
-      if (cartNo && selectedSkuCodes.length > 0) {
-
-        console.log("Cart NOT empty → Removing cart...");
-
-        const removeCartResponse =
-          await this.orderService.removeCart(
-            tokenWeb,
-            cartNo,
-            selectedSkuCodes
-          );
-
-        expect([200, 404])
-          .toContain(removeCartResponse.status());
-
-        console.log(
-          "Remove Cart PASS: " +
-          removeCartResponse.status()
-        );
-
+      // Step 4 — Remove Cart (skip when empty)
+      if (cartNo && skuCodes.length > 0) {
+        await this.orderService.removeCart(tokenWeb, cartNo, skuCodes);
+        console.log('Step 4 | Remove Cart       : OK');
       } else {
-
-        console.log(
-          "Cart EMPTY → Skip Remove Cart"
-        );
-
+        console.log('Step 4 | Remove Cart       : SKIP (empty cart)');
       }
 
+      // Step 5 — Add Cart
+      const { cartNo: newCartNo } = await this.orderService.addCart(tokenWeb, cartNo);
+      console.log(`Step 5 | Add Cart          : OK, cartNo=${newCartNo}`);
 
-      /**
-       * Step 5 — Add Cart
-       */
-      const addCartResult =
-        await this.orderService.addCart(
-          tokenWeb,
-          cartNo ?? ""
-        );
+      // Step 6 — Update Cart
+      await this.orderService.updateCart(tokenWeb, newCartNo);
+      console.log('Step 6 | Update Cart       : OK');
 
-      expect([200, 201])
-        .toContain(
-          addCartResult.response.status()
-        );
+      // Step 7 — Checkout
+      const { orderId } = await this.orderService.checkout(tokenWeb, newCartNo);
+      console.log(`Step 7 | Checkout          : OK, orderId=${orderId}`);
 
-      console.log(
-        "Add Cart PASS: " +
-        addCartResult.response.status()
-      );
+      console.log(`===== ORDER FLOW ${country} END =====`);
+      return { tokenWeb, cartNo: newCartNo, orderId };
 
-      console.log(
-        "New CartNo = " +
-        addCartResult.cartNo
-      );
-
-
-      /**
-       * Step 6 — Update Cart
-       */
-
-      const finalCartNo =
-        addCartResult.cartNo ?? cartNo ?? "";
-
-      const updateCartResponse =
-        await this.orderService.updateCart(
-          tokenWeb,
-          finalCartNo
-        );
-
-      expect([200])
-        .toContain(updateCartResponse.status());
-
-      console.log(
-        "Update Cart PASS: " +
-        updateCartResponse.status()
-      );
-
-      /**
-     * Step 7 — Checkout
-     */
-
-      const checkoutResult =
-        await this.orderService.checkout(tokenWeb);
-
-      expect([200, 201])
-        .toContain(
-          checkoutResult.response.status()
-        );
-
-      console.log(
-        "Checkout PASS: " +
-        checkoutResult.response.status()
-      );
-      console.log("ORDER_ID = " + checkoutResult.orderId);
-
-      console.log("===== ORDER FLOW END =====");
-
-      /**
-       * Return result
-       */
-      return {
-
-        tokenWeb,
-
-        orderId:
-          checkoutResult.orderId,
-
-        cartNo:
-          addCartResult.cartNo ?? cartNo,
-
-        skuCodes:
-          cartResult?.skuCodes ?? [],
-
-        selectedSkuCodes,
-
-        cartInfo:
-          cartResult?.response
-            ? await cartResult.response.json()
-            : null
-      };
     } catch (error) {
-      console.error("❌ Order flow failed:", error);
+      if (error instanceof ApiError) {
+        console.error(`Order flow failed at: ${error.message}`);
+      }
       throw error;
     }
   }

@@ -199,8 +199,8 @@ export class PickService {
     basicToken: string,
     ticketId: string,
   ): Promise<{ response: APIResponse; message: string; url: string }> {
-    console.log('activePickTicket | waiting 8s...');
-    await new Promise(r => setTimeout(r, 8000));
+    console.log('activePickTicket | waiting 10s...');
+    await new Promise(r => setTimeout(r, 10000));
 
     const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic');
     const response = await client.put(this.pick.endpoints.activePickTicket, {

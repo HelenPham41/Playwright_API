@@ -33,6 +33,10 @@ export const VN_SCENARIO_DATA: ScenarioData = {
   customerProvinceName:    'Thành phố Hồ Chí Minh',
   ordersCount:             151,
 
+  //business
+  businessName: 'Quầy thuốc',
+  businessCode: '29870',
+
   // Payment (updateCart)
   paymentMethod:  'PAYMENT_METHOD_BANK',
   deliveryMethod: 'DELIVERY_PLATFORM_NORMAL',

@@ -32,6 +32,11 @@ export interface ScenarioData {
   customerProvinceName: string;
   ordersCount: number;
 
+  //business
+  businessName: string;
+  businessCode: string;
+
+
   // Payment (updateCart)
   paymentMethod: string;
   deliveryMethod: string;
@@ -117,19 +122,36 @@ export interface CountryConfig {
       remarkTemplate: string;  // placeholder: {orderId}
     };
     endpoints: {
-      orderList:        string;
-      confirmOrder:     string;
-      saleOrders:       string;
-      checkPickTicket:  string;
+      orderList: string;
+      confirmOrder: string;
+      saleOrders: string;
+      checkPickTicket: string;
       activePickTicket: string;
-      pickTicketItem:   string;
+      pickTicketItem: string;
       staffZoneSession: string;
-      assignPickStaff:  string;
-      location:         string;
-      useBasket:        string;
-      pickItem:         string;
-      completePick:     string;
-      completePickSO:   string;
+      assignPickStaff: string;
+      location: string;
+      useBasket: string;
+      pickItem: string;
+      completePick: string;
+      completePickSO: string;
+    };
+  };
+  bookShipper?: {
+    warehouseCode: string;
+    hubCode: string;
+
+    endpoints: {
+      getDeliveryInfo: string;
+      selectDelivery: string;
+      updateDelivery: string;
+      getDeliveryOrder: string;
+      createDelivery: string;
+      getDeliveryAfterCreate: string;
+      getTransportInfo: string;
+      assignDriver: string;
+      getDeliveryStatus: string;
+
     };
   };
 }

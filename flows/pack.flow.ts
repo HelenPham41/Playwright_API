@@ -74,13 +74,17 @@ export class PackFlow {
     } catch (error) {
       if (error instanceof ApiError) console.error(`Pack flow failed at: ${error.message}`);
 
-      if (checkedIn) {
-        try { await this.packService.packCheckout(basicToken); } catch {}
-      }
       if (orderCode) {
         try {
           await this.orderService.cancelOrder(basicToken, orderId, orderCode);
           console.log(`Pack flow cleanup: cancelled order ${orderId}`);
+          await new Promise(r => setTimeout(r, 3000)); // chờ cancel được xử lý xong trước khi checkout zone
+        } catch {}
+      }
+      if (checkedIn) {
+        try {
+          await this.packService.packCheckout(basicToken);
+          await new Promise(r => setTimeout(r, 3000)); // chờ checkout được xử lý xong trước khi kết thúc cleanup
         } catch {}
       }
 

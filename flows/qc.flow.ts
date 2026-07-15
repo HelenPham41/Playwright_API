@@ -66,14 +66,18 @@ export class QcFlow {
     } catch (error) {
       if (error instanceof ApiError) console.error(`QC flow failed at: ${error.message}`);
 
-      // Auto-cleanup: giải phóng zone và cancel order để lần chạy sau không bị block
-      if (checkedIn) {
-        try { await this.qcService.checkoutQc(basicToken); } catch {}
-      }
+      // Auto-cleanup: cancel order và giải phóng zone để lần chạy sau không bị block
       if (orderCode) {
         try {
           await this.orderService.cancelOrder(basicToken, orderId, orderCode);
           console.log(`QC flow cleanup: cancelled order ${orderId} (${orderCode})`);
+          await new Promise(r => setTimeout(r, 3000)); // chờ cancel được xử lý xong trước khi checkout zone
+        } catch {}
+      }
+      if (checkedIn) {
+        try {
+          await this.qcService.checkoutQc(basicToken);
+          await new Promise(r => setTimeout(r, 3000)); // chờ checkout được xử lý xong trước khi kết thúc cleanup
         } catch {}
       }
 

@@ -7,6 +7,7 @@ export interface RequestLogEntry {
   requestBody:    unknown;
   responseStatus: number;
   responseBody:   unknown;
+  orderId?:       string | undefined;
 }
 
 export const requestLog: RequestLogEntry[] = [];

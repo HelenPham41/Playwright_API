@@ -6,27 +6,27 @@ import { HTTP_STATUS, ERROR_MSG } from '../constants/status-code.js';
 import { OrderPayloadBuilder } from '../payloads/order.payload.js';
 import { getScenarioData } from '../test-data/scenario.data.factory.js';
 
-export interface CartInfo       { cartNo: string | null; skuCodes: string[] }
-export interface AddCartResult  { cartNo: string }
+export interface CartInfo { cartNo: string | null; skuCodes: string[] }
+export interface AddCartResult { cartNo: string }
 export interface CheckoutResult { orderId: string }
 
 export class OrderService {
 
-  private readonly cfg:     CountryConfig;
+  private readonly cfg: CountryConfig;
   private readonly payload: OrderPayloadBuilder;
 
   constructor(
     countryConfig?: CountryConfig,
     payloadBuilder?: OrderPayloadBuilder,
   ) {
-    this.cfg     = countryConfig  ?? getCountryConfig();
+    this.cfg = countryConfig ?? getCountryConfig();
     this.payload = payloadBuilder ?? new OrderPayloadBuilder(getScenarioData());
   }
 
   async checkCart(token: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const body   = this.payload.checkCartBody();
-    const res    = await client.put(this.cfg.endpoints.checkCart, { data: body });
+    const body = this.payload.checkCartBody();
+    const res = await client.put(this.cfg.endpoints.checkCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NOT_FOUND], 'checkCart');
     requestLog.push({ step: 'checkCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
@@ -64,16 +64,16 @@ export class OrderService {
 
   async removeCart(token: string, cartNo: string, skus: string[]): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const body   = this.payload.removeCartBody(cartNo, skus);
-    const res    = await client.put(this.cfg.endpoints.removeCart, { data: body });
+    const body = this.payload.removeCartBody(cartNo, skus);
+    const res = await client.put(this.cfg.endpoints.removeCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.NO_CONTENT], 'removeCart');
     requestLog.push({ step: 'removeCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
 
   async addCart(token: string, cartNo: string | null): Promise<AddCartResult> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const body   = this.payload.addCartBody(cartNo);
-    const res    = await client.post(this.cfg.endpoints.addCart, { data: body });
+    const body = this.payload.addCartBody(cartNo);
+    const res = await client.post(this.cfg.endpoints.addCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'addCart');
 
     const json = await res.json();
@@ -86,22 +86,21 @@ export class OrderService {
 
   async updateCart(token: string, cartNo: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const body   = this.payload.updateCartBody(cartNo);
-    const res    = await client.put(this.cfg.endpoints.updateCart, { data: body });
+    const body = this.payload.updateCartBody(cartNo);
+    const res = await client.put(this.cfg.endpoints.updateCart, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK], 'updateCart');
     requestLog.push({ step: 'updateCart', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
 
   async checkout(token: string, cartNo: string): Promise<CheckoutResult> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const body   = this.payload.checkoutBody(cartNo);
-    console.log('checkout | request body:', JSON.stringify(body));
-    const res    = await client.put(this.cfg.endpoints.checkout, { data: body });
-    const json   = await res.json().catch(() => null);
-    requestLog.push({ step: 'checkout', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json });
+    const body = this.payload.checkoutBody(cartNo);
+    const res = await client.put(this.cfg.endpoints.checkout, { data: body });
+    const json = await res.json().catch(() => null);
+    const orderId: string | undefined = json?.data?.[0]?.orderId;
+    requestLog.push({ step: 'checkout', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json, orderId });
     await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'checkout');
 
-    const orderId: string | undefined = json?.data?.[0]?.orderId;
     if (!orderId) throw new ApiError('checkout', res.status(), res.url(), ERROR_MSG.ORDER_ID_MISSING);
 
     return { orderId };
@@ -109,8 +108,8 @@ export class OrderService {
 
   async cancelOrder(basicToken: string, orderId: string, orderCode: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
-    const body   = this.payload.cancelOrderBody(orderId, orderCode);
-    const res    = await client.put(this.cfg.endpoints.cancelOrder, { data: body });
+    const body = this.payload.cancelOrderBody(orderId, orderCode);
+    const res = await client.put(this.cfg.endpoints.cancelOrder, { data: body });
     await assertStatus(res, [HTTP_STATUS.OK], 'cancelOrder');
     requestLog.push({ step: 'cancelOrder', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }

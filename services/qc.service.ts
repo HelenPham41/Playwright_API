@@ -119,7 +119,7 @@ export class QcService {
         index--; // retry same SKU
       }
 
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 3000));
     }
 
     console.log(`processSkuQrLoop | done: total=${skuList.length}, scanned=${scanned}, skipped=${skipped}`);
@@ -133,7 +133,7 @@ export class QcService {
   async doneQcMoveToPack(basicToken: string, ticketId: string, so: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
     const body     = this.payload.doneQcBody(ticketId, so);
-    const response = await client.put(this.qc.endpoints.doneQcMoveToPack, { data: body, timeout: 3000 });
+    const response = await client.put(this.qc.endpoints.doneQcMoveToPack, { data: body, timeout: 5000 });
     await assertStatus(response, [HTTP_STATUS.OK], 'doneQcMoveToPack');
     requestLog.push({ step: 'doneQcMoveToPack', method: 'PUT', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;
@@ -145,7 +145,7 @@ export class QcService {
   async checkoutQc(basicToken: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
     const body     = this.payload.checkoutQcBody(this.qc.zoneCode);
-    const response = await client.post(this.qc.endpoints.staffZoneSession, { data: body, timeout: 3000 });
+    const response = await client.post(this.qc.endpoints.staffZoneSession, { data: body, timeout: 5000 });
     await assertStatus(response, [HTTP_STATUS.OK], 'checkoutQc');
     requestLog.push({ step: 'checkoutQc', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;

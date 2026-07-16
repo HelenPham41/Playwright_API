@@ -112,4 +112,51 @@ export const VN_CONFIG: CountryConfig = {
       getDeliveryStatus: '/backend/delivery/transporting/v1/hub-order'
     },
   },
+
+  delivery: {
+    warehouseCode: process.env.LOCATION || 'BD',
+    carrierCode: process.env.Carrier_CODE || 'NVCTHCM',
+    hubCode: process.env.HUB_CODE || 'HUBBD',
+    carrierId: 160,
+    carrierName: 'NV Công Ty - HCM',
+    appUrl: process.env.DELIVERY_URL || 'https://api.iam.stg.buymed.tech',
+    clientId: process.env.DELIVERY_CLIENT_ID || '9f352AFrUDIRS8W4jlYBWKDrJ61p4wE8qtL4mp7DAH4vEjji',
+    clientSecret: process.env.DELIVERY_CLIENT_SECRET || 'uztmAFaKXifzhjtw2PUyMlcZcfleS2h9uhBy7eBXNtxWJDYj',
+    driverPwd: process.env.DRIVER_PWD || 'Lam123456',
+    id: 3321,
+    latitude: 37.785834,
+    longitude: -122.406417,
+
+    endpoints: {
+      loginApp: '/iam/core/v1/sso/login',
+
+      auth: '/iam/core/v1/oauth/authorize',
+
+      loginRider: '/iam/core/v1/oauth/token',
+
+      acceptDelivery:
+        '/delivery/transporting/v1/hub-order/status',
+
+      confirmCurrentAddress:
+        '/delivery/transporting/v1/shipping-address',
+
+      getUploadImageToken:
+        '/core/file-manager/v1/access-token/gen',
+
+      uploadImage:
+        '/core/file-manager/v1/upload/image',
+
+      getUploadSignatureToken:
+        '/core/file-manager/v1/access-token/gen',
+
+      uploadSignature:
+        '/core/file-manager/v1/upload/image',
+
+      updateDelivery:
+        '/delivery/transporting/v1/hub-order/status',
+
+      getDeliveryStatus:
+        '/backend/delivery/transporting/v1/hub-order',
+    }
+  }
 };

@@ -63,6 +63,12 @@ export interface ScenarioData {
   deliveryWeight: number;
   driverId?: number;
   driverName?: string;
+
+  // Delivery image/signature upload (delivery flow)
+  dataImage?: string;
+  dataSignature?: string;
+  fileName?: string;
+  refType?: string;
 }
 
 export interface CountryConfig {
@@ -162,6 +168,36 @@ export interface CountryConfig {
       assignDriver: string;
       getDeliveryStatus: string;
 
+    };
+  };
+
+  delivery?: {
+    warehouseCode: string;
+    hubCode: string;
+    carrierCode: string;
+    carrierId: number;
+    carrierName: string;
+    appUrl: string;
+    clientId: string;
+    clientSecret: string;
+    driverName?: string;
+    driverPwd?: string;
+    id?: number;
+    latitude?: number;
+    longitude?: number;
+
+    endpoints: {
+      loginApp: string;
+      auth: string;
+      loginRider: string;
+      acceptDelivery: string;
+      confirmCurrentAddress: string;
+      getUploadImageToken: string;
+      uploadImage: string;
+      getUploadSignatureToken: string;
+      uploadSignature: string;
+      updateDelivery: string;
+      getDeliveryStatus: string;
     };
   };
 }

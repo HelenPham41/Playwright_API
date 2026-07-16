@@ -96,13 +96,12 @@ export class BookShipperService {
      */
     async updateDelivery(
         basicToken: string,
-        ticketId: string,
+        ticketId: number,
     ): Promise<APIResponse> {
 
         const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
 
         const body = this.payload.updateDeliveryBody(ticketId);
-
         const response = await client.put(
             this.bookShipper.endpoints.updateDelivery,
             { data: body }
@@ -110,13 +109,15 @@ export class BookShipperService {
 
         await assertStatus(response, [HTTP_STATUS.OK], 'updateDelivery');
 
+        const responseBody = await response.json().catch(() => null);
+
         requestLog.push({
             step: 'updateDelivery',
             method: 'PUT',
             url: response.url(),
             requestBody: body,
             responseStatus: response.status(),
-            responseBody: await response.json().catch(() => null),
+            responseBody,
         });
 
         return response;
@@ -125,7 +126,7 @@ export class BookShipperService {
     /**
      * 4. Get Delivery Order
      */
-    async getDeliveryOrder(basicToken: string, ticketId: string): Promise<any> {
+    async getDeliveryOrder(basicToken: string, ticketId: number): Promise<any> {
 
         const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
 
@@ -157,15 +158,17 @@ export class BookShipperService {
      */
     async createDelivery(
         basicToken: string,
-        shippingOrderCode: string,
+        so: string,
         basketCode: string,
+        donePackTime: number,
     ): Promise<any> {
 
         const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
 
         const body = this.payload.createDeliveryBody(
-            shippingOrderCode,
+            so,
             basketCode,
+            donePackTime,
         );
 
         const response = await client.post(
@@ -255,7 +258,7 @@ export class BookShipperService {
     async assignDriver(
         basicToken: string,
         data: AssignDriverRequest,
-    ): Promise<APIResponse> {
+    ): Promise<any> {
 
         const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
 
@@ -270,27 +273,31 @@ export class BookShipperService {
 
         await assertStatus(response, [HTTP_STATUS.OK], 'assignDriver');
 
+        const responseBody = await response.json().catch(() => null);
+
         requestLog.push({
             step: 'assignDriver',
             method: 'POST',
             url: response.url(),
             requestBody: body,
             responseStatus: response.status(),
-            responseBody: await response.json().catch(() => null),
+            responseBody,
         });
 
-        return response;
+        return responseBody;
     }
 
     /**
      * 9. Get Delivery Status
      */
-    async getDeliveryStatus(basicToken: string): Promise<any> {
+    async getDeliveryStatus(basicToken: string, so: string): Promise<any> {
 
         const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+        const params = this.payload.getDeliveryStatusParams(so);
 
         const response = await client.get(
-            this.bookShipper.endpoints.getDeliveryStatus
+            this.bookShipper.endpoints.getDeliveryStatus,
+            { params }
         );
 
         await assertStatus(response, [HTTP_STATUS.OK], 'getDeliveryStatus');
@@ -301,7 +308,7 @@ export class BookShipperService {
             step: 'getDeliveryStatus',
             method: 'GET',
             url: response.url(),
-            requestBody: null,
+            requestBody: params,
             responseStatus: response.status(),
             responseBody: data,
         });

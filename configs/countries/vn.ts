@@ -87,7 +87,10 @@ export const VN_CONFIG: CountryConfig = {
 
   bookShipper: {
     warehouseCode: process.env.LOCATION || 'BD',
-    hubCode: process.env.HUB_CODE || 'NVCTHCM',
+    carrierCode: process.env.Carrier_CODE || 'NVCTHCM',
+    hubCode: process.env.HUB_CODE || 'HUBBD',
+    carrierId: 160,
+    carrierName: 'NV Công Ty - HCM',
 
     endpoints: {
       getDeliveryInfo: '/backend/warehouse/picking/v1/pick-ticket',

@@ -30,7 +30,6 @@ interface RunRecord {
   errorMessage: string;
   duration:     number;   // seconds
   steps:        StepRecord[];
-  httpLog:      any[];
 }
 
 export default class HtmlSummaryReporter implements Reporter {
@@ -65,9 +64,6 @@ export default class HtmlSummaryReporter implements Reporter {
         error:    s.error ? clean(s.error.message ?? '').slice(0, 200) : '',
       }));
 
-    let httpLog: any[] = [];
-    try { httpLog = JSON.parse(ann('httpLog')); } catch {}
-
     this.records.push({
       index:        this.runIndex,
       testName:     test.title,
@@ -84,7 +80,6 @@ export default class HtmlSummaryReporter implements Reporter {
       errorMessage: bodyMatch?.[1]  ?? (status === 'FAIL' ? clean(errMsg).slice(0, 300) : '-'),
       duration:     Math.round(result.duration / 1000),
       steps,
-      httpLog,
     });
   }
 
@@ -208,36 +203,6 @@ export default class HtmlSummaryReporter implements Reporter {
           </table>
         </details>` : '';
 
-      // API Calls sub-section
-      const apiRows = r.httpLog.map((e, i) => `
-        <tr>
-          <td style="text-align:center">${i + 1}</td>
-          <td><b>${this.escape(e.step)}</b></td>
-          <td style="text-align:center">${this.escape(e.method)}</td>
-          <td style="word-break:break-all;overflow-wrap:anywhere">${this.escape(e.url)}</td>
-          <td><pre>${this.escape(JSON.stringify(e.requestBody, null, 2))}</pre></td>
-          <td style="text-align:center;color:${e.responseStatus >= 400 ? '#dc2626' : '#16a34a'};font-weight:bold">${e.responseStatus}</td>
-          <td><pre>${this.escape(JSON.stringify(e.responseBody, null, 2))}</pre></td>
-        </tr>`).join('');
-
-      const apiSection = r.httpLog.length ? `
-        <details ${isFail ? 'open' : ''}>
-          <summary class="sub-header">&#x1F4E1; API Calls — DEV (${r.httpLog.length})</summary>
-          <table class="sub-table" style="table-layout:fixed;width:100%">
-            <colgroup>
-              <col style="width:36px">
-              <col style="width:140px">
-              <col style="width:56px">
-              <col style="width:28%">
-              <col style="width:28%">
-              <col style="width:56px">
-              <col style="width:20%">
-            </colgroup>
-            <tr><th>#</th><th>Step</th><th>Method</th><th>URL</th><th>Request Body</th><th>Status</th><th>Response</th></tr>
-            ${apiRows}
-          </table>
-        </details>` : '';
-
       const badge = `<span class="badge ${isFail ? 'badge-fail' : 'badge-pass'}">${r.status}</span>`;
 
       return `
@@ -258,7 +223,6 @@ export default class HtmlSummaryReporter implements Reporter {
         <td colspan="9" style="padding:0;border-top:none">
           <div class="detail-wrap">
             ${stepsSection}
-            ${apiSection}
           </div>
         </td>
       </tr>`;

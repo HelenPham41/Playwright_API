@@ -13,6 +13,9 @@ export const HTTP_STATUS = {
 export const RESPONSE_CODE = {
   SUCCESS: 'success',
   FAILED:  'failed',
+
+  // Warehouse API (pick-ticket, delivery...) dùng convention khác: 'OK' / 'INVALID'
+  OK:      'OK',
 } as const;
 
 // ─── Error description (dùng cho assertion message / ApiError) ────────────────

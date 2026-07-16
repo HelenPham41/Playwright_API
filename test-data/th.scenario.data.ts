@@ -175,4 +175,7 @@ export const TH_SCENARIO_DATA: ScenarioData = {
   checkoutPaymentCode:         '',
   checkoutPaymentCardList:     '',
   checkoutPaymentCustomerTags: [],
+
+  // Delivery (bookShipper) — TODO: confirm TH delivery weight, bookShipper chưa có config cho TH
+  deliveryWeight: 0.254,
 };

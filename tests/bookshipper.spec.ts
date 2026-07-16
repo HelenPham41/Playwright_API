@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/flow.fixture.js';
 import { clearRequestLog, requestLog } from '../clients/apiClient.js';
+import { RESPONSE_CODE } from '../constants/status-code.js';
 
 test('Book Shipper Flow', async ({
     orderFlow,
@@ -77,7 +78,6 @@ test('Book Shipper Flow', async ({
             bookShipperFlow.bookShipper({
                 so: pickResult.so,
                 ticketId: pickResult.ticketId,
-                deliveryBasketCode: ''
             }),
     );
 
@@ -101,6 +101,11 @@ test('Book Shipper Flow', async ({
         description: bookResult.driverName,
     });
 
+    testInfo.annotations.push({
+        type: 'trackingNumber',
+        description: bookResult.trackingNumber,
+    });
+
     //──────────────────────────────────────────────
     // HTTP Log
     //──────────────────────────────────────────────
@@ -112,9 +117,20 @@ test('Book Shipper Flow', async ({
     //──────────────────────────────────────────────
     // Assertions
     //──────────────────────────────────────────────
-    expect(bookResult.so).toBeTruthy();
-    expect(bookResult.deliveryCode).toBeTruthy();
-    expect(bookResult.shippingOrderCode).toBeTruthy();
-    expect(bookResult.driverId).toBeGreaterThan(0);
-    expect(bookResult.driverName).toBeTruthy();
+    expect(bookResult.createDeliveryStatus).toBe(RESPONSE_CODE.OK);
+    expect(bookResult.trackingNumber).toBeTruthy();
+    expect(bookResult.createDeliveryMessage).toBe(
+        `Book vận chuyển thành công cho đơn hàng : ${bookResult.so}-F`,
+    );
+
+    expect(bookResult.assignDriverStatus).toBe(RESPONSE_CODE.OK);
+    expect(bookResult.assignDriverMessage).toBe('Gán tài xế thành công');
+
+    expect(bookResult.transportActionName).toBe(
+        'Đã nhập kho Hub VSIP II - BÌNH DƯƠNG',
+    );
+    expect(bookResult.transportType).toBe('TRANSPORTING');
+    expect(bookResult.transportStatus).toBe('WAIT_TO_DELIVERY');
+    expect(bookResult.transportProductivityAction).toBe('ASSIGN_DELIVERY');
+    expect(bookResult.transportTrackingCode).toBeTruthy();
 });

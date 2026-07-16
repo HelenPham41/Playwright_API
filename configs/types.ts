@@ -58,6 +58,11 @@ export interface ScenarioData {
   totalWard?: number;
   paymentMethods?: Record<string, unknown>[];
   deliveryMethods?: Record<string, unknown>[];
+
+  // Delivery (bookShipper)
+  deliveryWeight: number;
+  driverId?: number;
+  driverName?: string;
 }
 
 export interface CountryConfig {
@@ -140,6 +145,11 @@ export interface CountryConfig {
   bookShipper?: {
     warehouseCode: string;
     hubCode: string;
+    carrierCode: string;
+    carrierId: number;
+    carrierName: string;
+    driverId?: number;
+    driverName?: string;
 
     endpoints: {
       getDeliveryInfo: string;

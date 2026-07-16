@@ -7,7 +7,6 @@ import { ApiError } from '../errors/api.error.js';
 export interface BookShipperInput {
   so: string;
   ticketId: number | string;
-  deliveryBasketCode: string;
 }
 
 export interface BookShipperResult {
@@ -16,6 +15,16 @@ export interface BookShipperResult {
   so: string;
   deliveryCode: string;
   shippingOrderCode: string;
+  trackingNumber: string;
+  createDeliveryStatus: string;
+  createDeliveryMessage: string;
+  assignDriverStatus: string;
+  assignDriverMessage: string;
+  transportActionName: string;
+  transportType: string;
+  transportStatus: string;
+  transportProductivityAction: string;
+  transportTrackingCode: string;
 }
 
 export class BookShipperFlow {
@@ -38,47 +47,51 @@ export class BookShipperFlow {
     const {
       so,
       ticketId,
-      deliveryBasketCode,
     } = input;
 
-    // ensure ticketId is a string when passed to services expecting string
-    const ticketIdStr = String(ticketId);
+    const ticketIdNum = Number(ticketId);
+    const scenarioData = getScenarioData();
 
     try {
 
       //────────────────────────────────────────────
       // Step 1 - Get Delivery Info
       //────────────────────────────────────────────
-      await this.bookShipperService.getDeliveryInfo(
-        basicToken,
-        so,
-      );
+      const deliveryInfo =
+        await this.bookShipperService.getDeliveryInfo(
+          basicToken,
+          so,
+        );
 
       console.log('Step 1 | Get Delivery Info      : OK');
 
+      const ticketData = deliveryInfo?.data?.[0];
+
+      const deliveryBasket = ticketData?.baskets?.find(
+        (item: any) => item.type === 'DELIVERY',
+      );
+
+      const basketCode = deliveryBasket?.codes?.[0] ?? '';
+      const donePackTime = ticketData?.endTime ?? 0;
+
       //────────────────────────────────────────────
-      // Step 2 - Select Carrier
+      // Step 2 - Select Delivery
       //────────────────────────────────────────────
-      const carrier =
-        await this.bookShipperService.selectDelivery(
-          basicToken,
-        );
+      await this.bookShipperService.selectDelivery(
+        basicToken,
+      );
 
       console.log('Step 2 | Select Delivery        : OK');
 
-      // TODO: Update according to your actual response
-      const driverId =
-        carrier?.data?.driverId ?? 0;
-
-      const driverName =
-        carrier?.data?.driverName ?? '';
+      const driverId = scenarioData.driverId ?? 0;
+      const driverName = scenarioData.driverName ?? '';
 
         //────────────────────────────────────────────
       // Step 3 - Update Delivery
       //────────────────────────────────────────────
       await this.bookShipperService.updateDelivery(
         basicToken,
-        ticketIdStr,
+        ticketIdNum,
       );
 
       console.log('Step 3 | Update Delivery        : OK');
@@ -90,36 +103,30 @@ export class BookShipperFlow {
       const deliveryOrder =
         await this.bookShipperService.getDeliveryOrder(
           basicToken,
-          ticketIdStr,
+          ticketIdNum,
         );
 
       console.log('Step 4 | Get Delivery Order     : OK');
 
-      // TODO: Update according to your API response
-      const deliveryCode =
-        deliveryOrder?.data?.deliveryCode ??
-        deliveryOrder?.data?.[0]?.deliveryCode;
-
-      //────────────────────────────────────────────
-      // Step 4 - Update Delivery
-      //────────────────────────────────────────────
-      await this.bookShipperService.updateDelivery(
-        basicToken,
-        deliveryCode,
-      );
-
-      console.log('Step 4 | Update Delivery        : OK');
+      const deliveryCode = deliveryOrder?.data?.[0]?.deliveryOrderCode;
 
       //────────────────────────────────────────────
       // Step 5 - Create Delivery
       //────────────────────────────────────────────
-      await this.bookShipperService.createDelivery(
-        basicToken,
-        `${so}-F`,
-        deliveryBasketCode,
-      );
+      const createDeliveryResult =
+        await this.bookShipperService.createDelivery(
+          basicToken,
+          so,
+          basketCode,
+          donePackTime,
+        );
 
       console.log('Step 5 | Create Delivery        : OK');
+
+      const createDeliveryStatus = createDeliveryResult?.status;
+      const createDeliveryMessage = createDeliveryResult?.message ?? '';
+      const trackingNumber =
+        createDeliveryResult?.data?.[0]?.tracking_number ?? '';
 
       //────────────────────────────────────────────
       // Step 6 - Get Delivery After Create
@@ -132,11 +139,8 @@ export class BookShipperFlow {
 
       console.log('Step 6 | Delivery After Create  : OK');
 
-      // TODO: Update according to your API response
       const shippingOrderCode =
-        afterCreate?.data?.shippingOrderCode ??
-        afterCreate?.data?.[0]?.shippingOrderCode ??
-        `${so}-F`;
+        afterCreate?.data?.[0]?.referenceCode ?? `${so}-F`;
 
       //────────────────────────────────────────────
       // Step 7 - Get Transport Info
@@ -151,26 +155,39 @@ export class BookShipperFlow {
       //────────────────────────────────────────────
       // Step 8 - Assign Driver
       //────────────────────────────────────────────
-      await this.bookShipperService.assignDriver(
-        basicToken,
-        {
-          driverId,
-          driverName,
-          deliveryCode,
-          shippingOrderCode,
-        },
-      );
+      const assignDriverResult =
+        await this.bookShipperService.assignDriver(
+          basicToken,
+          {
+            driverId,
+            driverName,
+            so,
+            trackingNumber,
+          },
+        );
 
       console.log('Step 8 | Assign Driver          : OK');
+
+      const assignDriverStatus = assignDriverResult?.status;
+      const assignDriverMessage = assignDriverResult?.message ?? '';
 
       //────────────────────────────────────────────
       // Step 9 - Get Delivery Status
       //────────────────────────────────────────────
-      await this.bookShipperService.getDeliveryStatus(
-        basicToken,
-      );
+      const deliveryStatus =
+        await this.bookShipperService.getDeliveryStatus(
+          basicToken,
+          so,
+        );
 
       console.log('Step 9 | Get Delivery Status    : OK');
+
+      const transportOrder = deliveryStatus?.data?.[0];
+      const transportActionName = transportOrder?.actionName ?? '';
+      const transportType = transportOrder?.type ?? '';
+      const transportStatus = transportOrder?.status ?? '';
+      const transportProductivityAction = transportOrder?.productivityAction ?? '';
+      const transportTrackingCode = transportOrder?.trackingCode ?? '';
 
       console.log(`===== BOOK SHIPPER FLOW ${country} END =====`);
 
@@ -180,6 +197,16 @@ export class BookShipperFlow {
         so,
         deliveryCode,
         shippingOrderCode,
+        trackingNumber,
+        createDeliveryStatus,
+        createDeliveryMessage,
+        assignDriverStatus,
+        assignDriverMessage,
+        transportActionName,
+        transportType,
+        transportStatus,
+        transportProductivityAction,
+        transportTrackingCode,
       };
 
     } catch (error) {

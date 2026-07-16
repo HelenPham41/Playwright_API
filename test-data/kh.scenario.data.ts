@@ -143,4 +143,7 @@ export const KH_SCENARIO_DATA: ScenarioData = {
   checkoutPaymentCode:         '',
   checkoutPaymentCardList:     '',
   checkoutPaymentCustomerTags: [],
+
+  // Delivery (bookShipper) — TODO: confirm KH delivery weight, bookShipper chưa có config cho KH
+  deliveryWeight: 0.254,
 };

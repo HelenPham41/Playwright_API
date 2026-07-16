@@ -52,4 +52,11 @@ export const VN_SCENARIO_DATA: ScenarioData = {
   checkoutPaymentCode:         'MOMO',
   checkoutPaymentCardList:     'MOMO',
   checkoutPaymentCustomerTags: ['13384', 'TESTCREDIT'],
+
+  // Delivery (bookShipper)
+  deliveryWeight: 0.254,
+
+  //Driver Info
+  driverName: 'lam.delivery.malo',
+  driverId: 11140,
 };

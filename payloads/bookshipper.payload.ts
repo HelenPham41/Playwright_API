@@ -5,8 +5,8 @@ type DeliveryCfg = NonNullable<CountryConfig['bookShipper']>;
 export interface AssignDriverRequest {
     driverId: number;
     driverName: string;
-    deliveryCode: string;
-    shippingOrderCode: string;
+    so: string;
+    trackingNumber: string;
 }
 
 export class DeliveryPayloadBuilder {
@@ -18,7 +18,8 @@ export class DeliveryPayloadBuilder {
         return {
             address: d.customerShippingAddress,
             businessName: d.businessName,
-            code: d.businessCode,
+            // API pick-ticket parse code dạng number — businessCode trong ScenarioData là string
+            code: Number(d.businessCode),
             deliveryMode: 'NORMAL',
             district: d.customerDistrictName,
             districtCode: d.customerDistrictCode,
@@ -47,7 +48,7 @@ export class DeliveryPayloadBuilder {
     /**
      * 2. Select Delivery
      */
-    selectDeliveryParams(carrierCode: string = this.delivery.hubCode) {
+    selectDeliveryParams(carrierCode: string = this.delivery.carrierCode) {
         return {
             q: JSON.stringify({
                 carrierCode,
@@ -58,7 +59,7 @@ export class DeliveryPayloadBuilder {
     /**
      * 3. Update Delivery
      */
-    updateDeliveryBody(ticketId: string | number) {
+    updateDeliveryBody(ticketId: number) {
         return {
             ticketId,
             warehouseCode: this.delivery.warehouseCode,
@@ -70,7 +71,7 @@ export class DeliveryPayloadBuilder {
     /**
      * 4. Get Delivery Order
      */
-    getDeliveryOrderParams(ticketId: string | number) {
+    getDeliveryOrderParams(ticketId: number) {
         return {
             q: JSON.stringify({
                 routeCodes: [],
@@ -86,13 +87,24 @@ export class DeliveryPayloadBuilder {
      * 5. Create Delivery
      */
     createDeliveryBody(
-        shippingOrderCode: string,
+        so: string,
         deliveryBasketCode: string,
+        donePackTime: number,
     ) {
         return {
+            weight: this.data.deliveryWeight,
+            carrierId: this.delivery.carrierId,
+            carrierName: this.delivery.carrierName,
+            numPackage: 1,
+            so: `${so}-F`,
+            parentReferenceCode: so,
+            type: '',
+            donePackTime,
+            mergeStatus: null,
+            baskets: [
+                { code: deliveryBasketCode },
+            ],
             warehouseCode: this.delivery.warehouseCode,
-            shippingOrderCode,
-            deliveryBasketCode,
         };
     }
 
@@ -128,11 +140,11 @@ export class DeliveryPayloadBuilder {
      */
     assignDriverBody(data: AssignDriverRequest) {
         return {
-            warehouseCode: this.delivery.warehouseCode,
-            driverId: data.driverId,
             driverName: data.driverName,
-            deliveryCode: data.deliveryCode,
-            shippingOrderCode: data.shippingOrderCode,
+            driverId: data.driverId,
+            listReferenceCode: [`${data.so}-F`],
+            hubCode: this.delivery.hubCode,
+            listTrackingCode: [data.trackingNumber],
         };
     }
 

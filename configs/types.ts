@@ -63,6 +63,7 @@ export interface ScenarioData {
   deliveryWeight: number;
   driverId?: number;
   driverName?: string;
+  driverPwd?: string;
 
   // Delivery image/signature upload (delivery flow)
   dataImage?: string;
@@ -196,7 +197,7 @@ export interface CountryConfig {
       uploadImage: string;
       getUploadSignatureToken: string;
       uploadSignature: string;
-      updateDelivery: string;
+      completeDelivery: string;
       getDeliveryStatus: string;
     };
   };

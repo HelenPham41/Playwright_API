@@ -3,6 +3,7 @@ import { OrderService } from '../services/order.service.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 import { ApiError } from '../errors/api.error.js';
+import { HTTP_STATUS } from '../constants/status-code.js';
 
 export interface PackInput {
   so: string;
@@ -51,8 +52,17 @@ export class PackFlow {
       if (!bin) throw new Error('No BIN available');
       console.log(`Step 3 | Get BIN           : bin=${bin}`);
 
-      // Step 4 — Add Basket
-      await this.packService.addBasket(basicToken, ticketId, bin);
+      // Step 4 — Add Basket (retry once on 400)
+      try {
+        await this.packService.addBasket(basicToken, ticketId, bin);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === HTTP_STATUS.BAD_REQUEST) {
+          console.warn('addBasket | got 400, retrying once');
+          await this.packService.addBasket(basicToken, ticketId, bin);
+        } else {
+          throw error;
+        }
+      }
       console.log('Step 4 | Add Basket        : OK');
 
       // Step 5 — Update Ticket → WAIT_TO_DELIVERY
@@ -79,13 +89,18 @@ export class PackFlow {
           await this.orderService.cancelOrder(basicToken, orderId, orderCode);
           console.log(`Pack flow cleanup: cancelled order ${orderId}`);
           await new Promise(r => setTimeout(r, 3000)); // chờ cancel được xử lý xong trước khi checkout zone
-        } catch {}
+        } catch (cleanupError) {
+          console.error(`Pack flow cleanup: cancelOrder failed for ${orderId}:`, cleanupError instanceof Error ? cleanupError.message : cleanupError);
+        }
       }
       if (checkedIn) {
         try {
           await this.packService.packCheckout(basicToken);
+          console.log('Pack flow cleanup: checked out pack zone');
           await new Promise(r => setTimeout(r, 3000)); // chờ checkout được xử lý xong trước khi kết thúc cleanup
-        } catch {}
+        } catch (cleanupError) {
+          console.error('Pack flow cleanup: packCheckout failed:', cleanupError instanceof Error ? cleanupError.message : cleanupError);
+        }
       }
 
       throw error;

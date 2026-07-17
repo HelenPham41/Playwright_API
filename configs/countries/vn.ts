@@ -152,8 +152,8 @@ export const VN_CONFIG: CountryConfig = {
       uploadSignature:
         '/core/file-manager/v1/upload/image',
 
-      updateDelivery:
-        '/delivery/transporting/v1/hub-order/status',
+      completeDelivery:
+        '/delivery/transporting/v1/hub-order/complete',
 
       getDeliveryStatus:
         '/backend/delivery/transporting/v1/hub-order',

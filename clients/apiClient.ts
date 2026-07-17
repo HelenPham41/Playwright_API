@@ -4,6 +4,7 @@ export interface RequestLogEntry {
   step:           string;
   method:         string;
   url:            string;
+  requestHeaders?: Record<string, string>;
   requestBody:    unknown;
   responseStatus: number;
   responseBody:   unknown;

@@ -53,7 +53,7 @@ export class DeliveryPayloadBuilder {
     /**
      * Login App
      */
-    loginBody(username: string, password: string) {
+    loginAppBody(username: string, password: string) {
         return {
             username,
             password,
@@ -111,31 +111,6 @@ export class DeliveryPayloadBuilder {
     }
 
     /**
-     * Update Delivery
-     */
-    updateDeliveryBody(data: UpdateDeliveryRequest) {
-        return {
-            ticketId: Number(data.ticketId),
-
-            warehouseCode: this.delivery.warehouseCode,
-
-            customer: {
-                address: data.customer.address,
-                businessName: data.customer.businessName,
-                code: data.customer.code,
-                deliveryMode: data.customer.deliveryMode,
-                district: data.customer.district,
-                districtCode: data.customer.districtCode,
-                name: data.customer.name,
-                province: data.customer.province,
-                provinceCode: data.customer.provinceCode,
-                ward: data.customer.ward,
-                wardCode: data.customer.wardCode,
-            },
-        };
-    }
-
-    /**
      * Upload Image
      */
     uploadImageBody(
@@ -166,15 +141,14 @@ export class DeliveryPayloadBuilder {
      * Complete Delivery
      */
     completeDeliveryBody(
-        referenceCode: string,
+        so: string,
         hubCode: string,
         trackingNumber: string,
         uploadImageUrl: string,
         uploadSignatureUrl: string,
-        note = '',
     ) {
         return {
-            referenceCode,
+            referenceCode: `${so}-F`,
             hubCode,
             trackingCode: trackingNumber,
             status: 'DELIVERED',
@@ -199,7 +173,7 @@ export class DeliveryPayloadBuilder {
             q: JSON.stringify({
                 status: 'DELIVERED',
                 hubCode: this.delivery.hubCode,
-                listReferenceCode: `${so}-F`
+                listReferenceCode: [`${so}-F`]
             }),
         };
     }

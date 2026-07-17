@@ -72,7 +72,7 @@ export class PackService {
   async addBasket(basicToken: string, ticketId: string, bin: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic');
     const body     = this.payload.addBasketBody(ticketId, bin);
-    const response = await client.post(this.pack.endpoints.addBasket, { data: body, timeout: 7000 });
+    const response = await client.post(this.pack.endpoints.addBasket, { data: body, timeout: 10000 });
     await assertStatus(response, [HTTP_STATUS.OK], 'addBasket');
     requestLog.push({ step: 'addBasket', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;

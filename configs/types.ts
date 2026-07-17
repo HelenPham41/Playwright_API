@@ -70,6 +70,18 @@ export interface ScenarioData {
   dataSignature?: string;
   fileName?: string;
   refType?: string;
+
+  //Reconcile (reconcileShipper)
+  reconcileType?: string;
+  reconcileOrderId?: number;
+  reconcileOrderCode?: string;
+  reconcilePaymentSessionId?: number;
+  reconcilePaymentLineId?: number;
+  reconcileBankCode?: string;
+  reconcileBankAccountNumber?: string;
+  reconcileBankChannel?: string;
+  reconcileBankingTransactionCode?: string;
+  reconcileRemarkTemplate?: string;
 }
 
 export interface CountryConfig {
@@ -201,4 +213,19 @@ export interface CountryConfig {
       getDeliveryStatus: string;
     };
   };
+
+  reconcileShipper?: {
+    warehouseCode: string;
+    hubCode: string;
+    reconcileType: string;
+    endpoints: {
+      getPaymentSession: string;
+      getPaymentLine: string;
+      checkReconcileOrder: string;
+      confirmPayment: string;
+      getReconcileActivity: string;
+      approveReconcile: string;
+    };
+  }; 
 }
+

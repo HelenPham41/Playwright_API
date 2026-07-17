@@ -28,8 +28,8 @@ export const VN_SCENARIO_DATA: ScenarioData = {
   customerWardCode: '26947',
   customerAddressCode: 'YFFPHGG3',
   customerRegionCode: '107TQTAR1Y7G',
-  customerWardName: 'Phường 03',
-  customerDistrictName: 'Quận Bình Thạnh',
+  customerWardName: 'Xa Nha Be',
+  customerDistrictName: 'Xa Nha Be',
   customerProvinceName: 'Thành phố Hồ Chí Minh',
   ordersCount: 151,
 

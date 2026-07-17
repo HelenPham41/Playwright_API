@@ -10,6 +10,8 @@ import type {
   UploadSignatureData,
 } from '../payloads/delivery.payload.js';
 
+const WAIT_3S = 3000;
+
 export interface DeliveryInput {
   ticketId: number;
   so: string;
@@ -127,7 +129,7 @@ export class DeliveryFlow {
       const acceptDeliveryOrder = acceptDeliveryResult?.data?.[0];
 
       console.log('Step 4 | Accept Delivery          : OK');
-     
+
       //----------------------------------------------------------
       // Step 5 - Confirm Current Address
       //----------------------------------------------------------
@@ -177,6 +179,8 @@ export class DeliveryFlow {
       }
 
       console.log('Step 7 | Upload Image             : OK');
+      console.log('Wait 3s after upload Image...');
+      await new Promise(r => setTimeout(r, WAIT_3S));
 
       //----------------------------------------------------------
       // Step 8 - Get Upload Signature Token
@@ -191,6 +195,7 @@ export class DeliveryFlow {
       }
 
       console.log('Step 8 | Get Signature Token      : OK');
+    
 
       //----------------------------------------------------------
       // Step 9 - Upload Signature
@@ -208,30 +213,42 @@ export class DeliveryFlow {
       }
 
       console.log('Step 9 | Upload Signature          : OK');
+      console.log('Wait 3s after upload Signature...');
+      await new Promise(r => setTimeout(r, WAIT_3S));
 
       //----------------------------------------------------------
       // Step 10 - Complete Delivery
       //----------------------------------------------------------
+
       await this.deliveryService.completeDelivery(
         riderToken,
         so,
         trackingNumber,
         uploadedImageUrl,
         uploadedSignatureUrl,
+        customer.name,
       );
 
       console.log('Step 10 | Complete Delivery        : OK');
 
+
       //----------------------------------------------------------
       // Step 11 - Get Delivery Status
       //----------------------------------------------------------
+      console.log('Wait 3s before Get Delivery Status...');
+      await new Promise(r => setTimeout(r, WAIT_3S));
+
       const status =
         await this.deliveryService.getDeliveryStatus(basicToken, so);
 
       const deliveryOrder = status?.data?.[0];
 
       console.log('Step 11 | Get Delivery Status      : OK');
-    
+      console.log(
+        'getDeliveryStatus | status:', deliveryOrder?.status,
+        '| referenceCode:', deliveryOrder?.referenceCode,
+      );
+
       console.log(`===== DELIVERY FLOW ${country} END =====`);
 
       return {

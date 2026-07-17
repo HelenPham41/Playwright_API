@@ -17,7 +17,8 @@ export function clearRequestLog() { requestLog.length = 0; }
 export async function createClient(
   baseURL: string,
   token?: string,
-  authType: 'bearer' | 'basic' = 'bearer'
+  authType: 'bearer' | 'basic' = 'bearer',
+  userAgent?: string,
 ) {
 
   let headers: any = {
@@ -31,6 +32,10 @@ export async function createClient(
         ? `Basic ${token}`
         : `Bearer ${token}`;
 
+  }
+
+  if (userAgent) {
+    headers['User-Agent'] = userAgent;
   }
 
   return request.newContext({

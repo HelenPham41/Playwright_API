@@ -38,31 +38,44 @@ Playwright_API/
 │
 ├── flows/
 │   ├── order.flow.ts               # Orchestrate toàn bộ order steps
-│   ├── pick.flow.ts                # Picking workflow (chưa refactor)
-│   ├── pack.flow.ts                # Packing workflow (chưa refactor)
-│   └── qc.flow.ts                  # QC workflow (chưa refactor)
+│   ├── pick.flow.ts                # Picking workflow
+│   ├── pack.flow.ts                # Packing workflow
+│   ├── qc.flow.ts                  # QC workflow
+│   ├── bookshipper.flow.ts         # Book shipper workflow (chỉ VN có config)
+│   ├── delivery.flow.ts            # Giao hàng (rider app) — upload ảnh/chữ ký, complete delivery
+│   └── reconcileshipper.flow.ts    # Đối soát công nợ shipper (reconcile session)
 │
 ├── services/
 │   ├── auth.service.ts             # Login, refresh token
 │   ├── order.service.ts            # addCart, updateCart, checkout, ...
 │   ├── pick.service.ts
 │   ├── pack.service.ts
-│   └── qc.service.ts
+│   ├── qc.service.ts
+│   ├── bookshipper.service.ts
+│   ├── delivery.service.ts
+│   └── reconcileshipper.service.ts
 │
 ├── payloads/
 │   ├── order.payload.ts            # OrderPayloadBuilder — build request body từ ScenarioData
-│   └── pick.payload.ts             # PickPayloadBuilder — build body/params/headers từ CountryConfig.pick
+│   ├── pick.payload.ts             # PickPayloadBuilder — build body/params/headers từ CountryConfig.pick
+│   ├── bookshipper.payload.ts
+│   ├── delivery.payload.ts
+│   └── reconcileshipper.payload.ts
 │
 ├── clients/
-│   └── apiClient.ts                # createClient(baseURL, token, authType)
+│   └── apiClient.ts                # createClient(baseURL, token, authType); requestLog[] dùng để dump full request/response ra report
 │
 ├── fixtures/
-│   └── flow.fixture.ts             # Resolve country, tạo flows, inject { orderFlow, pickFlow, ... }
+│   └── flow.fixture.ts             # Resolve country, tạo flows, inject { orderFlow, pickFlow, qcFlow, packFlow, bookShipperFlow, deliveryFlow, reconcileShipperFlow }
 │
 ├── tests/
 │   ├── placeOrder.spec.ts          # Chạy với --project=VN/TH/KH — country-agnostic
-│   ├── fullFlow.spec.ts
-│   └── multiOrder.spec.ts
+│   ├── pick.spec.ts
+│   ├── qc.spec.ts
+│   ├── pack.spec.ts
+│   ├── bookshipper.spec.ts
+│   ├── delivery.spec.ts
+│   └── reconcileshipper.spec.ts    # Full chain: placeOrder → pick → qc → pack → bookShipper → delivery → reconcileShipper
 │
 ├── errors/
 │   └── api.error.ts                # ApiError, assertStatus()
@@ -436,6 +449,10 @@ Sau khi hoàn thành refactor:
 > Đã xử lý gần đây: KH đã được đăng ký đầy đủ trong cả `country.factory.ts` và `scenario.data.factory.ts`, project `KH` đã uncomment trong `playwright.config.ts` — `npx playwright test tests/placeOrder.spec.ts --project=KH` chạy được tới tận API thật (dừng ở bước login do credential sai, không phải lỗi code/data).
 
 > Đã xử lý (không còn là "chưa hoàn thiện" nữa): `pack.flow.ts`/`pack.service.ts` đã refactor xong sang `CountryConfig`; `configs/stg.env.ts` và `core/apiRequest.ts` đã bị xóa khỏi repo; QC flow đã có teardown tự động (catch block trong `qc.flow.ts` gọi `checkoutQc()` + `cancelOrder()`); `checkInPick` trong `pick.flow.ts` giờ tự xử lý conflict cho cả session QC và PACK (gọi `qcService.checkoutQc()`/`packService.packCheckout()`, tự cancel đơn cũ nếu bị block bởi phiếu SOBD dang dở, rồi retry).
+
+> Đã xử lý: `tests/reconcileshipper.spec.ts` trước đây không compile được — destructure `reconcileshipperFlow` nhưng fixture này chưa từng được đăng ký trong `fixtures/flow.fixture.ts` (0 test được list ra). Đã thêm fixture `reconcileShipperFlow` (camelCase, khớp convention `bookShipperFlow`) và sửa lại tên trong spec. Đồng thời `ReconcileShipperFlow.reconcileShipper()` trước đó chỉ trả `{ reconcileCode, lineID, trackingCode, so }` — thiếu hẳn các field spec cần assert (`paymentCode`, `confirmPaymentStatus/Message`, `approveStatus`, `reconcileStatus`, `activityAction`). Đã bổ sung: `ReconcileShipperService.confirmPayment()`/`approveReconcile()` giờ parse và trả về response body (thay vì raw `APIResponse`) để flow đọc được `status`/`message`/`data[].status`, theo đúng pattern đã dùng ở `bookshipper.service.ts` (`assignDriver()`, `createDelivery()`).
+>
+> **Lưu ý kiến trúc quan trọng — auth 2 tầng trong `reconcileshipper.flow.ts`:** 4 API đầu (`getPaymentSession`, `getPaymentLine`, `checkReconcileOrder`, `confirmPayment`, gọi vào `hosts.order`) dùng **`riderToken`** (bearer) — token này KHÔNG có sẵn trong config, phải tự sinh bằng cách gọi chuỗi login rider `DeliveryService.loginApp() → auth() → loginRider()` (y hệt Step 1-3 của `delivery.flow.ts`), nên `ReconcileShipperFlow` phải inject cả `DeliveryService` (flow được phép import nhiều service). 2 API sau (`getReconcileActivity`, `approveReconcile`, gọi vào `hosts.internal`) vẫn dùng `basicToken` (Basic auth) như thao tác ops/seller thông thường. Đừng "sửa" nhầm 4 API đầu về `basicToken` — đó là bug đã từng xảy ra (thấy `this.cfg.auth.riderToken` — field không tồn tại trong `CountryConfig['auth']` — dẫn tới `Authorization: Bearer undefined`).
 
 ---
 

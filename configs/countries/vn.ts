@@ -153,10 +153,36 @@ export const VN_CONFIG: CountryConfig = {
         '/core/file-manager/v1/upload/image',
 
       completeDelivery:
-        '/delivery/transporting/v1/hub-order/complete',
+        '/delivery/transporting/v1/hub-order/status',
 
       getDeliveryStatus:
         '/backend/delivery/transporting/v1/hub-order',
     }
-  }
+  },
+
+  reconcileShipper: {
+    warehouseCode: process.env.LOCATION || 'BD',
+    hubCode: process.env.HUB_CODE || 'HUBBD',
+    reconcileType: 'RIDER_HUB',
+
+    endpoints: {
+      getPaymentSession:
+        '/accounting/core/v1/reconcile-session/my',
+
+      getPaymentLine:
+        '/accounting/core/v1/reconcile-session/order',
+
+      checkReconcileOrder:
+        '/accounting/core/v1/reconcile-session/orders',
+
+      confirmPayment:
+        '/accounting/core/v1/reconcile-session',
+
+      getReconcileActivity:
+        '/backend/core/activity/v1/activity/list',
+
+      approveReconcile:
+        '/backend/accounting/core/v1/reconcile-session',
+    },
+  },
 };

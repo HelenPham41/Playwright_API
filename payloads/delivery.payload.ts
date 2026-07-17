@@ -146,6 +146,7 @@ export class DeliveryPayloadBuilder {
         trackingNumber: string,
         uploadImageUrl: string,
         uploadSignatureUrl: string,
+        signerName: string,
     ) {
         return {
             referenceCode: `${so}-F`,
@@ -157,7 +158,7 @@ export class DeliveryPayloadBuilder {
                 signature: [
                     {
                         signatureImage: uploadSignatureUrl,
-                        signatureName: 'data.customer.name',
+                        signerName,
                         type: ''
                     }
                 ]

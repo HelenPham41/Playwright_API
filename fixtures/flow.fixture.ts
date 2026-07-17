@@ -5,6 +5,7 @@ import { QcFlow } from '../flows/qc.flow.js';
 import { PackFlow } from '../flows/pack.flow.js';
 import { BookShipperFlow } from '../flows/bookshipper.flow.js';
 import { DeliveryFlow } from '../flows/delivery.flow.js';
+import { ReconcileShipperFlow } from '../flows/reconcileshipper.flow.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 
 type FlowFixtures = {
@@ -14,6 +15,7 @@ type FlowFixtures = {
   packFlow: PackFlow;
   bookShipperFlow: BookShipperFlow;
   deliveryFlow: DeliveryFlow;
+  reconcileShipperFlow: ReconcileShipperFlow;
 };
 
 /**
@@ -105,6 +107,20 @@ export const test = base.extend<FlowFixtures>({
     );
 
     await use(new DeliveryFlow(cfg));
+  },
+
+  reconcileShipperFlow: async ({ }, use, testInfo) => {
+    const country = process.env.COUNTRY || testInfo.project.name || 'VN';
+    process.env.COUNTRY = country;
+
+    const cfg = getCountryConfig();
+
+    testInfo.annotations.push(
+      { type: 'country', description: country },
+      { type: 'baseUrl', description: cfg.hosts.order },
+    );
+
+    await use(new ReconcileShipperFlow(cfg));
   },
 });
 

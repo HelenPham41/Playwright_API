@@ -11,6 +11,8 @@ import {
     type UploadSignatureData,
 } from '../payloads/delivery.payload.js';
 
+const DELIVERY_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36';
+
 export class DeliveryService {
 
     private readonly cfg: CountryConfig;
@@ -35,6 +37,7 @@ export class DeliveryService {
             this.delivery.appUrl,
             accessToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const body = this.payload.loginAppBody(username, password);
@@ -71,6 +74,7 @@ export class DeliveryService {
             this.delivery.appUrl,
             accessToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const body = this.payload.authBody();
@@ -107,6 +111,7 @@ export class DeliveryService {
             this.delivery.appUrl,
             ssoToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const body = this.payload.loginRiderBody(code);
@@ -147,6 +152,7 @@ export class DeliveryService {
             this.cfg.hosts.order,
             riderToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const body = this.payload.acceptDeliveryBody(trackingNumber, so);
@@ -185,6 +191,7 @@ export class DeliveryService {
             this.cfg.hosts.order,
             riderToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const body = this.payload.confirmCurrentAddress(data, so);
@@ -221,6 +228,7 @@ export class DeliveryService {
             this.cfg.hosts.order,
             riderToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const response = await client.get(
@@ -260,6 +268,7 @@ export class DeliveryService {
             this.cfg.hosts.order,
             riderToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const body = this.payload.uploadImageBody(data, accessToken);
@@ -267,6 +276,7 @@ export class DeliveryService {
         const requestHeaders = {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${riderToken}`,
+            'User-Agent': DELIVERY_USER_AGENT,
         };
 
         const response = await client.post(
@@ -308,6 +318,7 @@ export class DeliveryService {
             this.cfg.hosts.order,
             riderToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const response = await client.get(
@@ -346,6 +357,7 @@ export class DeliveryService {
             this.cfg.hosts.order,
             riderToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const body = this.payload.uploadSignatureBody(data, accessToken);
@@ -386,13 +398,14 @@ export class DeliveryService {
         trackingNumber: string,
         uploadImageUrl: string,
         uploadSignatureUrl: string,
-        note?: string,
+        signerName: string,
     ): Promise<APIResponse> {
 
         const client = await createClient(
             this.cfg.hosts.order,
             riderToken,
             'bearer',
+            DELIVERY_USER_AGENT,
         );
 
         const body = this.payload.completeDeliveryBody(
@@ -401,7 +414,14 @@ export class DeliveryService {
             trackingNumber,
             uploadImageUrl,
             uploadSignatureUrl,
+            signerName,
         );
+
+        const requestHeaders = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${riderToken}`,
+            'User-Agent': DELIVERY_USER_AGENT,
+        };
 
         const response = await client.put(
             this.delivery.endpoints.completeDelivery,
@@ -412,14 +432,18 @@ export class DeliveryService {
 
         await assertStatus(response, [HTTP_STATUS.OK], 'completeDelivery');
 
+        const responseBody = await response.json().catch(() => null);
+
         requestLog.push({
             step: 'completeDelivery',
             method: 'PUT',
             url: response.url(),
             requestBody: body,
             responseStatus: response.status(),
-            responseBody: await response.json().catch(() => null),
+            responseBody,
         });
+
+        console.log('completeDelivery | response:', JSON.stringify(responseBody));
 
         return response;
     }
@@ -432,7 +456,7 @@ export class DeliveryService {
         shippingOrderCode: string,
     ): Promise<any> {
 
-        const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+        const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic', DELIVERY_USER_AGENT);
 
         const response = await client.get(
             this.delivery.endpoints.getDeliveryStatus,

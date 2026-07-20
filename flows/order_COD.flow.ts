@@ -54,9 +54,13 @@ export class OrderFlow {
       await this.orderService.updateCart(tokenWeb, newCartNo);
       console.log('Step 6 | Update Cart       : OK');
 
-      // Step 7 — Checkout
+      // Step 7 — Update Payment to COD
+      await this.orderService.updatePaymentToCOD(tokenWeb, newCartNo);
+      console.log('Step 7 | Update Payment to COD : OK');
+
+      // Step 8 — Checkout
       const { orderId } = await this.orderService.checkout(tokenWeb, newCartNo);
-      console.log(`Step 7 | Checkout          : OK, orderId=${orderId}`);
+      console.log(`Step 8 | Checkout          : OK, orderId=${orderId}`);
 
       console.log(`===== ORDER FLOW ${country} END =====`);
       return { tokenWeb, cartNo: newCartNo, orderId };

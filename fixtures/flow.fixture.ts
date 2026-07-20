@@ -1,11 +1,12 @@
 import { test as base } from '@playwright/test';
-import { OrderFlow } from '../flows/order.flow.js';
+import { OrderFlow } from '../flows/order_COD.flow.js';
 import { PickFlow } from '../flows/pick.flow.js';
 import { QcFlow } from '../flows/qc.flow.js';
 import { PackFlow } from '../flows/pack.flow.js';
 import { BookShipperFlow } from '../flows/bookshipper.flow.js';
 import { DeliveryFlow } from '../flows/delivery.flow.js';
 import { ReconcileShipperFlow } from '../flows/reconcileshipper.flow.js';
+import { ReconcileAccountingFlow } from '../flows/reconcileaccounting_COD.flow.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 
 type FlowFixtures = {
@@ -16,6 +17,7 @@ type FlowFixtures = {
   bookShipperFlow: BookShipperFlow;
   deliveryFlow: DeliveryFlow;
   reconcileShipperFlow: ReconcileShipperFlow;
+  reconcileAccountingFlow: ReconcileAccountingFlow;
 };
 
 /**
@@ -121,6 +123,20 @@ export const test = base.extend<FlowFixtures>({
     );
 
     await use(new ReconcileShipperFlow(cfg));
+  },
+
+  reconcileAccountingFlow: async ({ }, use, testInfo) => {
+    const country = process.env.COUNTRY || testInfo.project.name || 'VN';
+    process.env.COUNTRY = country;
+
+    const cfg = getCountryConfig();
+
+    testInfo.annotations.push(
+      { type: 'country', description: country },
+      { type: 'baseUrl', description: cfg.hosts.order },
+    );
+
+    await use(new ReconcileAccountingFlow(cfg));
   },
 });
 

@@ -25,6 +25,16 @@ export interface DeliveryInput {
   signature: UploadSignatureData;
 }
 
+export interface TransferInfo {
+  type: string;
+  code: string;
+  transferId: number | string;
+  status: string;
+  createdTime: string;
+  sourceLocation: string;
+  destinationLocation: string;
+}
+
 export interface DeliveryResult {
   ticketId: number;
   deliveryCode: string;
@@ -32,6 +42,10 @@ export interface DeliveryResult {
   deliveryStatus: string;
   referenceCode: string;
   riderToken: string;
+  pickTransfer: TransferInfo;
+  qcTransfer: TransferInfo | undefined;
+  packTransfer: TransferInfo | undefined;
+  deliveryTransfer: TransferInfo | undefined;
 }
 
 export class DeliveryFlow {
@@ -61,6 +75,8 @@ export class DeliveryFlow {
       image,
       signature,
     } = input;
+
+    const warehouseCode = this.cfg.internalTransfer?.warehouseCode ?? '';
 
     const scenarioData = getScenarioData();
     const driverUsername = scenarioData.driverName ?? '';
@@ -250,6 +266,41 @@ export class DeliveryFlow {
         '| referenceCode:', deliveryOrder?.referenceCode,
       );
 
+      //----------------------------------------------------------
+      // Step 12 - Get Internal Transfer List
+      //----------------------------------------------------------
+      console.log('Wait 3s before Get Internal Transfer List...');
+      await new Promise(r => setTimeout(r, WAIT_3S));
+
+      const internalTransferList = await this.deliveryService.getInternalTransferList(basicToken, so, warehouseCode);
+      const transferList = internalTransferList?.data ?? [];
+
+      const rawPickTransfer = transferList.find((item: any) => item.type === 'PICK' && item.reference === so && item.status === 'DONE' && item.sourceLocation === 'WH-MAIN' && item.destinationLocation === 'WH-QC');
+      const rawQcTransfer = transferList.find((item: any) => item.type === 'QC' && item.reference === so && item.status === 'DONE' && item.sourceLocation === 'WH-QC' && item.destinationLocation === 'WH-PACK');
+      const rawPackTransfer = transferList.find((item: any) => item.type === 'PACK' && item.reference === so && item.status === 'DONE' && item.sourceLocation === 'WH-PACK' && item.destinationLocation === 'WH-DELIVERY');
+      const rawDeliveryTransfer = transferList.find((item: any) => item.type === 'DELIVERY' && item.reference === so && item.status === 'DONE' && item.sourceLocation === 'WH-DELIVERY' && item.destinationLocation === 'CUSTOMER');
+
+      if (!rawPickTransfer) {
+        throw new ApiError('getInternalTransferList', HTTP_STATUS.OK, this.cfg.internalTransfer?.endpoints.getInternalTransferList ?? '', 'Missing PICK transfer');
+      }
+
+      const toTransferInfo = (item: any): TransferInfo | undefined => item && {
+        type: item.type ?? '',
+        code: item.code ?? '',
+        transferId: item.transferId ?? '',
+        status: item.status ?? '',
+        createdTime: item.createdTime ?? '',
+        sourceLocation: item.sourceLocation ?? '',
+        destinationLocation: item.destinationLocation ?? '',
+      };
+
+      const pickTransfer = toTransferInfo(rawPickTransfer)!;
+      const qcTransfer = toTransferInfo(rawQcTransfer);
+      const packTransfer = toTransferInfo(rawPackTransfer);
+      const deliveryTransfer = toTransferInfo(rawDeliveryTransfer);
+
+      console.log('Step 12 | Get Internal Transfer List : OK');
+
       console.log(`===== DELIVERY FLOW ${country} END =====`);
 
       return {
@@ -259,6 +310,10 @@ export class DeliveryFlow {
         deliveryStatus: deliveryOrder?.status ?? '',
         referenceCode: deliveryOrder?.referenceCode ?? '',
         riderToken,
+        pickTransfer,
+        qcTransfer,
+        packTransfer,
+        deliveryTransfer,
       };
 
     } catch (error) {

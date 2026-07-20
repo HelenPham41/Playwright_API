@@ -2,23 +2,23 @@ import type { ScenarioData } from '../configs/types.js';
 
 export class OrderPayloadBuilder {
 
-  constructor(private readonly data: ScenarioData) {}
+  constructor(private readonly data: ScenarioData) { }
 
   private customerInfo() {
     const d = this.data;
     return {
-      customerName:            d.customerName,
-      customerPhone:           d.customerPhone,
-      customerEmail:           d.customerEmail,
+      customerName: d.customerName,
+      customerPhone: d.customerPhone,
+      customerEmail: d.customerEmail,
       customerShippingAddress: d.customerShippingAddress,
-      customerDistrictCode:    d.customerDistrictCode,
-      customerProvinceCode:    d.customerProvinceCode,
-      customerWardCode:        d.customerWardCode,
-      customerAddressCode:     d.customerAddressCode,
-      customerRegionCode:      d.customerRegionCode,
-      customerWardName:        d.customerWardName,
-      customerDistrictName:    d.customerDistrictName,
-      customerProvinceName:    d.customerProvinceName,
+      customerDistrictCode: d.customerDistrictCode,
+      customerProvinceCode: d.customerProvinceCode,
+      customerWardCode: d.customerWardCode,
+      customerAddressCode: d.customerAddressCode,
+      customerRegionCode: d.customerRegionCode,
+      customerWardName: d.customerWardName,
+      customerDistrictName: d.customerDistrictName,
+      customerProvinceName: d.customerProvinceName,
     };
   }
 
@@ -37,23 +37,23 @@ export class OrderPayloadBuilder {
   addCartBody(cartNo: string | null) {
     const d = this.data;
     return {
-      sku:         d.sku,
-      type:        d.type,
-      isDeal:      d.isDeal,
-      name:        d.productName,
-      price:       d.price,
-      quantity:    d.quantity,
-      cartNo:      cartNo ?? d.cartNo ?? null,
-      page:        d.page,
-      sellerID:    d.sellerID,
-      sellerCode:  d.sellerCode,
-      productId:   d.productId,
+      sku: d.sku,
+      type: d.type,
+      isDeal: d.isDeal,
+      name: d.productName,
+      price: d.price,
+      quantity: d.quantity,
+      cartNo: cartNo ?? d.cartNo ?? null,
+      page: d.page,
+      sellerID: d.sellerID,
+      sellerCode: d.sellerCode,
+      productId: d.productId,
       eventSource: d.eventSource,
       eventScreen: d.eventScreen,
-      source:      d.source,
-      ...(d.host          !== undefined ? { host: d.host }                                 : {}),
-      ...(d.recommendSKUs !== undefined ? { recommendSKUs: d.recommendSKUs }               : {}),
-      ...(d.host          !== undefined ? { metadata: { price_display: String(d.price) } } : {}),
+      source: d.source,
+      ...(d.host !== undefined ? { host: d.host } : {}),
+      ...(d.recommendSKUs !== undefined ? { recommendSKUs: d.recommendSKUs } : {}),
+      ...(d.host !== undefined ? { metadata: { price_display: String(d.price) } } : {}),
     };
   }
 
@@ -63,41 +63,41 @@ export class OrderPayloadBuilder {
 
     const invoice = invoiceRequest
       ? {
-          code:                 d.invoiceCode,
-          invoiceRequest:       true,
-          companyName:          d.invoiceCompanyName,
-          companyAddress:       d.invoiceCompanyAddress,
-          taxCode:              d.invoiceTaxCode,
-          isSaveInvoiceInfo:    false,
-          isUseCustom:          false,
-          email:                d.invoiceEmail,
-          isValidated:          true,
-          customerTaxGOVStatus: 'DIFF_INFO',
-          isDefault:            true,
-        }
+        code: d.invoiceCode,
+        invoiceRequest: true,
+        companyName: d.invoiceCompanyName,
+        companyAddress: d.invoiceCompanyAddress,
+        taxCode: d.invoiceTaxCode,
+        isSaveInvoiceInfo: false,
+        isUseCustom: false,
+        email: d.invoiceEmail,
+        isValidated: true,
+        customerTaxGOVStatus: 'DIFF_INFO',
+        isDefault: true,
+      }
       : {
-          invoiceRequest:    false,
-          companyName:       d.invoiceCompanyName,
-          companyAddress:    d.invoiceCompanyAddress,
-          taxCode:           d.invoiceTaxCode,
-          isSaveInvoiceInfo: false,
-          isUseCustom:       false,
-          email:             d.invoiceEmail,
-          postCode:          0,
-          code:              '',
-          province:          '',
-          district:          '',
-          ward:              '',
-          streetAddress:     '',
-        };
+        invoiceRequest: false,
+        companyName: d.invoiceCompanyName,
+        companyAddress: d.invoiceCompanyAddress,
+        taxCode: d.invoiceTaxCode,
+        isSaveInvoiceInfo: false,
+        isUseCustom: false,
+        email: d.invoiceEmail,
+        postCode: 0,
+        code: '',
+        province: '',
+        district: '',
+        ward: '',
+        streetAddress: '',
+      };
 
     return {
       ...this.customerInfo(),
-      ...(d.paymentMethods  !== undefined ? { paymentMethods:  d.paymentMethods  } : {}),
-      paymentMethod:  d.paymentMethod,
+      ...(d.paymentMethods !== undefined ? { paymentMethods: d.paymentMethods } : {}),
+      paymentMethod: d.paymentMethod,
       ...(d.deliveryMethods !== undefined ? { deliveryMethods: d.deliveryMethods } : {}),
       deliveryMethod: d.deliveryMethod,
-      ...(d.totalWard       !== undefined ? { totalWard:       d.totalWard       } : {}),
+      ...(d.totalWard !== undefined ? { totalWard: d.totalWard } : {}),
       ordersCount: d.ordersCount,
       invoice,
       cartNo,
@@ -105,6 +105,24 @@ export class OrderPayloadBuilder {
       source: d.source,
     };
   }
+
+  updatePaymentToCOD(cartNo: string) {
+    return {
+      paymentMethod: 'PAYMENT_METHOD_NORMAL',
+      customerDistrictCode: '786',
+      customerProvinceCode: '79',
+      customerWardCode: '27646',
+      cardList: '',
+      code: 'PAYMENT_METHOD_NORMAL',
+      description: '<p></p>\n',
+      name: 'Thanh toán tiền mặt',
+      isDisable: false,
+      defaultValue: null,
+      errorMessage: false,
+      cartNo,
+      source: 'thuocsi-web',
+    };
+  };
 
   checkoutBody(cartNo: string) {
     const d = this.data;
@@ -118,10 +136,10 @@ export class OrderPayloadBuilder {
     return {
       ...this.customerInfo(),
       paymentMethods: [{
-        cardList:     d.checkoutPaymentCardList,
-        code:         d.checkoutPaymentCode,
+        cardList: d.checkoutPaymentCardList,
+        code: d.checkoutPaymentCode,
         customerTags: d.checkoutPaymentCustomerTags,
-        description:  '<p></p>',
+        description: '<p></p>',
       }],
     };
   }
@@ -130,8 +148,8 @@ export class OrderPayloadBuilder {
     return {
       orderCode,
       orderId: Number(orderId),
-      status:  'CANCEL',
-      note:    'Cancel order for testing purpose',
+      status: 'CANCEL',
+      note: 'Cancel order for testing purpose',
     };
   }
 }

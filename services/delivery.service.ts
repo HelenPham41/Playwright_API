@@ -482,4 +482,45 @@ export class DeliveryService {
 
         return data;
     }
+
+    /**
+     * Get Internal Transfer List
+     */
+    async getInternalTransferList(
+        basicToken: string,
+        so: string,
+        warehouseCode: string,
+    ): Promise<any> {
+
+        const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic', DELIVERY_USER_AGENT);
+
+        const response = await client.get(
+            this.cfg.internalTransfer?.endpoints.getInternalTransferList ?? '',
+            {
+                params: this.payload.internalTransferListParams(
+                    so,
+                    warehouseCode,
+                ),
+            },
+        );
+
+        await assertStatus(
+            response,
+            [HTTP_STATUS.OK],
+            'getInternalTransferList',
+        );
+
+        const data = await response.json();
+
+        requestLog.push({
+            step: 'getInternalTransferList',
+            method: 'GET',
+            url: response.url(),
+            requestBody: null,
+            responseStatus: response.status(),
+            responseBody: data,
+        });
+
+        return data;
+    }
 }

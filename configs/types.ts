@@ -82,7 +82,23 @@ export interface ScenarioData {
   reconcileBankChannel?: string;
   reconcileBankingTransactionCode?: string;
   reconcileRemarkTemplate?: string;
+
+  //Reconcile Accounting (reconcileShipper)
+  reconcileAccountingType?: string;
+  reconcileAccountingOrderId?: number;
+  reconcileAccountingOrderCode?: string;
+  reconcileAccountingSessionId?: number;
+  reconcileAccountingLineId?: number;
+  reconcileAccountingBankCode?: string;
+  reconcileAccountingBankAccountNumber?: string;
+  reconcileAccountingBankChannel?: string;
+  reconcileAccountingBankingTransactionCode?: string;
+  reconcileAccountingRemarkTemplate?: string;
+
+  //Internal Tranfer
+  internalTransferType?: string;
 }
+
 
 export interface CountryConfig {
   countryCode: 'VN' | 'TH' | 'KH';
@@ -107,6 +123,7 @@ export interface CountryConfig {
     removeCart: string;
     addCart: string;
     updateCart: string;
+    updatePaymentToCOD?: string;
     checkout: string;
     cancelOrder: string;
   };
@@ -226,6 +243,28 @@ export interface CountryConfig {
       getReconcileActivity: string;
       approveReconcile: string;
     };
-  }; 
+  };
+
+  reconcileAccounting?: {
+    warehouseCode: string;
+    hubCode: string;
+    reconcileAccountingType: string;
+    endpoints: {
+      getReconcileSessionAccounting: string;
+      getReconcileOrdersAccounting: string;
+      selectReconcileOrdersAccounting: string;
+      confirmReconcileAccounting: string;
+      approveReconcileAccounting: string;
+      getCompletedOrderAccounting: string;
+    };
+  };
+
+  internalTransfer?: {
+    warehouseCode: string;
+    endpoints: {
+      getInternalTransferList: string;
+    };
+  };
+  
 }
 

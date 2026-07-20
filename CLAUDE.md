@@ -43,7 +43,8 @@ Playwright_API/
 │   ├── qc.flow.ts                  # QC workflow
 │   ├── bookshipper.flow.ts         # Book shipper workflow (chỉ VN có config)
 │   ├── delivery.flow.ts            # Giao hàng (rider app) — upload ảnh/chữ ký, complete delivery
-│   └── reconcileshipper.flow.ts    # Đối soát công nợ shipper (reconcile session)
+│   ├── reconcileshipper.flow.ts    # Đối soát công nợ shipper (reconcile session, rider tự confirm)
+│   └── reconcileaccounting.flow.ts # Đối soát kế toán (reconcile session, phía ops/accounting approve)
 │
 ├── services/
 │   ├── auth.service.ts             # Login, refresh token
@@ -53,20 +54,22 @@ Playwright_API/
 │   ├── qc.service.ts
 │   ├── bookshipper.service.ts
 │   ├── delivery.service.ts
-│   └── reconcileshipper.service.ts
+│   ├── reconcileshipper.service.ts
+│   └── reconcileaccounting.service.ts
 │
 ├── payloads/
 │   ├── order.payload.ts            # OrderPayloadBuilder — build request body từ ScenarioData
 │   ├── pick.payload.ts             # PickPayloadBuilder — build body/params/headers từ CountryConfig.pick
 │   ├── bookshipper.payload.ts
 │   ├── delivery.payload.ts
-│   └── reconcileshipper.payload.ts
+│   ├── reconcileshipper.payload.ts
+│   └── reconcileaccounting.payload.ts
 │
 ├── clients/
-│   └── apiClient.ts                # createClient(baseURL, token, authType); requestLog[] dùng để dump full request/response ra report
+│   └── apiClient.ts                # createClient(baseURL, token, authType, userAgent?); DEFAULT_USER_AGENT; requestLog[] dùng để dump full request/response ra report
 │
 ├── fixtures/
-│   └── flow.fixture.ts             # Resolve country, tạo flows, inject { orderFlow, pickFlow, qcFlow, packFlow, bookShipperFlow, deliveryFlow, reconcileShipperFlow }
+│   └── flow.fixture.ts             # Resolve country, tạo flows, inject { orderFlow, pickFlow, qcFlow, packFlow, bookShipperFlow, deliveryFlow, reconcileShipperFlow, reconcileAccountingFlow }
 │
 ├── tests/
 │   ├── placeOrder.spec.ts          # Chạy với --project=VN/TH/KH — country-agnostic
@@ -75,7 +78,8 @@ Playwright_API/
 │   ├── pack.spec.ts
 │   ├── bookshipper.spec.ts
 │   ├── delivery.spec.ts
-│   └── reconcileshipper.spec.ts    # Full chain: placeOrder → pick → qc → pack → bookShipper → delivery → reconcileShipper
+│   ├── reconcileshipper.spec.ts    # Full chain: placeOrder → pick → qc → pack → bookShipper → delivery → reconcileShipper
+│   └── reconcileaccounting.spec.ts # Full chain trên + thêm Step 8 Reconcile Accounting sau Reconcile Shipper
 │
 ├── errors/
 │   └── api.error.ts                # ApiError, assertStatus()
@@ -436,7 +440,8 @@ Sau khi hoàn thành refactor:
 
 ## Khu vực chưa hoàn thiện
 
-- `OrderFlow.placeOrder()` hiện dùng chung cho VN, TH và KH (cùng 7 bước). Nếu KH cần flow khác về sau, thêm dispatch logic trong `placeOrder()`.
+- `OrderFlow.placeOrder()` hiện dùng chung cho VN, TH và KH (cùng 8 bước). Nếu KH cần flow khác về sau, thêm dispatch logic trong `placeOrder()`.
+- `updatePaymentToCOD` (endpoint `CountryConfig.endpoints.updatePaymentToCOD`) hiện chỉ có giá trị thật cho VN (`/backend/marketplace/order/v2/cart/payment-method`). TH/KH chưa có endpoint này — field khai báo optional (`updatePaymentToCOD?: string`) nên `OrderService.updatePaymentToCOD()` fallback về chuỗi rỗng (`?? ''`) khi thiếu, cần bổ sung khi có endpoint thật cho TH/KH.
 - `configs/countries/th.ts` — `auth.basicToken` và một số endpoint còn TODO chưa confirm; chưa có section `pick`/`qc`/`pack` nên warehouse flow (pick/qc/pack) chưa chạy được cho TH.
 - `test-data/th.scenario.data.ts` — `checkoutPaymentCode`/`checkoutPaymentCardList` còn để trống, cần bổ sung khi có dữ liệu thật.
 - `configs/countries/kh.ts` — `auth.username`/`auth.password` đang fallback đúng y hệt giá trị của TH (copy-paste sót) → login KH hiện fail "Wrong password" vì tài khoản đó không hợp lệ cho môi trường KH. Cần credential thật cho KH (qua env `API_USERNAME`/`API_PASSWORD` hoặc sửa fallback). `basicToken` và các endpoint cũng còn TODO chưa confirm; chưa có section `pick`/`qc`/`pack`.
@@ -452,7 +457,24 @@ Sau khi hoàn thành refactor:
 
 > Đã xử lý: `tests/reconcileshipper.spec.ts` trước đây không compile được — destructure `reconcileshipperFlow` nhưng fixture này chưa từng được đăng ký trong `fixtures/flow.fixture.ts` (0 test được list ra). Đã thêm fixture `reconcileShipperFlow` (camelCase, khớp convention `bookShipperFlow`) và sửa lại tên trong spec. Đồng thời `ReconcileShipperFlow.reconcileShipper()` trước đó chỉ trả `{ reconcileCode, lineID, trackingCode, so }` — thiếu hẳn các field spec cần assert (`paymentCode`, `confirmPaymentStatus/Message`, `approveStatus`, `reconcileStatus`, `activityAction`). Đã bổ sung: `ReconcileShipperService.confirmPayment()`/`approveReconcile()` giờ parse và trả về response body (thay vì raw `APIResponse`) để flow đọc được `status`/`message`/`data[].status`, theo đúng pattern đã dùng ở `bookshipper.service.ts` (`assignDriver()`, `createDelivery()`).
 >
-> **Lưu ý kiến trúc quan trọng — auth 2 tầng trong `reconcileshipper.flow.ts`:** 4 API đầu (`getPaymentSession`, `getPaymentLine`, `checkReconcileOrder`, `confirmPayment`, gọi vào `hosts.order`) dùng **`riderToken`** (bearer) — token này KHÔNG có sẵn trong config, phải tự sinh bằng cách gọi chuỗi login rider `DeliveryService.loginApp() → auth() → loginRider()` (y hệt Step 1-3 của `delivery.flow.ts`), nên `ReconcileShipperFlow` phải inject cả `DeliveryService` (flow được phép import nhiều service). 2 API sau (`getReconcileActivity`, `approveReconcile`, gọi vào `hosts.internal`) vẫn dùng `basicToken` (Basic auth) như thao tác ops/seller thông thường. Đừng "sửa" nhầm 4 API đầu về `basicToken` — đó là bug đã từng xảy ra (thấy `this.cfg.auth.riderToken` — field không tồn tại trong `CountryConfig['auth']` — dẫn tới `Authorization: Bearer undefined`).
+> **Lưu ý kiến trúc quan trọng — auth 2 tầng trong `reconcileshipper.flow.ts`:** 4 API đầu (`getPaymentSession`, `getPaymentLine`, `checkReconcileOrder`, `confirmPayment`, gọi vào `hosts.order`) dùng **`riderToken`** (bearer). 2 API sau (`getReconcileActivity`, `approveReconcile`, gọi vào `hosts.internal`) dùng `basicToken` (Basic auth) như thao tác ops/seller thông thường. Đừng "sửa" nhầm 4 API đầu về `basicToken` — đó là bug đã từng xảy ra (thấy `this.cfg.auth.riderToken` — field không tồn tại trong `CountryConfig['auth']` — dẫn tới `Authorization: Bearer undefined`).
+>
+> **`riderToken` không tự sinh trong flow này** — `ReconcileShipperInput.riderToken` là param bắt buộc, phải lấy từ **`DeliveryFlow.delivery()`'s result** (`DeliveryResult.riderToken`, sinh ra từ chuỗi `loginApp() → auth() → loginRider()` bên trong `delivery.flow.ts`). Spec phải chain: `deliveryResult = await deliveryFlow.delivery(...)` trước, rồi truyền `riderToken: deliveryResult.riderToken` vào `reconcileShipperFlow.reconcileShipper({...})`. Không tự login lại trong `ReconcileShipperFlow` — tốn 1 lượt login/token không cần thiết vì Step Delivery ngay trước đó đã có sẵn rider session còn hiệu lực.
+>
+> **Reconcile Accounting (`reconcileaccounting.flow.ts`, `reconcileaccounting.service.ts`, `reconcileaccounting.payload.ts`) — chạy sau Reconcile Shipper, tái dùng cùng `riderToken`:** 6 bước, auth xen kẽ theo đúng signature từng method trong service (đừng đoán):
+> 1. `getReconcileSessionAccounting` — `riderToken`, `hosts.order` — response `data[0]` (mảng phẳng, KHÔNG phải `data.items`) → lấy `code` (dùng filter cho bước 2) và `totalOrder` (dùng làm `limit` cho bước 2).
+> 2. `getReconcileOrdersAccounting` — `riderToken`, `hosts.order` — response `data` là mảng phẳng, tìm item khớp `referenceCode === '{so}-F'` → lấy `lineID` và **`reconcileCode` riêng của chính order-line này** (khác với `code` ở bước 1 — dùng cho bước 5, không dùng lại code của session).
+> 3. `selectReconcileOrdersAccounting` — `riderToken`, `hosts.order`
+> 4. `confirmReconcileAccounting` — `riderToken`, `hosts.order` — response `data[0]` chứa **`shortCode`** và **`totalAmount`** → đây là nguồn thật của `reconcileShortCode`/`bankAmount` dùng ở bước 5 (approve), KHÔNG phải từ `getCompletedOrderAccounting`. Service method này phải parse và trả về response body (không phải raw `APIResponse`) để flow đọc được các field này.
+> 5. `approveReconcileAccounting` — `basicToken`, `hosts.internal` — dùng `reconcileShortCode`/`bankAmount` lấy từ bước 4.
+> 6. `getCompletedOrderAccounting` — `basicToken`, `hosts.internal` — chạy SAU approve, chỉ để verify đơn đã hoàn tất, không liên quan gì đến `bankAmount`.
+>
+> `ReconcileAccountingInput.riderToken` lấy từ `deliveryResult.riderToken` giống `ReconcileShipperInput`, không tự login lại.
+>
+> **Các bug đã xử lý trong `reconcileaccounting.flow.ts`/`reconcileaccounting.service.ts`:**
+> - `bankAmount`/`reconcileShortCode` từng được đoán nhầm là lấy từ `getCompletedOrderAccounting` (đặt cuối flow) hoặc từ session (bước 1) — cả 2 đều sai theo response thật từ Postman. Nguồn đúng là response của bước 4 (Confirm Reconcile). Vì bước 4 chạy TRƯỚC bước 5 (Approve) trong cùng flow, đặt tính toán ở đây tự nhiên tránh được lỗi "dùng biến trước khi khai báo" (`ReferenceError` do temporal dead zone) từng xảy ra khi các bước bị đảo thứ tự thủ công.
+> - Bước "Confirm Reconcile" từng truyền nhầm `basicToken` vào `confirmReconcileAccounting()` — nhưng service này build client với `'bearer'` (tham số tên `riderToken`) → gửi sai `Authorization: Bearer <basicToken value>`. Đã sửa lại truyền `riderToken`.
+> - Tính `bankAmount` phải viết `Number(a ?? b ?? 0)` (gộp fallback trước khi convert), **không** viết `Number(a) ?? Number(b) ?? 0` — vì `Number(undefined)` trả về `NaN`, và `NaN ?? x` KHÔNG fallback sang `x` (toán tử `??` chỉ fallback khi giá trị là `null`/`undefined`, không phải `NaN`).
 
 ---
 
@@ -466,7 +488,7 @@ Một đơn hàng đi qua các bước theo thứ tự sau — mỗi bước là
 PlaceOrder → Pick → QC → Pack → (Hoàn thành)
 ```
 
-#### 1. PlaceOrder (7 bước — `order.flow.ts`)
+#### 1. PlaceOrder (8 bước — `order.flow.ts`)
 
 Khách hàng đặt hàng. Hệ thống tạo đơn hàng và trả về `orderId`.
 
@@ -478,6 +500,7 @@ Khách hàng đặt hàng. Hệ thống tạo đơn hàng và trả về `orderI
 | Remove Cart | `PUT /cart/remove` | Xóa hàng cũ (nếu có) |
 | Add Cart | `POST /cart/add` | Thêm sản phẩm vào giỏ |
 | Update Cart | `PUT /cart` | Cập nhật thanh toán, giao hàng, hoá đơn |
+| Update Payment to COD | `PUT /cart/payment-method` | Chuyển phương thức thanh toán sang COD (tiền mặt) |
 | Checkout | `PUT /cart/checkout` | Xác nhận đặt hàng → nhận `orderId` |
 
 **Output:** `{ orderId, cartNo, tokenWeb }`

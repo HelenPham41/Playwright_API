@@ -4,7 +4,8 @@ type DeliveryCfg = NonNullable<CountryConfig['delivery']>;
 
 export interface DeliveryOrderRequest {
     ticketId: number;
-    warehouseCode?: string;}
+    warehouseCode?: string;
+}
 
 export interface UploadImageData {
     dataImage: string;
@@ -166,9 +167,9 @@ export class DeliveryPayloadBuilder {
         }
     }
 
-     /**
-     * Get Delivery Status
-     */
+    /**
+    * Get Delivery Status
+    */
     deliveryStatusParams(so: string) {
         return {
             q: JSON.stringify({
@@ -179,5 +180,20 @@ export class DeliveryPayloadBuilder {
         };
     }
 
-
+    /**
+     * Get Internal Transfer List   
+     */
+    internalTransferListParams(so: string, warehouseCode: string) {
+        return {
+            q: JSON.stringify({
+                status: 'DONE',
+                transferName: so,
+                warehouseCode: warehouseCode,
+            }),
+            offset: 0,
+            limit: 20,
+            getTotal: true,
+            warehouseCode: warehouseCode,
+        };
+    }
 }

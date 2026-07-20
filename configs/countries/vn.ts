@@ -28,6 +28,7 @@ export const VN_CONFIG: CountryConfig = {
     removeCart: '/backend/marketplace/order/v2/cart/remove',
     addCart: '/backend/marketplace/order/v2/cart/add',
     updateCart: '/backend/marketplace/order/v2/cart',
+    updatePaymentToCOD: '/backend/marketplace/order/v2/cart/payment-method',
     checkout: '/backend/marketplace/order/v2/cart/checkout',
     cancelOrder: '/backend/marketplace/order/v2/order/status',
   },
@@ -183,6 +184,40 @@ export const VN_CONFIG: CountryConfig = {
 
       approveReconcile:
         '/backend/accounting/core/v1/reconcile-session',
+    },
+  },
+
+  reconcileAccounting: {
+    warehouseCode: process.env.LOCATION || 'BD',
+    hubCode: process.env.HUB_CODE || 'HUBBD',
+    reconcileAccountingType: 'HUB_COMP',
+
+    endpoints: {
+      getReconcileSessionAccounting:
+        '/accounting/core/v1/reconcile-session',
+
+      getReconcileOrdersAccounting:
+        '/accounting/core/v1/reconcile-session/order',
+
+      selectReconcileOrdersAccounting:
+        '/accounting/core/v1/reconcile-session/orders',
+
+      confirmReconcileAccounting:
+        '/accounting/core/v1/reconcile-session',
+
+      approveReconcileAccounting:
+        '/backend/accounting/core/v1/reconcile-session/approve',
+
+      getCompletedOrderAccounting:
+        '/backend/marketplace/order/v2/order/list',
+    },
+  },
+
+  internalTransfer: {
+    warehouseCode: process.env.LOCATION || 'BD',
+    endpoints: {
+      getInternalTransferList:
+        '/backend/warehouse/inventory/v1/transfer',
     },
   },
 };

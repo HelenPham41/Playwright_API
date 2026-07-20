@@ -90,7 +90,21 @@ export class PackFlow {
           console.log(`Pack flow cleanup: cancelled order ${orderId}`);
           await new Promise(r => setTimeout(r, 3000)); // chờ cancel được xử lý xong trước khi checkout zone
         } catch (cleanupError) {
-          console.error(`Pack flow cleanup: cancelOrder failed for ${orderId}:`, cleanupError instanceof Error ? cleanupError.message : cleanupError);
+          // DELIVERY_ORDER_STATUS_INVALID: phiếu giao hàng do WMS tự sinh khi order chuyển WAIT_TO_DELIVERY
+          // có thể chưa ổn định ngay lúc cleanup gọi cancel — retry 1 lần sau khi chờ ổn định.
+          if (cleanupError instanceof ApiError && cleanupError.body.includes('DELIVERY_ORDER_STATUS_INVALID')) {
+            console.warn(`Pack flow cleanup: cancelOrder got DELIVERY_ORDER_STATUS_INVALID for ${orderId}, retrying once after 3s`);
+            await new Promise(r => setTimeout(r, 3000));
+            try {
+              await this.orderService.cancelOrder(basicToken, orderId, orderCode);
+              console.log(`Pack flow cleanup: cancelled order ${orderId} on retry`);
+              await new Promise(r => setTimeout(r, 3000));
+            } catch (retryError) {
+              console.error(`Pack flow cleanup: cancelOrder retry failed for ${orderId}:`, retryError instanceof Error ? retryError.message : retryError);
+            }
+          } else {
+            console.error(`Pack flow cleanup: cancelOrder failed for ${orderId}:`, cleanupError instanceof Error ? cleanupError.message : cleanupError);
+          }
         }
       }
       if (checkedIn) {

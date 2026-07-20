@@ -1,5 +1,5 @@
 import type { APIResponse } from '@playwright/test';
-import { createClient, requestLog } from '../clients/apiClient.js';
+import { createClient, DEFAULT_USER_AGENT, requestLog } from '../clients/apiClient.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 import { assertStatus } from '../errors/api.error.js';
@@ -37,6 +37,7 @@ export class ReconcileShipperService {
             this.cfg.hosts.order,
             riderToken,
             'bearer',
+            DEFAULT_USER_AGENT,
         );
 
     const params = this.payload.getPaymentSessionParams();
@@ -81,6 +82,7 @@ export class ReconcileShipperService {
       this.cfg.hosts.order,
       riderToken,
       'bearer',
+      DEFAULT_USER_AGENT,
     );
 
     const params = this.payload.getPaymentLineParams(
@@ -129,6 +131,7 @@ export class ReconcileShipperService {
       this.cfg.hosts.order,
       riderToken,
       'bearer',
+      DEFAULT_USER_AGENT,
     );
 
     const body = this.payload.checkReconcileOrderBody(
@@ -174,6 +177,7 @@ export class ReconcileShipperService {
       this.cfg.hosts.order,
       riderToken,
       'bearer',
+      DEFAULT_USER_AGENT,
     );
 
     const body = this.payload.confirmPaymentBody(

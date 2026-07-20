@@ -31,6 +31,7 @@ export interface DeliveryResult {
   shippingOrderCode: string;
   deliveryStatus: string;
   referenceCode: string;
+  riderToken: string;
 }
 
 export class DeliveryFlow {
@@ -257,6 +258,7 @@ export class DeliveryFlow {
         shippingOrderCode,
         deliveryStatus: deliveryOrder?.status ?? '',
         referenceCode: deliveryOrder?.referenceCode ?? '',
+        riderToken,
       };
 
     } catch (error) {

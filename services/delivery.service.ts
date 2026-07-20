@@ -1,5 +1,5 @@
 import type { APIResponse } from '@playwright/test';
-import { createClient, requestLog } from '../clients/apiClient.js';
+import { createClient, requestLog, DEFAULT_USER_AGENT as DELIVERY_USER_AGENT } from '../clients/apiClient.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 import { assertStatus } from '../errors/api.error.js';
@@ -10,8 +10,6 @@ import {
     type UploadImageData,
     type UploadSignatureData,
 } from '../payloads/delivery.payload.js';
-
-const DELIVERY_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36';
 
 export class DeliveryService {
 
@@ -442,8 +440,6 @@ export class DeliveryService {
             responseStatus: response.status(),
             responseBody,
         });
-
-        console.log('completeDelivery | response:', JSON.stringify(responseBody));
 
         return response;
     }

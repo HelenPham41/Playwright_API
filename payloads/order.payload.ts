@@ -106,7 +106,7 @@ export class OrderPayloadBuilder {
     };
   }
 
-  updatePaymentToCOD(cartNo: string) {
+  updatePaymentToCODBody(cartNo: string) {
     return {
       paymentMethod: 'PAYMENT_METHOD_NORMAL',
       customerDistrictCode: '786',
@@ -123,6 +123,24 @@ export class OrderPayloadBuilder {
       source: 'thuocsi-web',
     };
   };
+  updatePaymentToBankTransferBody(cartNo: string) {
+    return {
+      paymentMethod: 'PAYMENT_METHOD_BANK',
+      customerDistrictCode: '786',
+      customerProvinceCode: '79',
+      customerWardCode: '27646',
+      cardList: '',
+      code: 'PAYMENT_METHOD_BANK',
+      description: '<p></p>\n',
+      name: 'Chuyển khoản (Giảm 0.5%)',
+      isDisable: false,
+      defaultValue: null,
+      errorMessage: false,
+      cartNo,
+      source: 'thuocsi-web',
+    };
+  };
+
 
   checkoutBody(cartNo: string) {
     const d = this.data;

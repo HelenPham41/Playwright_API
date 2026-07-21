@@ -302,4 +302,88 @@ export class ReconcileAccountingService {
 
     return data;
   }
+
+  /**
+   * 7. Get Bill Info
+   */
+  async getBillInfoAccounting(
+    basicToken: string,
+    orderId: number | string,
+  ): Promise<any> {
+
+    const client = await createClient(
+      this.cfg.hosts.internal,
+      basicToken,
+      'basic',
+    );
+
+    const params = this.payload.getBillInfoParams(orderId);
+
+    const response = await client.get(
+      this.reconcileAccounting.endpoints.getAndUpdateBillInfo,
+      {
+        params,
+      },
+    );
+
+    await assertStatus(
+      response,
+      [HTTP_STATUS.OK],
+      'getBillInfoAccounting',
+    );
+
+    const data = await response.json();
+
+    requestLog.push({
+      step: 'getBillInfoAccounting',
+      method: 'GET',
+      url: response.url(),
+      requestBody: params,
+      responseStatus: response.status(),
+      responseBody: data,
+    });
+
+    return data;
+  }
+
+  /**
+   * 8. Update Bill To Complete Order
+   */
+  async updateBillToCompleteOrder(
+    basicToken: string,
+    billCode: string,
+  ): Promise<APIResponse> {
+
+    const client = await createClient(
+      this.cfg.hosts.internal,
+      basicToken,
+      'basic',
+    );
+
+    const body = this.payload.updateBillToCompleteOrderBody(billCode);
+
+    const response = await client.put(
+      this.reconcileAccounting.endpoints.getAndUpdateBillInfo,
+      {
+        data: body,
+      },
+    );
+
+    await assertStatus(
+      response,
+      [HTTP_STATUS.OK],
+      'updateBillToCompleteOrder',
+    );
+
+    requestLog.push({
+      step: 'updateBillToCompleteOrder',
+      method: 'PUT',
+      url: response.url(),
+      requestBody: body,
+      responseStatus: response.status(),
+      responseBody: await response.json().catch(() => null),
+    });
+
+    return response;
+  }
 }

@@ -256,6 +256,7 @@ export interface CountryConfig {
       confirmReconcileAccounting: string;
       approveReconcileAccounting: string;
       getCompletedOrderAccounting: string;
+      getAndUpdateBillInfo: string;
     };
   };
 

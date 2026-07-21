@@ -210,6 +210,10 @@ export const VN_CONFIG: CountryConfig = {
 
       getCompletedOrderAccounting:
         '/backend/marketplace/order/v2/order/list',
+
+      getAndUpdateBillInfo:
+        '/backend/accounting/core/v1/bill',
+
     },
   },
 

@@ -21,13 +21,15 @@ export interface ReconcileAccountingResult {
   reconcileStatus: string;
   totalAmount: number;
   confirmStatus: number;
-  approveStatus: number;
   completedSaleOrderCode: string;
   completedStatus: string;
   completedSaleOrderStatus: string;
+  billCode: string;
+  billStatus: string;
+  updateBillStatus: number;
 }
 
-export class ReconcileAccountingFlow_COD {
+export class ReconcileAccountingFlow_BankTransfer {
 
   private readonly reconcileAccountingService: ReconcileAccountingService;
   private readonly cfg: CountryConfig;
@@ -112,21 +114,36 @@ export class ReconcileAccountingFlow_COD {
       console.log('Step 4 | Confirm Reconcile          : OK');
 
       //----------------------------------------------------------------------
-      // Step 5 - Approve Reconcile
+      // Step 5 - Get Bill Info
       //----------------------------------------------------------------------
-      console.log('Wait 5s before approve reconcile accounting...');
-      await new Promise(r => setTimeout(r, WAIT_5S));
-      const approve =
-        await this.reconcileAccountingService.approveReconcileAccounting(
+      const billInfo =
+        await this.reconcileAccountingService.getBillInfoAccounting(
           basicToken,
-          reconcileAccountingShortCode,
-          totalAmount,
+          input.orderId,
         );
 
-      console.log('Step 5 | Approve Reconcile          : OK');
+      const matchedBill = billInfo?.data?.find(
+        (item: any) => item.saleOrderCode === input.so,
+      );
+
+      const billCode = matchedBill?.billCode ?? '';
+      const billStatus = matchedBill?.status ?? '';
+
+      console.log(`Step 5 | Get Bill Info              : OK, billCode=${billCode}, status=${billStatus}`);
 
       //----------------------------------------------------------------------
-      // Step 6 - Get Completed Order (verify sau khi approve)
+      // Step 6 - Update Bill To Complete Order
+      //----------------------------------------------------------------------
+      const updateBill =
+        await this.reconcileAccountingService.updateBillToCompleteOrder(
+          basicToken,
+          billCode,
+        );
+
+      console.log('Step 8 | Update Bill To Complete Order : OK');
+
+      //----------------------------------------------------------------------
+      // Step 7 - Get Completed Order (verify sau khi approve)
       //----------------------------------------------------------------------
       console.log('Wait 3s before get completed order...');
       await new Promise(r => setTimeout(r, WAIT_3S));
@@ -143,6 +160,7 @@ export class ReconcileAccountingFlow_COD {
 
       console.log('Step 6 | Get Completed Order        : OK');
 
+
       console.log(`===== RECONCILE ACCOUNTING FLOW ${country} END =====`);
 
       return {
@@ -151,10 +169,12 @@ export class ReconcileAccountingFlow_COD {
         reconcileStatus: 'DONE',
         totalAmount,
         confirmStatus: HTTP_STATUS.OK,
-        approveStatus: approve.status(),
         completedSaleOrderCode,
         completedStatus,
         completedSaleOrderStatus,
+        billCode,
+        billStatus,
+        updateBillStatus: updateBill.status(),
       };
 
     } catch (error) {

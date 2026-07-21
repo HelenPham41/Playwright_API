@@ -10,7 +10,7 @@ export interface OrderResult {
   cartNo: string;
 }
 
-export class OrderFlow_COD {
+export class OrderFlow_BankTransfer {
 
   private readonly authService: AuthService;
   private readonly orderService: OrderService;
@@ -54,9 +54,9 @@ export class OrderFlow_COD {
       await this.orderService.updateCart(tokenWeb, newCartNo);
       console.log('Step 6 | Update Cart       : OK');
 
-      // Step 7 — Update Payment to COD
-      await this.orderService.updatePaymentToCOD(tokenWeb, newCartNo);
-      console.log('Step 7 | Update Payment to COD : OK');
+      // Step 7 — Update Payment to Bank Transfer
+      await this.orderService.updatePaymentToBankTransfer(tokenWeb, newCartNo);
+      console.log('Step 7 | Update Payment to Bank Transfer : OK');
 
       // Step 8 — Checkout
       const { orderId } = await this.orderService.checkout(tokenWeb, newCartNo);

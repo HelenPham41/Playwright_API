@@ -94,12 +94,18 @@ export class OrderService {
 
   async updatePaymentToCOD(token: string, cartNo: string): Promise<void> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
-    const body = this.payload.updatePaymentToCOD(cartNo);
+    const body = this.payload.updatePaymentToCODBody(cartNo);
     const res = await client.put(this.cfg.endpoints.updatePaymentToCOD ?? '', { data: body });
     await assertStatus(res, [HTTP_STATUS.OK], 'updatePaymentToCOD');
     requestLog.push({ step: 'updatePaymentToCOD', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
   }
-
+  async updatePaymentToBankTransfer(token: string, cartNo: string): Promise<void> {
+    const client = await createClient(this.cfg.hosts.web, token, 'bearer');
+    const body = this.payload.updatePaymentToBankTransferBody(cartNo);
+    const res = await client.put(this.cfg.endpoints.updatePaymentToCOD ?? '', { data: body });
+    await assertStatus(res, [HTTP_STATUS.OK], 'updatePaymentToCOD');
+    requestLog.push({ step: 'updatePaymentToCOD', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: await res.json().catch(() => null) });
+  }
   async checkout(token: string, cartNo: string): Promise<CheckoutResult> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
     const body = this.payload.checkoutBody(cartNo);

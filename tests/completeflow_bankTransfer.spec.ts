@@ -3,15 +3,15 @@ import { clearRequestLog, requestLog } from '../clients/apiClient.js';
 import { RESPONSE_CODE, HTTP_STATUS } from '../constants/status-code.js';
 import { getScenarioData } from '../test-data/scenario.data.factory.js';
 
-test('Complete Order Flow COD', async ({
-    orderFlow_COD,
+test('Complete Order Flow Bank Transfer', async ({
+    orderFlow_BankTransfer,
     pickFlow,
     qcFlow,
     packFlow,
     bookShipperFlow,
     deliveryFlow,
     reconcileShipperFlow,
-    reconcileAccountingFlow_COD,
+    reconcileAccountingFlow_BankTransfer,
 }, testInfo) => {
 
     clearRequestLog();
@@ -21,7 +21,7 @@ test('Complete Order Flow COD', async ({
     //──────────────────────────────────────────────
     const { orderId } = await test.step(
         'Place Order',
-        () => orderFlow_COD.placeOrder(),
+        () => orderFlow_BankTransfer.placeOrder(),
     );
 
     testInfo.annotations.push({
@@ -177,7 +177,7 @@ test('Complete Order Flow COD', async ({
     const reconcileAccountingResult = await test.step(
         'Reconcile Accounting',
         () =>
-            reconcileAccountingFlow_COD.reconcileAccounting({
+            reconcileAccountingFlow_BankTransfer.reconcileAccounting({
                 orderId: Number(orderId),
                 so: bookResult.so,
                 trackingCode: bookResult.trackingNumber,
@@ -243,8 +243,6 @@ test('Complete Order Flow COD', async ({
 
     expect(reconcileAccountingResult.confirmStatus).toBe(HTTP_STATUS.OK);
 
-    expect(reconcileAccountingResult.approveStatus).toBe(HTTP_STATUS.OK);
-
     expect(reconcileAccountingResult.reconcileStatus).toBe('DONE');
 
     expect(reconcileAccountingResult.completedSaleOrderCode).toBe(bookResult.so);
@@ -252,4 +250,10 @@ test('Complete Order Flow COD', async ({
     expect(reconcileAccountingResult.completedStatus).toBe('COMPLETED');
 
     expect(reconcileAccountingResult.completedSaleOrderStatus).toBe('COMPLETED');
+
+    expect(reconcileAccountingResult.billCode).toBeTruthy();
+
+    expect(reconcileAccountingResult.billStatus).toBe('WAIT_TO_PAYMENT');
+
+    expect(reconcileAccountingResult.updateBillStatus).toBe(HTTP_STATUS.OK);
 });

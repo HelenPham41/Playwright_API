@@ -7,7 +7,7 @@ export class ReconcileAccountingPayloadBuilder {
 
   constructor(
     private readonly reconcile: ReconcileAccountingCfg,
-  ) {}
+  ) { }
 
   /**
    * 1. Get Reconcile Session
@@ -108,6 +108,30 @@ export class ReconcileAccountingPayloadBuilder {
       q: JSON.stringify({
         orderId,
       }),
+    };
+  }
+
+  /**
+   * 7. Get Bill Info
+   */
+  getBillInfoParams(
+    orderId: number | string,
+  ) {
+    return {
+      q: JSON.stringify({
+        orderId,
+      }),
+    };
+  };
+
+  /**
+   * 8. Update Bill To Complete Order
+   */
+  updateBillToCompleteOrderBody(
+    billCode: string,) {
+    return {
+      billCode,
+      status: 'DONE'
     };
   }
 }

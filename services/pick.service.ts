@@ -193,7 +193,7 @@ export class PickService {
   }
 
   /**
-   * PUT /warehouse/picking/v1/pick-ticket/active
+   * PUT /warehouse/picking/v1/pick-ticket/active  (max 3 retries — SO may not be indexed yet, 404 SO_NOT_FOUND)
    */
   async activePickTicket(
     basicToken: string,
@@ -202,16 +202,28 @@ export class PickService {
     console.log('activePickTicket | waiting 10s...');
     await new Promise(r => setTimeout(r, 10000));
 
-    const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic');
-    const response = await client.put(this.pick.endpoints.activePickTicket, {
-      data: this.payload.activePickTicketBody(ticketId),
-    });
-    await assertStatus(response, [HTTP_STATUS.OK], 'activePickTicket');
+    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic');
 
-    const json = await response.json();
-    console.log('activePickTicket | message:', json.message);
-    requestLog.push({ step: 'activePickTicket', method: 'PUT', url: response.url(), requestBody: this.payload.activePickTicketBody(''), responseStatus: response.status(), responseBody: { message: json.message } });
-    return { response, message: json.message, url: response.url() };
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await client.put(this.pick.endpoints.activePickTicket, {
+          data: this.payload.activePickTicketBody(ticketId),
+        });
+        console.log(`activePickTicket | attempt ${attempt} status:`, response.status());
+        await assertStatus(response, [HTTP_STATUS.OK], 'activePickTicket');
+
+        const json = await response.json();
+        console.log('activePickTicket | message:', json.message);
+        requestLog.push({ step: 'activePickTicket', method: 'PUT', url: response.url(), requestBody: this.payload.activePickTicketBody(''), responseStatus: response.status(), responseBody: { message: json.message } });
+        return { response, message: json.message, url: response.url() };
+      } catch (error) {
+        console.log(`activePickTicket | attempt ${attempt} failed`);
+        if (attempt === 3) throw error;
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    }
+
+    throw new Error('activePickTicket failed after retries');
   }
 
   /**

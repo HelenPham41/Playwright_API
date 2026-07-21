@@ -445,7 +445,7 @@ export class DeliveryService {
     }
 
     /**
-     * Get Delivery Status
+     * Get Delivery Status  (max 3 retries — STG occasionally slow/unresponsive)
      */
     async getDeliveryStatus(
         basicToken: string,
@@ -453,34 +453,43 @@ export class DeliveryService {
     ): Promise<any> {
 
         const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic', DELIVERY_USER_AGENT);
+        const params = this.payload.deliveryStatusParams(shippingOrderCode);
 
-        const response = await client.get(
-            this.delivery.endpoints.getDeliveryStatus,
-            {
-                params: this.payload.deliveryStatusParams(
-                    shippingOrderCode,
-                ),
-            },
-        );
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                console.log(`getDeliveryStatus | attempt ${attempt}`);
+                const response = await client.get(
+                    this.delivery.endpoints.getDeliveryStatus,
+                    { params },
+                );
 
-        await assertStatus(
-            response,
-            [HTTP_STATUS.OK],
-            'getDeliveryStatus',
-        );
+                console.log('getDeliveryStatus | status:', response.status());
+                await assertStatus(
+                    response,
+                    [HTTP_STATUS.OK],
+                    'getDeliveryStatus',
+                );
 
-        const data = await response.json();
+                const data = await response.json();
 
-        requestLog.push({
-            step: 'getDeliveryStatus',
-            method: 'GET',
-            url: response.url(),
-            requestBody: null,
-            responseStatus: response.status(),
-            responseBody: data,
-        });
+                requestLog.push({
+                    step: 'getDeliveryStatus',
+                    method: 'GET',
+                    url: response.url(),
+                    requestBody: null,
+                    responseStatus: response.status(),
+                    responseBody: data,
+                });
 
-        return data;
+                return data;
+            } catch (error) {
+                console.log(`getDeliveryStatus | attempt ${attempt} failed:`, error);
+                if (attempt === 3) throw error;
+                await new Promise(r => setTimeout(r, 3000));
+            }
+        }
+
+        throw new Error('getDeliveryStatus failed after retries');
     }
 
     /**

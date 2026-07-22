@@ -12,7 +12,7 @@ export const TH_CONFIG: CountryConfig = {
   auth: {
     username:      process.env.API_USERNAME || '0559948786',
     password:      process.env.API_PASSWORD || 'A12345678a',
-    basicToken:    process.env.BASIC_TOKEN  || 'UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU=',                                  // TODO: đây là basicToken VN, chưa có account nội bộ TH thật — pick sẽ fail "Not found any matched account"
+    basicToken:    process.env.BASIC_TOKEN  || 'UEFSVE5FUi92Mi5jdXN0b21lci5jdXN0b21lcjpWNHRqTDI5UVQ0',
     loginEndpoint: '/backend/marketplace/customer/v1/authentication',
   },
 

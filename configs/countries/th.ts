@@ -12,17 +12,72 @@ export const TH_CONFIG: CountryConfig = {
   auth: {
     username:      process.env.API_USERNAME || '0559948786',
     password:      process.env.API_PASSWORD || 'A12345678a',
-    basicToken:    process.env.BASIC_TOKEN  || '',                                  // TODO: provide TH basicToken
+    basicToken:    process.env.BASIC_TOKEN  || 'UEFSVE5FUi9zZWxsZXIuY29yZTpJT2tuTWdaaU1Ka2JSUEU=',                                  // TODO: đây là basicToken VN, chưa có account nội bộ TH thật — pick sẽ fail "Not found any matched account"
     loginEndpoint: '/backend/marketplace/customer/v1/authentication',
   },
 
   endpoints: {
-    checkCart:   '/backend/marketplace/order/v2/cart/select',                       // TODO: confirm TH endpoint
+    checkCart:   '/backend/marketplace/order/v2/cart/select',                       
     getCartInfo: '/backend/marketplace/order/v2/cart/v2',
-    removeCart:  '/backend/marketplace/order/v2/cart/remove',                       // TODO: confirm TH endpoint
-    addCart:     '/backend/marketplace/order/v2/cart/add',                          // TODO: confirm TH endpoint
-    updateCart:  '/backend/marketplace/order/v2/cart',                              // TODO: confirm TH endpoint
-    checkout:    '/backend/marketplace/order/v2/cart/checkout',                     // TODO: confirm TH endpoint
-    cancelOrder: '/backend/marketplace/order/v2/order/status',                      // TODO: confirm TH endpoint
+    removeCart:  '/backend/marketplace/order/v2/cart/remove',                      
+    addCart:     '/backend/marketplace/order/v2/cart/add',                          
+    updateCart:  '/backend/marketplace/order/v2/cart',                              
+    checkout:    '/backend/marketplace/order/v2/cart/checkout',                     
+    cancelOrder: '/backend/marketplace/order/v2/order/status',                      
+  },
+
+  pick: {
+    warehouseCode: process.env.LOCATION || 'BK',
+    employee: 'Customer Group - Customer Service',
+    employeeId: 2,
+
+    confirmPayment: {
+      bankCode: '333',
+      bankAccountNumber: '0314758651',
+      bankChannel: 'OCB',
+      bankingTransactionCode: 'Ma transaction',
+      remarkTemplate: 'NHAN TU 104866682689 TRACE 237883 ND QR - {orderId} - Nguyen Huu Tho - MD',
+    },
+
+    endpoints: {
+      orderList: '/backend/marketplace/order/v2/order/list',
+      confirmOrder: '/backend/marketplace/order/v2/order/status',
+      saleOrders: '/warehouse/core/v1/sale-orders',
+      checkPickTicket: '/backend/warehouse/picking/v1/pick-ticket/active/check',
+      activePickTicket: '/warehouse/picking/v1/pick-ticket/active',
+      pickTicketItem: '/backend/warehouse/picking/v1/pick-ticket-item',
+      staffZoneSession: '/warehouse/core/v1/staff-zone-session/check',
+      assignPickStaff: '/warehouse/picking/v1/pick-ticket/assign-manual',
+      location: '/warehouse/inventory/v1/location',
+      useBasket: '/warehouse/picking/v1/sub-pick-ticket/basket/use',
+      pickItem: '/warehouse/picking/v1/sub-pick-ticket-item/pick',
+      completePick: '/warehouse/picking/v1/sub-pick-ticket/complete',
+      completePickSO: '/warehouse/picking/v1/pick-ticket/pick-quantity',
+    },
+  },
+
+  // Bypass config — PickFlow luôn khởi tạo QcService/PackService dù không dùng tới
+  // (chỉ để tránh crash "config not defined"), chưa xác nhận đúng cho TH.
+  qc: {
+    warehouseCode: process.env.LOCATION || 'BK',
+    zoneCode: 'QC-01',
+    endpoints: {
+      staffZoneSession: '/backend/warehouse/core/v1/staff-zone-session/check',
+      pickTicket: '/backend/warehouse/picking/v1/pick-ticket',
+      getQrCode: '/backend/operation/qr/v1/qrcode',
+      scanTicketItem: '/backend/warehouse/picking/v1/scan-ticket-item/scan',
+      doneQcMoveToPack: '/backend/warehouse/picking/v1/pick-ticket/v2/update',
+    },
+  },
+
+  pack: {
+    warehouseCode: process.env.LOCATION || 'BK',
+    zoneCode: 'PACK-RFID-01',
+    endpoints: {
+      staffZoneSession: '/warehouse/core/v1/staff-zone-session/check',
+      updateTicket: '/warehouse/picking/v1/pick-ticket/v2/update',
+      getBin: '/warehouse/inventory/v1/location',
+      addBasket: '/warehouse/picking/v1/basket/use',
+    },
   },
 };

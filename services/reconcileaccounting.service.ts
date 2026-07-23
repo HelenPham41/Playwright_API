@@ -120,7 +120,7 @@ export class ReconcileAccountingService {
   }
 
   /**
-   * 3. Select Reconcile Orders
+   * 3. Select Reconcile Orders  (max 3 retries)
    */
   async selectReconcileOrdersAccounting(
     riderToken: string,
@@ -142,29 +142,41 @@ export class ReconcileAccountingService {
       trackingCode,
     );
 
-    const response = await client.put(
-      this.reconcileAccounting.endpoints.selectReconcileOrdersAccounting,
-      {
-        data: body,
-      },
-    );
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await client.put(
+          this.reconcileAccounting.endpoints.selectReconcileOrdersAccounting,
+          {
+            data: body,
+          },
+        );
 
-    await assertStatus(
-      response,
-      [HTTP_STATUS.OK],
-      'selectReconcileOrdersAccounting',
-    );
+        console.log(`selectReconcileOrdersAccounting | attempt ${attempt} status:`, response.status());
 
-    requestLog.push({
-      step: 'selectReconcileOrdersAccounting',
-      method: 'PUT',
-      url: response.url(),
-      requestBody: body,
-      responseStatus: response.status(),
-      responseBody: await response.json().catch(() => null),
-    });
+        await assertStatus(
+          response,
+          [HTTP_STATUS.OK],
+          'selectReconcileOrdersAccounting',
+        );
 
-    return response;
+        requestLog.push({
+          step: 'selectReconcileOrdersAccounting',
+          method: 'PUT',
+          url: response.url(),
+          requestBody: body,
+          responseStatus: response.status(),
+          responseBody: await response.json().catch(() => null),
+        });
+
+        return response;
+      } catch (error) {
+        console.log(`selectReconcileOrdersAccounting | attempt ${attempt} failed`);
+        if (attempt === 3) throw error;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+
+    throw new Error('selectReconcileOrdersAccounting failed after 3 attempts');
   }
 
   /**

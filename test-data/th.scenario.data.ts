@@ -32,6 +32,10 @@ export const TH_SCENARIO_DATA: ScenarioData = {
   customerProvinceName:    '',
   ordersCount:             19,
 
+  //business
+  businessName: '',
+  businessCode: '',
+
   // Payment (updateCart)
   paymentMethod:  'PAYMENT_METHOD_NORMAL',
   deliveryMethod: 'DELIVERY_PLATFORM_NORMAL',

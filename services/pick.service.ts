@@ -109,6 +109,7 @@ export class PickService {
     let jsonData: any;
     let firstOrder: any;
     let get_sku_codes: any[] = [];
+    let ticketId: any;
 
     for (let i = 1; i <= 6; i++) {
       const response = await client.get(this.pick.endpoints.saleOrders, {
@@ -132,13 +133,17 @@ export class PickService {
       get_sku_codes = extractSkuCodes(jsonData);
       firstOrder    = jsonData?.data?.[0];
 
+      // Một số nước (TH) chưa thấy pickTicketInfos ở response — fallback lấy pickTicketId từ logs
+      ticketId = firstOrder?.pickTicketInfos?.[0]?.pickTicketId
+        ?? firstOrder?.logs?.find((l: any) => l.pickTicketId)?.pickTicketId;
+
       const ready =
-        firstOrder?.pickTicketInfos?.length > 0 &&
+        !!ticketId &&
         firstOrder?.orderLines?.length > 0 &&
         firstOrder?.orderLines?.some((line: any) => line.pickItems?.length > 0);
 
       if (ready) {
-        requestLog.push({ step: 'getOrderSku', method: 'GET', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: { so: firstOrder?.orderLines?.[0]?.saleOrderCode, ticketId: firstOrder?.pickTicketInfos?.[0]?.pickTicketId } });
+        requestLog.push({ step: 'getOrderSku', method: 'GET', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: { so: firstOrder?.orderLines?.[0]?.saleOrderCode, ticketId } });
         break;
       }
 
@@ -146,7 +151,7 @@ export class PickService {
       await new Promise(r => setTimeout(r, 3000));
     }
 
-    if (!firstOrder?.pickTicketInfos?.length) {
+    if (!ticketId) {
       throw new Error('Pick ticket not ready');
     }
 
@@ -158,7 +163,7 @@ export class PickService {
     }
 
     return {
-      ticketId:     firstOrder.pickTicketInfos[0].pickTicketId,
+      ticketId,
       so:           firstOrder.orderLines[0].saleOrderCode,
       sku:          skuList[0]?.sku,
       quantity:     skuList[0]?.quantity,
@@ -182,9 +187,9 @@ export class PickService {
   /**
    * POST /backend/warehouse/picking/v1/pick-ticket/active/check
    */
-  async checkPickTicket(basicToken: string, ticketId: string): Promise<APIResponse> {
+  async checkPickTicket(basicToken: string, ticketId: string, so: string): Promise<APIResponse> {
     const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic', DEFAULT_USER_AGENT);
-    const body     = this.payload.checkPickTicketBody(ticketId);
+    const body     = this.payload.checkPickTicketBody(ticketId, so);
     const response = await client.post(this.pick.endpoints.checkPickTicket, { data: body });
     await assertStatus(response, [HTTP_STATUS.OK], 'checkPickTicket');
     requestLog.push({ step: 'checkPickTicket', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
@@ -197,6 +202,7 @@ export class PickService {
   async activePickTicket(
     basicToken: string,
     ticketId: string,
+    so: string,
   ): Promise<{ response: APIResponse; message: string; url: string }> {
     console.log('activePickTicket | waiting 10s...');
     await new Promise(r => setTimeout(r, 10000));
@@ -206,14 +212,14 @@ export class PickService {
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const response = await client.put(this.pick.endpoints.activePickTicket, {
-          data: this.payload.activePickTicketBody(ticketId),
+          data: this.payload.activePickTicketBody(ticketId, so),
         });
         console.log(`activePickTicket | attempt ${attempt} status:`, response.status());
         await assertStatus(response, [HTTP_STATUS.OK], 'activePickTicket');
 
         const json = await response.json();
         console.log('activePickTicket | message:', json.message);
-        requestLog.push({ step: 'activePickTicket', method: 'PUT', url: response.url(), requestBody: this.payload.activePickTicketBody(''), responseStatus: response.status(), responseBody: { message: json.message } });
+        requestLog.push({ step: 'activePickTicket', method: 'PUT', url: response.url(), requestBody: this.payload.activePickTicketBody('', so), responseStatus: response.status(), responseBody: { message: json.message } });
         return { response, message: json.message, url: response.url() };
       } catch (error) {
         console.log(`activePickTicket | attempt ${attempt} failed`);
@@ -279,7 +285,26 @@ export class PickService {
    */
   async assignPickStaff(basicToken: string, ticketId: string, so: string): Promise<string> {
     const client = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
-    const body   = this.payload.assignPickStaffBody(ticketId, so);
+
+    // TH: assign-manual cần ticketId thật của sub-pick-ticket (khác pickTicketId) — chờ tới khi status = WAIT_TO_PICK
+    let realTicketId: any = ticketId;
+    if (this.pick.checkPickTicketBy === 'so' && this.pick.endpoints.subPickTicket) {
+      for (let i = 1; i <= 10; i++) {
+        const subRes  = await client.get(this.pick.endpoints.subPickTicket, {
+          params: this.payload.getSubPickTicketParams(so),
+        });
+        const subJson = await subRes.json().catch(() => null);
+        const subInfo = subJson?.data?.[0];
+        if (subInfo?.status === 'WAIT_TO_PICK' && subInfo?.ticketId) {
+          realTicketId = subInfo.ticketId;
+          break;
+        }
+        console.log(`assignPickStaff | sub-pick-ticket chưa WAIT_TO_PICK, chờ 3s (attempt ${i})`);
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    }
+
+    const body = this.payload.assignPickStaffBody(realTicketId, so);
 
     console.log('assignPickStaff | start');
 
@@ -291,7 +316,10 @@ export class PickService {
 
       if (statusCode === HTTP_STATUS.OK) {
         const json        = await response.json();
-        const subTicketId = json?.data?.[0]?.ticketId;
+        // TH: response không có data[].ticketId — dùng lại ticketId thật đã dùng để assign
+        const subTicketId = this.pick.checkPickTicketBy === 'so'
+          ? realTicketId
+          : json?.data?.[0]?.ticketId;
         if (!subTicketId) throw new Error('subTicketId not found in response');
         console.log('assignPickStaff | OK, subTicketId:', subTicketId);
         requestLog.push({ step: 'assignPickStaff', method: 'PUT', url: response.url(), requestBody: body, responseStatus: statusCode, responseBody: json });

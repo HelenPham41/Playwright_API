@@ -18,6 +18,10 @@ export class PickPayloadBuilder {
     return { saleOrderCode: so, warehouseCode: this.pick.warehouseCode };
   }
 
+  getSubPickTicketParams(so: string) {
+    return { q: JSON.stringify({ saleOrderCode: so, warehouseCode: this.pick.warehouseCode }) };
+  }
+
   confirmPaymentBody(orderId: string, price: number) {
     const p = this.pick.confirmPayment;
     return {
@@ -36,12 +40,16 @@ export class PickPayloadBuilder {
       status: 'CONFIRMED',
     };
   }
-  checkPickTicketBody(ticketId: string) {
-    return { ticketIdList: [Number(ticketId)], warehouseCode: this.pick.warehouseCode };
+  checkPickTicketBody(ticketId: string, so: string) {
+    return this.pick.checkPickTicketBy === 'so'
+      ? { soList: [so], warehouseCode: this.pick.warehouseCode }
+      : { ticketIdList: [Number(ticketId)], warehouseCode: this.pick.warehouseCode };
   }
 
-  activePickTicketBody(ticketId: string) {
-    return { ticketId: Number(ticketId), isManualActive: true, warehouseCode: this.pick.warehouseCode };
+  activePickTicketBody(ticketId: string, so: string) {
+    return this.pick.checkPickTicketBy === 'so'
+      ? { so, isManualActive: true, warehouseCode: this.pick.warehouseCode }
+      : { ticketId: Number(ticketId), isManualActive: true, warehouseCode: this.pick.warehouseCode };
   }
 
   getZoneLocationParams(so: string) {
@@ -63,8 +71,16 @@ export class PickPayloadBuilder {
     return { zoneCode: zone, status: 'CHECK_IN_ZONE', jobType: 'PICK', wareHouseCode: this.pick.warehouseCode };
   }
 
-  // Lưu ý: field key là wareHouseCode (capital H) — API yêu cầu casing này
+  // Lưu ý: field key là wareHouseCode (capital H) — API yêu cầu casing này (VN). TH dùng shape khác hẳn.
   assignPickStaffBody(ticketId: string, so: string) {
+    if (this.pick.checkPickTicketBy === 'so') {
+      return {
+        listTicketIds: [Number(ticketId)],
+        warehouseCode: this.pick.warehouseCode,
+        employee: this.pick.employee,
+        employeeId: this.pick.employeeId,
+      };
+    }
     return {
       ticketId,
       wareHouseCode: this.pick.warehouseCode,

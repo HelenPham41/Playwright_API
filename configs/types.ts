@@ -155,6 +155,7 @@ export interface CountryConfig {
     warehouseCode: string;
     employee: string;
     employeeId: number;
+    checkPickTicketBy: 'ticketId' | 'so';
     confirmPayment: {
       bankCode: string;
       bankAccountNumber: string;
@@ -166,6 +167,7 @@ export interface CountryConfig {
       orderList: string;
       confirmOrder: string;
       saleOrders: string;
+      subPickTicket?: string;
       checkPickTicket: string;
       activePickTicket: string;
       pickTicketItem: string;

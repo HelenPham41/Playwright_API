@@ -1,93 +1,83 @@
-# Automation QC
+# Automation QC — Playwright API Test Framework
 
+Framework test API tự động cho luồng nghiệp vụ order → warehouse (pick/qc/pack) → shipper → delivery → reconcile, hỗ trợ nhiều country (VN, TH, KH) qua cùng một bộ code.
 
+> Chi tiết kiến trúc, quy tắc code, và các lưu ý nghiệp vụ (business logic, exception cases, bug đã fix...) nằm trong [CLAUDE.md](./CLAUDE.md) — đây là tài liệu tham chiếu đầy đủ nhất, nên đọc khi cần hiểu sâu hoặc sửa code. README này chỉ tóm tắt để onboard nhanh.
 
-## Getting started
+## Cài đặt
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.buymed.tech/buymed/qc/automation-qc.git
-git branch -M main
-git push -uf origin main
+```bash
+npm install
+npx playwright install   # nếu chưa có browser/driver cần thiết
 ```
 
-## Integrate with your tools
+## Chạy test
 
-- [ ] [Set up project integrations](https://gitlab.buymed.tech/buymed/qc/automation-qc/-/settings/integrations)
+```bash
+# Chạy toàn bộ spec, tất cả country (VN, TH, KH)
+npx playwright test
 
-## Collaborate with your team
+# Chạy 1 spec cho 1 country cụ thể
+npx playwright test tests/placeOrder.spec.ts --project=VN
+npx playwright test tests/completeflow_COD.spec.ts --project=VN
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+# Mở lại report HTML tuỳ chỉnh gần nhất
+npm run report:open
+```
 
-## Test and Deploy
+**Biến môi trường thường dùng:**
 
-Use the built-in continuous integration in GitLab.
+| Biến | Mục đích | Default |
+|---|---|---|
+| `COUNTRY` | Chọn country config (`VN`/`TH`/`KH`) | lấy từ `--project`, fallback `VN` |
+| `RUN_TIMES` | Số lần lặp mỗi test (`repeatEach`) | `1` |
+| `MAX_REPORTS` | Số file report HTML tối đa giữ lại trong `reports/` (rotate) | `10` |
+| `OPEN_REPORT` | `false` để không tự mở report sau khi chạy xong | mở tự động |
+| `LOCATION`, `ZONE_CODE` | Override warehouse/zone code cho pick/pack (VN) | xem `configs/countries/vn.ts` |
+| `API_USERNAME`, `API_PASSWORD` | Override credential login (khi cần test account khác) | xem từng file `configs/countries/*.ts` |
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Luồng nghiệp vụ (tổng quan)
 
-***
+```
+PlaceOrder → Pick → QC → Pack → Book Shipper → Delivery → Reconcile Shipper → Reconcile Accounting
+```
 
-# Editing this README
+Mỗi bước là 1 flow độc lập (`flows/*.flow.ts`), nhận output của bước trước làm input — không có bước nào hard-code ID, tất cả đều chain runtime qua flow trước đó. Xem chi tiết từng bước (API endpoint, input/output, exception case) trong CLAUDE.md → mục **"Luồng nghiệp vụ đơn hàng"**.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Test file tương ứng trong `tests/`:
 
-## Suggestions for a good README
+| Spec | Phạm vi |
+|---|---|
+| `placeOrder.spec.ts` | Chỉ đặt hàng (8 bước) |
+| `pick.spec.ts` | PlaceOrder → Pick |
+| `qc.spec.ts` | PlaceOrder → Pick → QC |
+| `pack.spec.ts` | PlaceOrder → Pick → QC → Pack |
+| `bookshipper.spec.ts` | ... → Pack → Book Shipper (chỉ VN có config) |
+| `delivery.spec.ts` | ... → Book Shipper → Delivery |
+| `reconcileshipper.spec.ts` | ... → Delivery → Reconcile Shipper |
+| `completeflow_COD.spec.ts` | Full chain, thanh toán COD, đến Reconcile Accounting |
+| `completeflow_bankTransfer.spec.ts` | Full chain, thanh toán chuyển khoản, đến Reconcile Accounting |
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## Kiến trúc code (layer)
 
-## Name
-Choose a self-explaining name for your project.
+```
+tests/       → chỉ chứa expect(). Không biết HTTP, không biết config.
+fixtures/    → resolve CountryConfig, tạo Flow, inject vào test qua { orderFlow, pickFlow, ... }
+flows/       → gom các bước nghiệp vụ, log từng step, KHÔNG có expect()
+services/    → mỗi method = 1 HTTP call, throw ApiError nếu status ngoài expected
+payloads/    → build request body/params/headers từ config/test-data, tách khỏi HTTP logic
+clients/     → createClient(baseURL, token, authType) → APIRequestContext
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Country được switch qua 2 factory song song, cùng đọc `process.env.COUNTRY`:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+- `configs/country.factory.ts` → `getCountryConfig()` — hosts, auth, endpoints
+- `test-data/scenario.data.factory.ts` → `getScenarioData()` — SKU, customer, invoice, payment
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Mỗi country có file config + test-data riêng, **không import chéo** (`configs/countries/vn.ts` + `test-data/vn.scenario.data.ts`, tương tự cho `th`/`kh`).
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Xem đầy đủ cấu trúc thư mục, quy tắc bắt buộc (không hard-code, không cross-import service, log style...), và checklist thêm country/flow mới trong CLAUDE.md.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Report
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Ngoài report HTML gốc của Playwright (`playwright-report/`), project có report tổng hợp tuỳ chỉnh: `reporters/html-summary.reporter.ts` → xuất file vào `reports/<timestamp>-<country>.html`, gồm summary pass/fail, môi trường chạy, và chi tiết từng test (test steps + lỗi assertion/API nếu fail).

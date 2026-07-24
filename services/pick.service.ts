@@ -209,7 +209,7 @@ export class PickService {
 
     const client = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 5; attempt++) {
       try {
         const response = await client.put(this.pick.endpoints.activePickTicket, {
           data: this.payload.activePickTicketBody(ticketId, so),
@@ -223,8 +223,8 @@ export class PickService {
         return { response, message: json.message, url: response.url() };
       } catch (error) {
         console.log(`activePickTicket | attempt ${attempt} failed`);
-        if (attempt === 3) throw error;
-        await new Promise(r => setTimeout(r, 3000));
+        if (attempt === 5) throw error;
+        await new Promise(r => setTimeout(r, 5000));
       }
     }
 

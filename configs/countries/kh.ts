@@ -10,8 +10,8 @@ export const KH_CONFIG: CountryConfig = {
   },
 
   auth: {
-    username:      process.env.API_USERNAME || '0559948786',
-    password:      process.env.API_PASSWORD || 'G12345678h',
+    username:      process.env.API_USERNAME || '0559958786',
+    password:      process.env.API_PASSWORD || 'A12345678a',
     basicToken:    process.env.BASIC_TOKEN  || '',                                  // TODO: provide KH basicToken
     loginEndpoint: '/backend/marketplace/customer/v1/authentication',
   },

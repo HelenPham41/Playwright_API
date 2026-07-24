@@ -17,10 +17,10 @@ export const KH_SCENARIO_DATA: ScenarioData = {
   source:      'thuocsi-web',
 
   // Customer & Shipping
-  customerName:            '[TECH] Hanh Pham',
-  customerPhone:           '0559948786',
-  customerEmail:           'hanh.pham@buymed.com',
-  customerShippingAddress: '12 Le Thanh Ton',
+  customerName:            'AUTO TEST',
+  customerPhone:           '0559958786',
+  customerEmail:           'bichhanh0401+12@gmail.com',
+  customerShippingAddress: '72 Le Thanh Ton',
   customerDistrictCode:    '0604',
   customerProvinceCode:    '06',
   customerWardCode:        '060403',
@@ -31,7 +31,9 @@ export const KH_SCENARIO_DATA: ScenarioData = {
   customerProvinceName:    '',
   ordersCount:             21,
 
-  // Payment (updateCart)
+  // Business
+  businessName: 'AUTO TEST',
+  businessCode: '200201',
   paymentMethod:  'PAYMENT_METHOD_NORMAL',
   deliveryMethod: 'Grab',
   totalWard:      7,
@@ -137,7 +139,7 @@ export const KH_SCENARIO_DATA: ScenarioData = {
   invoiceCompanyName:    '',
   invoiceCompanyAddress: '',
   invoiceTaxCode:        '',
-  invoiceEmail:          'hanh.pham@buymed.com',
+  invoiceEmail:          'bichhanh0401+12@gmail.com',
 
   // Checkout payment
   checkoutPaymentCode:         '',

@@ -6,7 +6,7 @@ import { HTTP_STATUS } from '../constants/status-code.js';
 
 // wait durations
 const WAIT_3S = 3000;
-const WAIT_5S = 5000;
+const WAIT_8S = 8000;
 
 export interface ReconcileAccountingInput {
   orderId: number;
@@ -114,8 +114,8 @@ export class ReconcileAccountingFlow_COD {
       //----------------------------------------------------------------------
       // Step 5 - Approve Reconcile
       //----------------------------------------------------------------------
-      console.log('Wait 5s before approve reconcile accounting...');
-      await new Promise(r => setTimeout(r, WAIT_5S));
+      console.log('Wait 8s before approve reconcile accounting...');
+      await new Promise(r => setTimeout(r, WAIT_8S));
       const approve =
         await this.reconcileAccountingService.approveReconcileAccounting(
           basicToken,

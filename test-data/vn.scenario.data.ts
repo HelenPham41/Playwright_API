@@ -19,23 +19,23 @@ export const VN_SCENARIO_DATA: ScenarioData = {
   source: 'thuocsi-web',
 
   // Customer & Shipping
-  customerName: '[Tech] Hanh Pham',
-  customerPhone: '0559948786',
-  customerEmail: 'hanh.pham@buymed.com',
+  customerName: 'AUTO TEST',
+  customerPhone: '0559958786',
+  customerEmail: 'bichhanh0401+12@gmail.com',
   customerShippingAddress: '72 Le Thanh Ton',
   customerDistrictCode: '765',
   customerProvinceCode: '79',
   customerWardCode: '26947',
   customerAddressCode: 'YFFPHGG3',
   customerRegionCode: '107TQTAR1Y7G',
-  customerWardName: 'Xa Nha Be',
-  customerDistrictName: 'Xa Nha Be',
+  customerWardName: 'Quận 3',
+  customerDistrictName: 'Quận 3',
   customerProvinceName: 'Thành phố Hồ Chí Minh',
   ordersCount: 151,
 
   //business
-  businessName: 'Quầy thuốc',
-  businessCode: '29870',
+  businessName: 'AUTO TEST',
+  businessCode: '30274',
 
   // Payment (updateCart)
   paymentMethod: 'PAYMENT_METHOD_BANK',

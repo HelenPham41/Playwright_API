@@ -203,6 +203,13 @@ export default class HtmlSummaryReporter implements Reporter {
           </table>
         </details>` : '';
 
+      // Test-level error (assertion fail hoặc ApiError không attach vào step nào)
+      const errorSection = isFail && r.errorMessage !== '-' ? `
+        <details open>
+          <summary class="sub-header">&#x274C; Test Error</summary>
+          <pre>${this.escape(r.errorMessage)}</pre>
+        </details>` : '';
+
       const badge = `<span class="badge ${isFail ? 'badge-fail' : 'badge-pass'}">${r.status}</span>`;
 
       return `
@@ -217,11 +224,12 @@ export default class HtmlSummaryReporter implements Reporter {
         <td>${this.escape(r.so)}</td>
         <td>${this.escape(r.bin)}</td>
         <td style="max-width:160px;word-break:break-all;font-size:0.78rem">${this.escape(r.sku)}</td>
-        ${isFail ? `<td style="max-width:200px;word-break:break-word;color:#dc2626;font-size:0.78rem">${this.escape(r.errorStep)} ${r.errorCode !== '-' ? '[' + r.errorCode + ']' : ''}</td>` : '<td>-</td>'}
+        ${isFail ? `<td style="max-width:200px;word-break:break-word;color:#dc2626;font-size:0.78rem">${r.errorStep !== '-' ? this.escape(r.errorStep) + (r.errorCode !== '-' ? ' [' + r.errorCode + ']' : '') : this.escape(r.errorMessage).slice(0, 120)}</td>` : '<td>-</td>'}
       </tr>
       <tr id="detail-${r.index}" class="detail-row${isFail ? ' fail-detail' : ''}" style="display:${expanded ? 'table-row' : 'none'}">
         <td colspan="9" style="padding:0;border-top:none">
           <div class="detail-wrap">
+            ${errorSection}
             ${stepsSection}
           </div>
         </td>

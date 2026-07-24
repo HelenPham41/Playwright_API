@@ -10,7 +10,7 @@ export const TH_CONFIG: CountryConfig = {
   },
 
   auth: {
-    username:      process.env.API_USERNAME || '0559948786',
+    username:      process.env.API_USERNAME || '0559958786',
     password:      process.env.API_PASSWORD || 'A12345678a',
     basicToken:    process.env.BASIC_TOKEN  || '',                                  // TODO: provide TH basicToken
     loginEndpoint: '/backend/marketplace/customer/v1/authentication',

@@ -18,9 +18,9 @@ export const TH_SCENARIO_DATA: ScenarioData = {
   source:      'thuocsi-web',
 
   // Customer & Shipping
-  customerName:            '[TECH] Hanh Pham',
-  customerPhone:           '0559948786',
-  customerEmail:           'hanh.pham@buymed.com',
+  customerName:            'AUTO TEST',
+  customerPhone:           '0559958786',
+  customerEmail:           'bichhanh0401+12@gmail.com',
   customerShippingAddress: '72 Le Thanh Ton',
   customerDistrictCode:    '8601',
   customerProvinceCode:    '86',
@@ -31,6 +31,10 @@ export const TH_SCENARIO_DATA: ScenarioData = {
   customerDistrictName:    '',
   customerProvinceName:    '',
   ordersCount:             19,
+
+  // Business
+  businessName: 'AUTO TEST',
+  businessCode: '200298',
 
   // Payment (updateCart)
   paymentMethod:  'PAYMENT_METHOD_NORMAL',
@@ -166,10 +170,10 @@ export const TH_SCENARIO_DATA: ScenarioData = {
   // Invoice (updateCart)
   invoiceRequest:        false,
   invoiceCode:           '',
-  invoiceCompanyName:    '[TECH] Hanh Pham',
+  invoiceCompanyName:    'AUTO TEST',
   invoiceCompanyAddress: '72 Le Thanh Ton, ปากน้ำ, อำเภอเมืองชุมพร, ชุมพร',
   invoiceTaxCode:        '',
-  invoiceEmail:          'hanh.pham@buymed.com',
+  invoiceEmail:          'bichhanh0401+12@gmail.com',
 
   // Checkout payment — TODO: confirm TH checkout payment
   checkoutPaymentCode:         '',

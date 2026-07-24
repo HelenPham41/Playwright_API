@@ -131,6 +131,7 @@ export interface CountryConfig {
   pack?: {
     warehouseCode: string;
     zoneCode: string;
+    skipBinStep?: boolean; // TH: không có bước getBin/addBasket/packComplete riêng
     endpoints: {
       staffZoneSession: string;
       updateTicket: string;

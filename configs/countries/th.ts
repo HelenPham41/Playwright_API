@@ -76,7 +76,8 @@ export const TH_CONFIG: CountryConfig = {
 
   pack: {
     warehouseCode: process.env.LOCATION || 'BK',
-    zoneCode: 'PACK-RFID-01',
+    zoneCode: 'PACK-01',
+    skipBinStep: true,
     endpoints: {
       staffZoneSession: '/backend/warehouse/core/v1/staff-zone-session/check',
       updateTicket: '/backend/warehouse/picking/v1/pick-ticket/v2/update',

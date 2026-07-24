@@ -5,10 +5,11 @@ import { clearRequestLog } from '../clients/apiClient.js';
 // Chạy: npx playwright test tests/completeflow_TH.spec.ts --project=TH
 // Chạy xong bước nào OK thì bổ sung config (th.ts) + step tiếp theo vào đây.
 
-test('Complete Order Flow TH ', async ({
+test('Flow - Place Order → Pick → QC → Pack (COD)', async ({
     orderFlow_COD,
     pickFlow,
     qcFlow,
+    packFlow,
 }, testInfo) => {
 
     clearRequestLog();
@@ -56,4 +57,23 @@ test('Complete Order Flow TH ', async ({
     );
 
     expect(qcResult.scanned).toBeGreaterThan(0);
+
+    //──────────────────────────────────────────────
+    // Step 4 - Pack
+    //──────────────────────────────────────────────
+    const packResult = await test.step(
+        'Pack Order',
+        () =>
+            packFlow.packOrder({
+                so: pickResult.so,
+                ticketId: pickResult.ticketId,
+                orderId,
+                orderCode: pickResult.orderCode,
+            }),
+    );
+
+    testInfo.annotations.push({
+        type: 'bin',
+        description: packResult.bin ?? 'N/A',
+    });
 });

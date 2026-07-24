@@ -47,31 +47,38 @@ export class PackFlow {
       await this.packService.packPacking(basicToken, ticketId);
       console.log('Step 2 | Pack Packing      : OK');
 
-      // Step 3 — Get BIN
-      const { bin } = await this.packService.getBin(basicToken);
-      if (!bin) throw new Error('No BIN available');
-      console.log(`Step 3 | Get BIN           : bin=${bin}`);
+      let bin: string | null = null;
 
-      // Step 4 — Add Basket (retry once on 400)
-      try {
-        await this.packService.addBasket(basicToken, ticketId, bin);
-      } catch (error) {
-        if (error instanceof ApiError && error.status === HTTP_STATUS.BAD_REQUEST) {
-          console.warn('addBasket | got 400, retrying once');
+      if (!this.cfg.pack?.skipBinStep) {
+        // Step 3 — Get BIN
+        const result = await this.packService.getBin(basicToken);
+        bin = result.bin;
+        if (!bin) throw new Error('No BIN available');
+        console.log(`Step 3 | Get BIN           : bin=${bin}`);
+
+        // Step 4 — Add Basket (retry once on 400)
+        try {
           await this.packService.addBasket(basicToken, ticketId, bin);
-        } else {
-          throw error;
+        } catch (error) {
+          if (error instanceof ApiError && error.status === HTTP_STATUS.BAD_REQUEST) {
+            console.warn('addBasket | got 400, retrying once');
+            await this.packService.addBasket(basicToken, ticketId, bin);
+          } else {
+            throw error;
+          }
         }
+        console.log('Step 4 | Add Basket        : OK');
       }
-      console.log('Step 4 | Add Basket        : OK');
 
       // Step 5 — Update Ticket → WAIT_TO_DELIVERY
       await this.packService.updateTicket(basicToken, ticketId, so);
       console.log('Step 5 | Update Ticket     : OK');
 
-      // Step 6 — Pack Complete
-      await this.packService.packComplete(basicToken, ticketId);
-      console.log('Step 6 | Pack Complete     : OK');
+      if (!this.cfg.pack?.skipBinStep) {
+        // Step 6 — Pack Complete
+        await this.packService.packComplete(basicToken, ticketId);
+        console.log('Step 6 | Pack Complete     : OK');
+      }
 
       // Step 7 — Checkout Pack
       await this.packService.packCheckout(basicToken);

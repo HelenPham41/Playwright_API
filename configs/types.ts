@@ -142,12 +142,17 @@ export interface CountryConfig {
   qc?: {
     warehouseCode: string;
     zoneCode: string;
+    host?: 'web' | 'internal';           // host cho checkInQcZone + scanTicketItem (VN: 'web', TH: 'internal')
+    scanQrFieldStyle?: 'flat' | 'mongo'; // shape field trong qr.* của scanTicketItem
+    generateQrLocally?: boolean;         // TH: không có API GET tra cứu QR — tự build qrData ở client
     endpoints: {
       staffZoneSession: string;
       pickTicket: string;
       getQrCode: string;
       scanTicketItem: string;
-      doneQcMoveToPack: string;
+      doneQcMoveToPack?: string;  // VN: 1 API gộp done QC + move to pack
+      doneQc?: string;            // TH: API riêng "done QC"
+      moveToPack?: string;        // TH: API riêng "move to pack"
     };
   };
 

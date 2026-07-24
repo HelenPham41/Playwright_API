@@ -8,6 +8,7 @@ import { clearRequestLog } from '../clients/apiClient.js';
 test('Complete Order Flow TH ', async ({
     orderFlow_COD,
     pickFlow,
+    qcFlow,
 }, testInfo) => {
 
     clearRequestLog();
@@ -41,4 +42,18 @@ test('Complete Order Flow TH ', async ({
     });
 
     expect(pickResult.so).toBeTruthy();
+
+    //──────────────────────────────────────────────
+    // Step 3 - QC
+    //──────────────────────────────────────────────
+    const qcResult = await test.step(
+        'QC Order',
+        () =>
+            qcFlow.qcOrder({
+                ...pickResult,
+                orderId,
+            }),
+    );
+
+    expect(qcResult.scanned).toBeGreaterThan(0);
 });

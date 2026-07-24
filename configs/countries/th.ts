@@ -58,17 +58,19 @@ export const TH_CONFIG: CountryConfig = {
     },
   },
 
-  // Bypass config — PickFlow luôn khởi tạo QcService/PackService dù không dùng tới
-  // (chỉ để tránh crash "config not defined"), chưa xác nhận đúng cho TH.
   qc: {
     warehouseCode: process.env.LOCATION || 'BK',
     zoneCode: 'QC-01',
+    host: 'internal',
+    scanQrFieldStyle: 'mongo',
+    generateQrLocally: true,
     endpoints: {
       staffZoneSession: '/backend/warehouse/core/v1/staff-zone-session/check',
       pickTicket: '/backend/warehouse/picking/v1/pick-ticket',
       getQrCode: '/backend/operation/qr/v1/qrcode',
       scanTicketItem: '/backend/warehouse/picking/v1/scan-ticket-item/scan',
-      doneQcMoveToPack: '/backend/warehouse/picking/v1/pick-ticket/v2/update',
+      doneQc: '/backend/warehouse/picking/v1/scan-ticket-item/arrange',
+      moveToPack: '/backend/warehouse/picking/v1/pick-ticket/status',
     },
   },
 

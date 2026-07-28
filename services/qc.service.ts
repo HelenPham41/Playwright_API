@@ -31,7 +31,8 @@ export class QcService {
    * POST /backend/warehouse/core/v1/staff-zone-session/check  (CHECK_IN_ZONE)
    */
   async checkInQcZone(basicToken: string): Promise<APIResponse> {
-    const client   = await createClient(this.cfg.hosts.web, basicToken, 'basic');
+    const host     = this.qc.host === 'internal' ? this.cfg.hosts.internal : this.cfg.hosts.web;
+    const client   = await createClient(host, basicToken, 'basic');
     const body     = this.payload.checkInQcBody(this.qc.zoneCode);
     const response = await client.post(this.qc.endpoints.staffZoneSession, { data: body });
     await assertStatus(response, [HTTP_STATUS.OK], 'checkInQcZone');
@@ -62,8 +63,9 @@ export class QcService {
     ticketId: string,
     get_sku_codes: any[],
   ): Promise<QrLoopResult> {
-    const internalClient = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
-    const webClient      = await createClient(this.cfg.hosts.web, basicToken, 'basic');
+    const scanHost        = this.qc.host === 'internal' ? this.cfg.hosts.internal : this.cfg.hosts.web;
+    const internalClient  = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const webClient       = await createClient(scanHost, basicToken, 'basic');
 
     const skuList = get_sku_codes as SkuQrItem[];
     const maxFail = 2;
@@ -78,28 +80,36 @@ export class QcService {
 
       console.log(`processSkuQrLoop | SKU ${index + 1}/${skuList.length}: ${item.sku}`);
 
-      const qr = this.payload.generateQrCode(item);
-      console.log('processSkuQrLoop | QR:', qr);
+      let qrData: any;
 
-      let qrResponse: APIResponse;
-      try {
-        qrResponse = await internalClient.get(this.qc.endpoints.getQrCode, {
-          params:  this.payload.getQrCodeParams(qr),
-          timeout: 5000,
-        });
-      } catch {
-        console.log('processSkuQrLoop | getQrCode failed, skip');
-        skipped++;
-        continue;
-      }
+      if (this.qc.generateQrLocally) {
+        // TH: không có API GET tra cứu QR — tự build qrData ở client
+        qrData = this.payload.generateQrDataTH(item, index);
+        console.log('processSkuQrLoop | QR (generated locally):', qrData.uniqueId);
+      } else {
+        const qr = this.payload.generateQrCode(item);
+        console.log('processSkuQrLoop | QR:', qr);
 
-      await assertStatus(qrResponse, [HTTP_STATUS.OK], 'getQrCode');
+        let qrResponse: APIResponse;
+        try {
+          qrResponse = await internalClient.get(this.qc.endpoints.getQrCode, {
+            params:  this.payload.getQrCodeParams(qr),
+            timeout: 5000,
+          });
+        } catch {
+          console.log('processSkuQrLoop | getQrCode failed, skip');
+          skipped++;
+          continue;
+        }
 
-      const qrData = (await qrResponse.json())?.data?.[0];
-      if (!qrData) {
-        console.log('processSkuQrLoop | QR data empty, skip');
-        skipped++;
-        continue;
+        await assertStatus(qrResponse, [HTTP_STATUS.OK], 'getQrCode');
+
+        qrData = (await qrResponse.json())?.data?.[0];
+        if (!qrData) {
+          console.log('processSkuQrLoop | QR data empty, skip');
+          skipped++;
+          continue;
+        }
       }
 
       try {
@@ -128,12 +138,27 @@ export class QcService {
   }
 
   /**
-   * PUT /backend/warehouse/picking/v1/pick-ticket/v2/update
+   * VN: PUT /backend/warehouse/picking/v1/pick-ticket/v2/update (1 API gộp)
+   * TH: PUT scan-ticket-item/arrange (done QC) + PUT pick-ticket/status (move to pack) — 2 API riêng
    */
   async doneQcMoveToPack(basicToken: string, ticketId: string, so: string): Promise<APIResponse> {
-    const client   = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+    const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic');
+
+    if (this.qc.endpoints.doneQc && this.qc.endpoints.moveToPack) {
+      const arrangeBody = this.payload.doneQcArrangeBody(so);
+      const arrangeRes  = await client.put(this.qc.endpoints.doneQc, { data: arrangeBody, timeout: 5000 });
+      await assertStatus(arrangeRes, [HTTP_STATUS.OK], 'doneQc');
+      requestLog.push({ step: 'doneQc', method: 'PUT', url: arrangeRes.url(), requestBody: arrangeBody, responseStatus: arrangeRes.status(), responseBody: await arrangeRes.json().catch(() => null) });
+
+      const packBody = this.payload.moveToPackBody(ticketId);
+      const response  = await client.put(this.qc.endpoints.moveToPack, { data: packBody, timeout: 5000 });
+      await assertStatus(response, [HTTP_STATUS.OK], 'moveToPack');
+      requestLog.push({ step: 'moveToPack', method: 'PUT', url: response.url(), requestBody: packBody, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
+      return response;
+    }
+
     const body     = this.payload.doneQcBody(ticketId, so);
-    const response = await client.put(this.qc.endpoints.doneQcMoveToPack, { data: body, timeout: 5000 });
+    const response = await client.put(this.qc.endpoints.doneQcMoveToPack!, { data: body, timeout: 5000 });
     await assertStatus(response, [HTTP_STATUS.OK], 'doneQcMoveToPack');
     requestLog.push({ step: 'doneQcMoveToPack', method: 'PUT', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
     return response;

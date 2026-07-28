@@ -91,11 +91,11 @@ export class PickFlow {
       console.log(`Step 5  | Get Order SKU    : ticketId=${skuInfo.ticketId}, skus=${skuInfo.skuList.length}`);
 
       // Step 6 — Check Pick Ticket
-      await this.pickService.checkPickTicket(basicToken, skuInfo.ticketId);
+      await this.pickService.checkPickTicket(basicToken, skuInfo.ticketId, so);
       console.log('Step 6  | Check Pick Ticket: OK');
 
       // Step 7 — Active Pick Ticket
-      const activeResult = await this.pickService.activePickTicket(basicToken, skuInfo.ticketId);
+      const activeResult = await this.pickService.activePickTicket(basicToken, skuInfo.ticketId, so);
       console.log(`Step 7  | Active Ticket    : message=${activeResult.message}`);
 
       // Step 8 — Get Zone and Location

@@ -131,6 +131,7 @@ export interface CountryConfig {
   pack?: {
     warehouseCode: string;
     zoneCode: string;
+    skipBinStep?: boolean; // TH: không có bước getBin/addBasket/packComplete riêng
     endpoints: {
       staffZoneSession: string;
       updateTicket: string;
@@ -142,12 +143,17 @@ export interface CountryConfig {
   qc?: {
     warehouseCode: string;
     zoneCode: string;
+    host?: 'web' | 'internal';           // host cho checkInQcZone + scanTicketItem (VN: 'web', TH: 'internal')
+    scanQrFieldStyle?: 'flat' | 'mongo'; // shape field trong qr.* của scanTicketItem
+    generateQrLocally?: boolean;         // TH: không có API GET tra cứu QR — tự build qrData ở client
     endpoints: {
       staffZoneSession: string;
       pickTicket: string;
       getQrCode: string;
       scanTicketItem: string;
-      doneQcMoveToPack: string;
+      doneQcMoveToPack?: string;  // VN: 1 API gộp done QC + move to pack
+      doneQc?: string;            // TH: API riêng "done QC"
+      moveToPack?: string;        // TH: API riêng "move to pack"
     };
   };
 
@@ -155,6 +161,7 @@ export interface CountryConfig {
     warehouseCode: string;
     employee: string;
     employeeId: number;
+    checkPickTicketBy: 'ticketId' | 'so';
     confirmPayment: {
       bankCode: string;
       bankAccountNumber: string;
@@ -166,6 +173,7 @@ export interface CountryConfig {
       orderList: string;
       confirmOrder: string;
       saleOrders: string;
+      subPickTicket?: string;
       checkPickTicket: string;
       activePickTicket: string;
       pickTicketItem: string;

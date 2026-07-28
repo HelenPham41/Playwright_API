@@ -60,6 +60,7 @@ export const VN_CONFIG: CountryConfig = {
     warehouseCode: process.env.LOCATION || 'BD',
     employee: 'seller.core',
     employeeId: 100000039,
+    checkPickTicketBy: 'ticketId',
 
     confirmPayment: {
       bankCode: '333',

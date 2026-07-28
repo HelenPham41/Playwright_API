@@ -85,4 +85,33 @@ export const TH_CONFIG: CountryConfig = {
       addBasket: '/backend/warehouse/picking/v1/basket/use',
     },
   },
+
+   bookShipper: {
+    warehouseCode: process.env.LOCATION || 'BK',
+    carrierCode: process.env.Carrier_CODE || 'BK',
+    hubCode: process.env.HUB_CODE || 'HUB_SPRAKAN',
+    carrierId: 3,
+    carrierName: 'Internal Carrier Thai',
+    minimalFlow: true,
+
+    endpoints: {
+      getDeliveryInfo: '/backend/warehouse/picking/v1/pick-ticket',
+
+      selectDelivery: '/backend/delivery/transporting/v1/carrier',
+
+      updateDelivery: '/backend/warehouse/picking/v1/pick-ticket',
+
+      getDeliveryOrder: '/backend/warehouse/core/v1/delivery-order',
+
+      createDelivery: '/backend/delivery/transporting/v1/shipping-service',
+
+      getDeliveryAfterCreate: '/backend/delivery/transporting/v1/shipping-order/list',
+
+      getTransportInfo: '/backend/delivery/transporting/v1/hub-order',
+
+      assignDriver: '/backend/delivery/transporting/v1/hub-order/assign',
+
+      getDeliveryStatus: '/backend/delivery/transporting/v1/hub-order'
+    },
+  },
 };

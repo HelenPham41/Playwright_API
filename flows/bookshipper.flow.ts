@@ -54,6 +54,12 @@ export class BookShipperFlow {
 
     try {
 
+      if (this.cfg.bookShipper?.minimalFlow) {
+        const result = await this.bookShipperMinimal(basicToken, so, scenarioData);
+        console.log(`===== BOOK SHIPPER FLOW ${country} END =====`);
+        return result;
+      }
+
       //────────────────────────────────────────────
       // Step 1 - Get Delivery Info
       //────────────────────────────────────────────
@@ -217,5 +223,91 @@ export class BookShipperFlow {
 
       throw error;
     }
+  }
+
+  /**
+   * TH: chỉ dùng 3 endpoint (khong can ticket/basket/carrier lookup truoc).
+   */
+  private async bookShipperMinimal(
+    basicToken: string,
+    so: string,
+    scenarioData: ReturnType<typeof getScenarioData>,
+  ): Promise<BookShipperResult> {
+
+    const driverId = scenarioData.driverId ?? 0;
+    const driverName = scenarioData.driverName ?? '';
+
+    //────────────────────────────────────────────
+    // Step 1 - Create Delivery
+    //────────────────────────────────────────────
+    const createDeliveryResult =
+      await this.bookShipperService.createDelivery(
+        basicToken,
+        so,
+        '',
+        0,
+      );
+
+    console.log('Step 1 | Create Delivery        : OK');
+
+    const createDeliveryStatus = createDeliveryResult?.status;
+    const createDeliveryMessage = createDeliveryResult?.message ?? '';
+    const trackingNumber =
+      createDeliveryResult?.data?.[0]?.tracking_number ?? '';
+
+    //────────────────────────────────────────────
+    // Step 2 - Assign Driver
+    //────────────────────────────────────────────
+    const assignDriverResult =
+      await this.bookShipperService.assignDriver(
+        basicToken,
+        {
+          driverId,
+          driverName,
+          so,
+          trackingNumber,
+        },
+      );
+
+    console.log('Step 2 | Assign Driver          : OK');
+
+    const assignDriverStatus = assignDriverResult?.status;
+    const assignDriverMessage = assignDriverResult?.message ?? '';
+
+    //────────────────────────────────────────────
+    // Step 3 - Get Delivery Status
+    //────────────────────────────────────────────
+    const deliveryStatus =
+      await this.bookShipperService.getDeliveryStatus(
+        basicToken,
+        so,
+      );
+
+    console.log('Step 3 | Get Delivery Status    : OK');
+
+    const transportOrder = deliveryStatus?.data?.[0];
+    const transportActionName = transportOrder?.actionName ?? '';
+    const transportType = transportOrder?.type ?? '';
+    const transportStatus = transportOrder?.status ?? '';
+    const transportProductivityAction = transportOrder?.productivityAction ?? '';
+    const transportTrackingCode = transportOrder?.trackingCode ?? '';
+
+    return {
+      driverId,
+      driverName,
+      so,
+      deliveryCode: '',
+      shippingOrderCode: `${so}-F`,
+      trackingNumber,
+      createDeliveryStatus,
+      createDeliveryMessage,
+      assignDriverStatus,
+      assignDriverMessage,
+      transportActionName,
+      transportType,
+      transportStatus,
+      transportProductivityAction,
+      transportTrackingCode,
+    };
   }
 }

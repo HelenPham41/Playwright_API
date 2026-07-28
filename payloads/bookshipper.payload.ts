@@ -91,6 +91,16 @@ export class DeliveryPayloadBuilder {
         deliveryBasketCode: string,
         donePackTime: number,
     ) {
+        if (this.delivery.minimalFlow) {
+            return {
+                so: `${so}-F`,
+                carrierId: this.delivery.carrierId,
+                numPackage: 1,
+                weight: this.data.deliveryWeight,
+                warehouseCode: this.delivery.warehouseCode,
+            };
+        }
+
         return {
             weight: this.data.deliveryWeight,
             carrierId: this.delivery.carrierId,

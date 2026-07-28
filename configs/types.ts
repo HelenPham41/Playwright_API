@@ -194,6 +194,7 @@ export interface CountryConfig {
     carrierName: string;
     driverId?: number;
     driverName?: string;
+    minimalFlow?: boolean;
 
     endpoints: {
       getDeliveryInfo: string;

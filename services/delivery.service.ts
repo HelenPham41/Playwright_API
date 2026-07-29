@@ -26,13 +26,18 @@ export class DeliveryService {
         return this.cfg.delivery;
     }
 
+    private get ssoAppHost(): string {
+        if (!this.cfg.hosts.sso_App) throw new Error(`hosts.sso_App not defined for country: ${this.cfg.countryCode}`);
+        return this.cfg.hosts.sso_App;
+    }
+
     /**
      * Login App
      */
     async loginApp(accessToken: string, username: string, password: string): Promise<any> {
 
         const client = await createClient(
-            this.delivery.appUrl,
+            this.ssoAppHost,
             accessToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -69,7 +74,7 @@ export class DeliveryService {
     async auth(accessToken: string): Promise<any> {
 
         const client = await createClient(
-            this.delivery.appUrl,
+            this.ssoAppHost,
             accessToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -106,7 +111,7 @@ export class DeliveryService {
     async loginRider(ssoToken: string, code: string): Promise<any> {
 
         const client = await createClient(
-            this.delivery.appUrl,
+            this.ssoAppHost,
             ssoToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -147,7 +152,7 @@ export class DeliveryService {
     ): Promise<APIResponse> {
 
         const client = await createClient(
-            this.cfg.hosts.order,
+            this.cfg.hosts.app ?? this.cfg.hosts.order,
             riderToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -186,7 +191,7 @@ export class DeliveryService {
     ): Promise<APIResponse> {
 
         const client = await createClient(
-            this.cfg.hosts.order,
+            this.cfg.hosts.app ?? this.cfg.hosts.order,
             riderToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -223,7 +228,7 @@ export class DeliveryService {
     ): Promise<any> {
 
         const client = await createClient(
-            this.cfg.hosts.order,
+            this.cfg.hosts.app ?? this.cfg.hosts.order,
             riderToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -263,7 +268,7 @@ export class DeliveryService {
     ): Promise<any> {
 
         const client = await createClient(
-            this.cfg.hosts.order,
+            this.cfg.hosts.app ?? this.cfg.hosts.order,
             riderToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -313,7 +318,7 @@ export class DeliveryService {
     ): Promise<any> {
 
         const client = await createClient(
-            this.cfg.hosts.order,
+            this.cfg.hosts.app ?? this.cfg.hosts.order,
             riderToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -352,7 +357,7 @@ export class DeliveryService {
     ): Promise<any> {
 
         const client = await createClient(
-            this.cfg.hosts.order,
+            this.cfg.hosts.app ?? this.cfg.hosts.order,
             riderToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -400,7 +405,7 @@ export class DeliveryService {
     ): Promise<APIResponse> {
 
         const client = await createClient(
-            this.cfg.hosts.order,
+            this.cfg.hosts.app ?? this.cfg.hosts.order,
             riderToken,
             'bearer',
             DELIVERY_USER_AGENT,
@@ -427,6 +432,12 @@ export class DeliveryService {
                 data: body,
             },
         );
+        console.log('completeDelivery | client:', JSON.stringify(client));
+        console.log('completeDelivery | url:', response.url());
+        console.log('completeDelivery | headers:', JSON.stringify(requestHeaders));
+        console.log('completeDelivery | body:', JSON.stringify(body));
+        console.log('completeDelivery | riderToken:', riderToken);
+        console.log('completeDelivery | userAgent:', requestHeaders['User-Agent']);
 
         await assertStatus(response, [HTTP_STATUS.OK], 'completeDelivery');
 

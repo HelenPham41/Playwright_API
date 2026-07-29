@@ -93,7 +93,7 @@ export class DeliveryPayloadBuilder {
     ) {
         if (this.delivery.minimalFlow) {
             return {
-                so: `${so}-F`,
+                so: `${so}`,
                 carrierId: this.delivery.carrierId,
                 numPackage: 1,
                 weight: this.data.deliveryWeight,
@@ -122,6 +122,16 @@ export class DeliveryPayloadBuilder {
      * 6. Get Delivery After Create
      */
     getDeliveryAfterCreateParams(so: string) {
+        if (this.delivery.minimalFlow) {
+            return {
+                q: JSON.stringify({
+                referenceCode: `${so}`,
+            }),
+            offset: '0',
+            limit: '100',
+            getTotal: 'false',
+            };
+        }
         return {
             q: JSON.stringify({
                 referenceCode: `${so}-F`,
@@ -149,6 +159,15 @@ export class DeliveryPayloadBuilder {
      * 8. Assign Driver
      */
     assignDriverBody(data: AssignDriverRequest) {
+        if (this.delivery.minimalFlow) {
+            return {
+                driverId: data.driverId,
+                listReferenceCode: [`${data.so}`],
+                hubCode: this.delivery.hubCode,
+                listTrackingCode: [data.trackingNumber],
+            };
+        }
+
         return {
             driverName: data.driverName,
             driverId: data.driverId,

@@ -110,6 +110,11 @@ export class PickPayloadBuilder {
   }
 
   completePickBody(subTicketId: number) {
+    if (this.pick.minimalFlow) {
+            return {
+                warehouseCode: this.pick.warehouseCode, "status": "DONE", ticketId: subTicketId
+            };
+        }
     return { warehouseCode: this.pick.warehouseCode, ticketId: subTicketId };
   }
 

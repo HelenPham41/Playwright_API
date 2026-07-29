@@ -34,7 +34,7 @@ export class ReconcileShipperService {
   ): Promise<any> {
 
      const client = await createClient(
-            this.cfg.hosts.order,
+           this.cfg.hosts.app ?? this.cfg.hosts.order,
             riderToken,
             'bearer',
             DEFAULT_USER_AGENT,
@@ -79,7 +79,7 @@ export class ReconcileShipperService {
   ): Promise<any> {
 
     const client = await createClient(
-      this.cfg.hosts.order,
+      this.cfg.hosts.app ?? this.cfg.hosts.order,
       riderToken,
       'bearer',
       DEFAULT_USER_AGENT,
@@ -128,7 +128,7 @@ export class ReconcileShipperService {
   ): Promise<APIResponse> {
 
     const client = await createClient(
-      this.cfg.hosts.order,
+      this.cfg.hosts.app ?? this.cfg.hosts.order,
       riderToken,
       'bearer',
       DEFAULT_USER_AGENT,
@@ -174,7 +174,7 @@ export class ReconcileShipperService {
   ): Promise<any> {
 
     const client = await createClient(
-      this.cfg.hosts.order,
+      this.cfg.hosts.app ?? this.cfg.hosts.order,
       riderToken,
       'bearer',
       DEFAULT_USER_AGENT,

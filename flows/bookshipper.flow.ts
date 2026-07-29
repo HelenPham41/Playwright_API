@@ -3,6 +3,7 @@ import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
 import { getScenarioData } from '../test-data/scenario.data.factory.js';
 import { ApiError } from '../errors/api.error.js';
+import { HTTP_STATUS } from '../constants/status-code.js';
 
 export interface BookShipperInput {
   so: string;
@@ -29,6 +30,7 @@ export interface BookShipperResult {
 
 export class BookShipperFlow {
 
+  private static readonly WAIT_3S = 3000;
   private readonly bookShipperService: BookShipperService;
   private readonly cfg: CountryConfig;
 
@@ -240,6 +242,9 @@ export class BookShipperFlow {
     //────────────────────────────────────────────
     // Step 1 - Create Delivery
     //────────────────────────────────────────────
+    console.log('Wait 3s before create delivery...');
+    await new Promise(r => setTimeout(r, BookShipperFlow.WAIT_3S));
+
     const createDeliveryResult =
       await this.bookShipperService.createDelivery(
         basicToken,
@@ -275,29 +280,47 @@ export class BookShipperFlow {
     const assignDriverMessage = assignDriverResult?.message ?? '';
 
     //────────────────────────────────────────────
-    // Step 3 - Get Delivery Status
+    // Step 3 - Get Delivery After Create
     //────────────────────────────────────────────
-    const deliveryStatus =
-      await this.bookShipperService.getDeliveryStatus(
+    const afterCreate =
+      await this.bookShipperService.getDeliveryAfterCreate(
         basicToken,
         so,
       );
 
-    console.log('Step 3 | Get Delivery Status    : OK');
+    console.log('Step 3 | Delivery After Create  : OK');
 
-    const transportOrder = deliveryStatus?.data?.[0];
-    const transportActionName = transportOrder?.actionName ?? '';
-    const transportType = transportOrder?.type ?? '';
-    const transportStatus = transportOrder?.status ?? '';
-    const transportProductivityAction = transportOrder?.productivityAction ?? '';
-    const transportTrackingCode = transportOrder?.trackingCode ?? '';
+    const shippingOrder = afterCreate?.data?.[0];
+
+    if (!shippingOrder) {
+      throw new ApiError('getDeliveryAfterCreate', HTTP_STATUS.OK, this.cfg.bookShipper?.endpoints.getDeliveryAfterCreate ?? '', 'Missing shipping order');
+    }
+
+    if (shippingOrder.status !== 'READY_TO_PICK') {
+      throw new ApiError('getDeliveryAfterCreate', HTTP_STATUS.OK, this.cfg.bookShipper?.endpoints.getDeliveryAfterCreate ?? '', `Invalid shipping order status: ${shippingOrder.status}`);
+    }
+
+    if (shippingOrder.trackingCode !== trackingNumber) {
+      throw new ApiError('getDeliveryAfterCreate', HTTP_STATUS.OK, this.cfg.bookShipper?.endpoints.getDeliveryAfterCreate ?? '', `Tracking code mismatch: expected ${trackingNumber}, got ${shippingOrder.trackingCode}`);
+    }
+
+    console.log('Delivery After Create | status:', shippingOrder.status, '| trackingCode:', shippingOrder.trackingCode);
+
+    const shippingOrderCode = shippingOrder.referenceCode ?? `${so}-F`;
+
+    // TH khong co hub-order (getDeliveryStatus) — chi map duoc status/trackingCode tu shipping-order
+    const transportActionName = '';
+    const transportType = '';
+    const transportStatus = shippingOrder.status ?? '';
+    const transportProductivityAction = '';
+    const transportTrackingCode = shippingOrder.trackingCode ?? '';
 
     return {
       driverId,
       driverName,
       so,
       deliveryCode: '',
-      shippingOrderCode: `${so}-F`,
+      shippingOrderCode,
       trackingNumber,
       createDeliveryStatus,
       createDeliveryMessage,

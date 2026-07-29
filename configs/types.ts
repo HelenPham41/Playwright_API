@@ -107,6 +107,8 @@ export interface CountryConfig {
     order: string;
     internal: string;
     web: string;
+    app?: string;
+    sso_App?: string;
   };
 
   auth: {
@@ -162,6 +164,7 @@ export interface CountryConfig {
     employee: string;
     employeeId: number;
     checkPickTicketBy: 'ticketId' | 'so';
+    minimalFlow?: boolean;
     confirmPayment: {
       bankCode: string;
       bankAccountNumber: string;
@@ -184,6 +187,8 @@ export interface CountryConfig {
       pickItem: string;
       completePick: string;
       completePickSO: string;
+      addNoteForOrder?: string;
+      getCurrentTicket?: string;
     };
   };
   bookShipper?: {
@@ -216,7 +221,6 @@ export interface CountryConfig {
     carrierCode: string;
     carrierId: number;
     carrierName: string;
-    appUrl: string;
     clientId: string;
     clientSecret: string;
     driverName?: string;
@@ -224,6 +228,7 @@ export interface CountryConfig {
     id?: number;
     latitude?: number;
     longitude?: number;
+    minimalFlow?: boolean;
 
     endpoints: {
       loginApp: string;
@@ -244,6 +249,7 @@ export interface CountryConfig {
     warehouseCode: string;
     hubCode: string;
     reconcileType: string;
+    minimalFlow?: boolean;
     endpoints: {
       getPaymentSession: string;
       getPaymentLine: string;
@@ -258,6 +264,7 @@ export interface CountryConfig {
     warehouseCode: string;
     hubCode: string;
     reconcileAccountingType: string;
+    minimalFlow?: boolean;
     endpoints: {
       getReconcileSessionAccounting: string;
       getReconcileOrdersAccounting: string;

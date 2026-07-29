@@ -104,7 +104,8 @@ export class PickService {
    * Polls until pick ticket and order lines are ready (max 6 attempts × 3s).
    */
   async getOrderSku(basicToken: string, so: string): Promise<OrderSkuResult> {
-    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
 
     let jsonData: any;
     let firstOrder: any;
@@ -207,7 +208,8 @@ export class PickService {
     console.log('activePickTicket | waiting 10s...');
     await new Promise(r => setTimeout(r, 10000));
 
-    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
 
     for (let attempt = 1; attempt <= 5; attempt++) {
       try {
@@ -272,7 +274,8 @@ export class PickService {
    * Handles PACK session conflict — see CLAUDE.md "API Business Logic" for message handling.
    */
   async checkInPick(basicToken: string, zone: string): Promise<APIResponse> {
-    const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host     = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client   = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
     const body     = this.payload.checkInPickBody(zone);
     const response = await client.post(this.pick.endpoints.staffZoneSession, { data: body });
     console.log('checkInPick | status:', response.status());
@@ -284,7 +287,8 @@ export class PickService {
    * PUT /warehouse/picking/v1/pick-ticket/assign-manual  (max 3 retries)
    */
   async assignPickStaff(basicToken: string, ticketId: string, so: string): Promise<string> {
-    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
 
     // TH: assign-manual cần ticketId thật của sub-pick-ticket (khác pickTicketId) — chờ tới khi status = WAIT_TO_PICK
     let realTicketId: any = ticketId;
@@ -340,7 +344,8 @@ export class PickService {
    * GET /warehouse/inventory/v1/location  (first available OTL)
    */
   async getOTL(basicToken: string): Promise<{ firstOTL: string; response: APIResponse }> {
-    const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host     = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client   = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
     const response = await client.get(this.pick.endpoints.location, {
       params: this.payload.getOTLParams(),
     });
@@ -363,7 +368,8 @@ export class PickService {
     subTicketId: number,
     otlCode: string,
   ): Promise<{ response: APIResponse; message: string; url: string }> {
-    const client   = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host     = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client   = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
     const response = await client.post(this.pick.endpoints.useBasket, {
       data: this.payload.useBasketBody(subTicketId, otlCode),
     });
@@ -385,7 +391,8 @@ export class PickService {
   ): Promise<{ response: APIResponse | null }> {
     console.log('checkPickItems | start');
 
-    const client      = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host        = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client      = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
     const { skuList } = await this.getOrderSku(basicToken, so);
     let lastResponse: APIResponse | null = null;
 
@@ -426,7 +433,8 @@ export class PickService {
    * PUT /warehouse/picking/v1/sub-pick-ticket/complete  (max 3 retries)
    */
   async completePick(basicToken: string, subTicketId: number): Promise<APIResponse> {
-    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
@@ -451,7 +459,8 @@ export class PickService {
    * PUT /warehouse/picking/v1/pick-ticket/pick-quantity  (max 3 retries)
    */
   async completePickForSO(basicToken: string, so: string): Promise<APIResponse> {
-    const client    = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host      = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client    = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
     const orderInfo = await this.getOrderSku(basicToken, so);
 
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -477,7 +486,8 @@ export class PickService {
    * POST /warehouse/core/v1/staff-zone-session/check  (CHECK_OUT_ZONE, max 3 retries)
    */
   async checkoutPick(basicToken: string, zone: string): Promise<APIResponse> {
-    const client = await createClient(this.cfg.hosts.order, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const host = this.pick.minimalFlow ? this.cfg.hosts.internal : this.cfg.hosts.order;
+    const client = await createClient(host, basicToken, 'basic', DEFAULT_USER_AGENT);
     const body   = this.payload.checkoutPickBody(zone);
 
     for (let attempt = 1; attempt <= 3; attempt++) {

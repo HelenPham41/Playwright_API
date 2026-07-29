@@ -7,6 +7,7 @@ export const VN_CONFIG: CountryConfig = {
     order: process.env.BASE_URL || 'https://api.v2-stg.thuocsi.vn',
     internal: process.env.INTERNAL_URL || 'https://internal.v2-stg.thuocsi.vn',
     web: process.env.WEB_URL || 'https://web.v2-stg.thuocsi.vn',
+    sso_App: process.env.DELIVERY_URL || 'https://api.iam.stg.buymed.tech',
   },
 
   auth: {
@@ -121,7 +122,6 @@ export const VN_CONFIG: CountryConfig = {
     hubCode: process.env.HUB_CODE || 'HUBBD',
     carrierId: 160,
     carrierName: 'NV Công Ty - HCM',
-    appUrl: process.env.DELIVERY_URL || 'https://api.iam.stg.buymed.tech',
     clientId: process.env.DELIVERY_CLIENT_ID || '9f352AFrUDIRS8W4jlYBWKDrJ61p4wE8qtL4mp7DAH4vEjji',
     clientSecret: process.env.DELIVERY_CLIENT_SECRET || 'uztmAFaKXifzhjtw2PUyMlcZcfleS2h9uhBy7eBXNtxWJDYj',
     driverPwd: process.env.DRIVER_PWD || 'Lam123456',

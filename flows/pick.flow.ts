@@ -146,9 +146,13 @@ export class PickFlow {
       await this.pickService.completePick(basicToken, Number(subTicketId));
       console.log('Step 14 | Complete Pick    : OK');
 
-      // Step 15 — Complete Pick for SO
-      await this.pickService.completePickForSO(basicToken, so);
-      console.log('Step 15 | Complete Pick SO : OK');
+      // Step 15 — Complete Pick for SO (TH: pick-quantity endpoint not used)
+      if (this.cfg.pick?.minimalFlow) {
+        console.log('Step 15 | Complete Pick SO : SKIPPED (minimalFlow)');
+      } else {
+        await this.pickService.completePickForSO(basicToken, so);
+        console.log('Step 15 | Complete Pick SO : OK');
+      }
 
       // Step 16 — Checkout Pick
       await this.pickService.checkoutPick(basicToken, zone);

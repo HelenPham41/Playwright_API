@@ -57,7 +57,7 @@ export class ReconcileAccountingPayloadBuilder {
       {
         lineID: lineAccountingID,
         hubCode: this.reconcile.hubCode,
-        referenceCode: `${so}-F`,
+        referenceCode: this.reconcile.minimalFlow ? so : `${so}-F`,
         trackingCode,
         reconcileType: this.reconcile.reconcileAccountingType,
         carrierCodAmount: 0,

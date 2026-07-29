@@ -24,7 +24,8 @@ export async function createClient(
 ) {
 
   let headers: any = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   };
 
   if (token) {

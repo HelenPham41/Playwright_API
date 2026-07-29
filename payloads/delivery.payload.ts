@@ -90,7 +90,7 @@ export class DeliveryPayloadBuilder {
     acceptDeliveryBody(trackingNumber: string, so: string) {
         return {
             hubCode: this.delivery.hubCode,
-            referenceCode: `${so}-F`,
+            referenceCode: this.delivery.minimalFlow ? so : `${so}-F`,
             trackingcode: trackingNumber,
             status: 'DELIVERING',
         };
@@ -101,7 +101,7 @@ export class DeliveryPayloadBuilder {
      */
     confirmCurrentAddress(data: UpdateDeliveryRequest, so: string) {
         return {
-            nearestOrder: `${so}-F`,
+            nearestOrder: this.delivery.minimalFlow ? so : `${so}-F`,
             wardCode: data.customer.ward,
             latitude: this.delivery.latitude,
             longitude: this.delivery.longitude,
@@ -150,7 +150,7 @@ export class DeliveryPayloadBuilder {
         signerName: string,
     ) {
         return {
-            referenceCode: `${so}-F`,
+            referenceCode: this.delivery.minimalFlow ? so : `${so}-F`,
             hubCode,
             trackingCode: trackingNumber,
             status: 'DELIVERED',
@@ -175,7 +175,7 @@ export class DeliveryPayloadBuilder {
             q: JSON.stringify({
                 status: 'DELIVERED',
                 hubCode: this.delivery.hubCode,
-                listReferenceCode: [`${so}-F`]
+                listReferenceCode: [this.delivery.minimalFlow ? so : `${so}-F`]
             }),
         };
     }
@@ -186,8 +186,7 @@ export class DeliveryPayloadBuilder {
     internalTransferListParams(so: string, warehouseCode: string) {
         return {
             q: JSON.stringify({
-                status: 'DONE',
-                transferName: so,
+                reference: so,
                 warehouseCode: warehouseCode,
             }),
             offset: 0,

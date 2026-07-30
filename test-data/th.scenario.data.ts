@@ -175,7 +175,7 @@ export const TH_SCENARIO_DATA: ScenarioData = {
   invoiceTaxCode:        '',
   invoiceEmail:          'bichhanh0401+12@gmail.com',
 
-  // Checkout payment — TODO: confirm TH checkout payment
+  // Checkout payment
   checkoutPaymentCode:         '',
   checkoutPaymentCardList:     '',
   checkoutPaymentCustomerTags: [],

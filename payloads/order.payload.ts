@@ -106,46 +106,50 @@ export class OrderPayloadBuilder {
     };
   }
 
-  updatePaymentToCODBody(cartNo: string) {
+  private findPaymentMethod(code: string) {
+    return this.data.paymentMethods?.find(pm => pm.code === code);
+  }
+
+  private paymentMethodBody(code: string, cartNo: string, fallback: { cardList: string; description: string; name: string }) {
+    const d = this.data;
+    const pm = this.findPaymentMethod(code);
     return {
-      paymentMethod: 'PAYMENT_METHOD_NORMAL',
-      customerDistrictCode: '786',
-      customerProvinceCode: '79',
-      customerWardCode: '27646',
+      paymentMethod: code,
+      customerDistrictCode: d.customerDistrictCode,
+      customerProvinceCode: d.customerProvinceCode,
+      customerWardCode: d.customerWardCode,
+      cardList: (pm?.cardList as string | undefined) ?? fallback.cardList,
+      code,
+      description: (pm?.description as string | undefined) ?? fallback.description,
+      name: (pm?.name as string | undefined) ?? fallback.name,
+      isDisable: (pm?.isDisable as boolean | undefined) ?? false,
+      defaultValue: (pm?.defaultValue as string | undefined) ?? null,
+      errorMessage: (pm?.errorMessage as boolean | undefined) ?? false,
+      cartNo,
+      source: d.source,
+    };
+  }
+
+  updatePaymentToCODBody(cartNo: string) {
+    return this.paymentMethodBody('PAYMENT_METHOD_NORMAL', cartNo, {
       cardList: '',
-      code: 'PAYMENT_METHOD_NORMAL',
       description: '<p></p>\n',
       name: 'Thanh toán tiền mặt',
-      isDisable: false,
-      defaultValue: null,
-      errorMessage: false,
-      cartNo,
-      source: 'thuocsi-web',
-    };
+    });
   };
   updatePaymentToBankTransferBody(cartNo: string) {
-    return {
-      paymentMethod: 'PAYMENT_METHOD_BANK',
-      customerDistrictCode: '786',
-      customerProvinceCode: '79',
-      customerWardCode: '27646',
+    return this.paymentMethodBody('PAYMENT_METHOD_BANK', cartNo, {
       cardList: '',
-      code: 'PAYMENT_METHOD_BANK',
       description: '<p></p>\n',
       name: 'Chuyển khoản (Giảm 0.5%)',
-      isDisable: false,
-      defaultValue: null,
-      errorMessage: false,
-      cartNo,
-      source: 'thuocsi-web',
-    };
+    });
   };
 
 
   checkoutBody(cartNo: string) {
     const d = this.data;
 
-    // TH: checkout body is structurally identical to updateCart body
+    // TH, KH: checkout body is structurally identical to updateCart body
     if ((d.invoiceRequest ?? true) === false) {
       return this.updateCartBody(cartNo);
     }

@@ -149,9 +149,9 @@ export class DeliveryFlow {
       console.log('Step 4 | Accept Delivery          : OK');
 
       //----------------------------------------------------------
-      // Step 5 - Confirm Current Address  (skip for TH)
+      // Step 5 - Confirm Current Address  (skip for TH/KH)
       //----------------------------------------------------------
-      if (this.cfg.countryCode !== 'TH') {
+      if (this.cfg.countryCode === 'VN') {
         const confirmAddressData: UpdateDeliveryRequest = {
           ticketId,
           so,
@@ -167,7 +167,7 @@ export class DeliveryFlow {
 
         console.log('Step 5 | Confirm Current Address  : OK');
       } else {
-        console.log('Step 5 | Confirm Current Address  : SKIPPED (TH)');
+        console.log(`Step 5 | Confirm Current Address  : SKIPPED (${this.cfg.countryCode})`);
       }
 
       //----------------------------------------------------------

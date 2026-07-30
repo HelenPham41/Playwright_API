@@ -24,6 +24,7 @@ export const TH_CONFIG: CountryConfig = {
     removeCart: '/backend/marketplace/order/v2/cart/remove',
     addCart: '/backend/marketplace/order/v2/cart/add',
     updateCart: '/backend/marketplace/order/v2/cart',
+        updatePaymentToCOD: '/backend/marketplace/order/v2/cart/payment-method',
     checkout: '/backend/marketplace/order/v2/cart/checkout',
     cancelOrder: '/backend/marketplace/order/v2/order/status',
   },

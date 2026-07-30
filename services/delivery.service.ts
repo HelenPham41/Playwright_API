@@ -432,13 +432,6 @@ export class DeliveryService {
                 data: body,
             },
         );
-        console.log('completeDelivery | client:', JSON.stringify(client));
-        console.log('completeDelivery | url:', response.url());
-        console.log('completeDelivery | headers:', JSON.stringify(requestHeaders));
-        console.log('completeDelivery | body:', JSON.stringify(body));
-        console.log('completeDelivery | riderToken:', riderToken);
-        console.log('completeDelivery | userAgent:', requestHeaders['User-Agent']);
-
         await assertStatus(response, [HTTP_STATUS.OK], 'completeDelivery');
 
         const responseBody = await response.json().catch(() => null);

@@ -171,6 +171,7 @@ export const TH_CONFIG: CountryConfig = {
     warehouseCode: process.env.LOCATION || 'BK',
     hubCode: process.env.HUB_CODE || 'HUB_SPRAKAN',
     reconcileType: 'RIDER_HUB',
+    minimalFlow: true,
 
     endpoints: {
       getPaymentSession:
@@ -197,6 +198,7 @@ export const TH_CONFIG: CountryConfig = {
     warehouseCode: process.env.LOCATION || 'BK',
     hubCode: process.env.HUB_CODE || 'HUB_SPRAKAN',
     reconcileAccountingType: 'HUB_COMP',
+    minimalFlow: true,
 
     endpoints: {
       getReconcileSessionAccounting:

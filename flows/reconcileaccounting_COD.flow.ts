@@ -76,7 +76,9 @@ export class ReconcileAccountingFlow_COD {
 
       console.log('Step 2 | Get Reconcile Orders       : OK');
 
-      const expectedReferenceCode = `${input.so}-F`;
+      const expectedReferenceCode = this.cfg.reconcileAccounting?.minimalFlow
+        ? input.so
+        : `${input.so}-F`;
       const matchedItem = order?.data?.find(
         (item: any) => item.referenceCode === expectedReferenceCode,
       );

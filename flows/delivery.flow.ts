@@ -283,17 +283,15 @@ export class DeliveryFlow {
       const rawQcTransfer = transferList.find((item: any) => item.type === 'QC' && item.reference === so && item.status === 'DONE' && item.sourceLocation === 'WH-QC' && item.destinationLocation === 'WH-PACK');
       const rawPackTransfer = transferList.find((item: any) => item.type === 'PACK' && item.reference === so && item.status === 'DONE' && item.sourceLocation === 'WH-PACK' && item.destinationLocation === 'WH-DELIVERY');
       const rawDeliveryTransfer = transferList.find((item: any) => item.type === 'DELIVERY' && item.reference === so && item.status === 'DONE' && item.sourceLocation === 'WH-DELIVERY' && item.destinationLocation === 'CUSTOMER');
+      if (!rawPickTransfer) {
+        throw new ApiError('getInternalTransferList', HTTP_STATUS.OK, this.cfg.internalTransfer?.endpoints.getInternalTransferList ?? '', 'Missing PICK transfer');
+      }
 
-      //Tạm command để fix bug trước khi validation
-      // if (!rawPickTransfer) {
-      //   throw new ApiError('getInternalTransferList', HTTP_STATUS.OK, this.cfg.internalTransfer?.endpoints.getInternalTransferList ?? '', 'Missing PICK transfer');
-      // }
+      console.log('getInternalTransferList | PICK transfer status:', rawPickTransfer.status);
 
-      // console.log('getInternalTransferList | PICK transfer status:', rawPickTransfer.status);
-
-      // if (rawPickTransfer.status !== 'DONE') {
-      //   throw new ApiError('getInternalTransferList', HTTP_STATUS.OK, this.cfg.internalTransfer?.endpoints.getInternalTransferList ?? '', `PICK transfer status is ${rawPickTransfer.status}, expected DONE`);
-      // }
+      if (rawPickTransfer.status !== 'DONE') {
+        throw new ApiError('getInternalTransferList', HTTP_STATUS.OK, this.cfg.internalTransfer?.endpoints.getInternalTransferList ?? '', `PICK transfer status is ${rawPickTransfer.status}, expected DONE`);
+      }
 
       const toTransferInfo = (item: any): TransferInfo | undefined => item && {
         type: item.type ?? '',

@@ -149,22 +149,26 @@ export class DeliveryFlow {
       console.log('Step 4 | Accept Delivery          : OK');
 
       //----------------------------------------------------------
-      // Step 5 - Confirm Current Address
+      // Step 5 - Confirm Current Address  (skip for TH)
       //----------------------------------------------------------
-      const confirmAddressData: UpdateDeliveryRequest = {
-        ticketId,
-        so,
-        trackingNumber,
-        customer,
-      };
+      if (this.cfg.countryCode !== 'TH') {
+        const confirmAddressData: UpdateDeliveryRequest = {
+          ticketId,
+          so,
+          trackingNumber,
+          customer,
+        };
 
-      await this.deliveryService.confirmCurrentAddress(
-        riderToken,
-        confirmAddressData,
-        so,
-      );
+        await this.deliveryService.confirmCurrentAddress(
+          riderToken,
+          confirmAddressData,
+          so,
+        );
 
-      console.log('Step 5 | Confirm Current Address  : OK');
+        console.log('Step 5 | Confirm Current Address  : OK');
+      } else {
+        console.log('Step 5 | Confirm Current Address  : SKIPPED (TH)');
+      }
 
       //----------------------------------------------------------
       // Step 6 - Get Upload Image Token

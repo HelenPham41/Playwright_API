@@ -221,7 +221,7 @@ export class PickService {
 
         const json = await response.json();
         console.log('activePickTicket | message:', json.message);
-        requestLog.push({ step: 'activePickTicket', method: 'PUT', url: response.url(), requestBody: this.payload.activePickTicketBody('', so), responseStatus: response.status(), responseBody: { message: json.message } });
+        
         return { response, message: json.message, url: response.url() };
       } catch (error) {
         console.log(`activePickTicket | attempt ${attempt} failed`);
@@ -361,6 +361,30 @@ export class PickService {
   }
 
   /**
+   * POST /warehouse/picking/v1/sub-pick-ticket/get-current  (TH only)
+   * Validates the current ticket's saleOrderCode matches the SO we're processing.
+   */
+  async getCurrentTicket(basicToken: string, so: string): Promise<APIResponse> {
+    const client = await createClient(this.cfg.hosts.internal, basicToken, 'basic', DEFAULT_USER_AGENT);
+    const body   = this.payload.getCurrentTicketBody();
+    const response = await client.post(this.pick.endpoints.getCurrentTicket ?? '', { data: body });
+    await assertStatus(response, [HTTP_STATUS.OK], 'getCurrentTicket');
+
+    const json = await response.json().catch(() => null);
+    requestLog.push({ step: 'getCurrentTicket', method: 'POST', url: response.url(), requestBody: body, responseStatus: response.status(), responseBody: json });
+
+    const actualSO = String(json?.data?.[0]?.saleOrderCode ?? '').trim();
+    const expectedSO = String(so ?? '').trim();
+    console.log('getCurrentTicket | expectedSO:', expectedSO, '| actualSO:', actualSO);
+
+    if (actualSO !== expectedSO) {
+      throw new ApiError('getCurrentTicket', response.status(), response.url(), `SO mismatch — expected: ${expectedSO}, actual: ${actualSO}`);
+    }
+
+    return response;
+  }
+
+  /**
    * POST /warehouse/picking/v1/sub-pick-ticket/basket/use
    */
   async useBasket(
@@ -386,6 +410,7 @@ export class PickService {
   async checkPickItems(
     basicToken: string,
     subTicketId: string,
+    productName: string,
     locationCode: string,
     so: string,
   ): Promise<{ response: APIResponse | null }> {
@@ -397,7 +422,7 @@ export class PickService {
     let lastResponse: APIResponse | null = null;
 
     for (const item of skuList) {
-      const payload = this.payload.pickItemBody(subTicketId, item.sku, item.quantity ?? 0, locationCode);
+      const payload = this.payload.pickItemBody(subTicketId, item.sku, item.quantity ?? 0, productName, locationCode);
 
       let response: APIResponse | null = null;
 
@@ -438,12 +463,12 @@ export class PickService {
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
+        const body = this.payload.completePickBody(subTicketId);
         const response = await client.put(this.pick.endpoints.completePick, {
-          data: this.payload.completePickBody(subTicketId),
+          data: body,
         });
         console.log(`completePick | attempt ${attempt} status:`, response.status());
         await assertStatus(response, [HTTP_STATUS.OK], 'completePick');
-        requestLog.push({ step: 'completePick', method: 'PUT', url: response.url(), requestBody: null, responseStatus: response.status(), responseBody: await response.json().catch(() => null) });
         return response;
       } catch (error) {
         console.log(`completePick | attempt ${attempt} failed`);

@@ -109,15 +109,26 @@ export class OrderService {
   async checkout(token: string, cartNo: string): Promise<CheckoutResult> {
     const client = await createClient(this.cfg.hosts.web, token, 'bearer');
     const body = this.payload.checkoutBody(cartNo);
-    const res = await client.put(this.cfg.endpoints.checkout, { data: body });
-    const json = await res.json().catch(() => null);
-    const orderId: string | undefined = json?.data?.[0]?.orderId;
-    requestLog.push({ step: 'checkout', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json, orderId });
-    await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'checkout');
 
-    if (!orderId) throw new ApiError('checkout', res.status(), res.url(), ERROR_MSG.ORDER_ID_MISSING);
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await client.put(this.cfg.endpoints.checkout, { data: body });
+        const json = await res.json().catch(() => null);
+        const orderId: string | undefined = json?.data?.[0]?.orderId;
+        requestLog.push({ step: 'checkout', method: 'PUT', url: res.url(), requestBody: body, responseStatus: res.status(), responseBody: json, orderId });
+        await assertStatus(res, [HTTP_STATUS.OK, HTTP_STATUS.CREATED], 'checkout');
 
-    return { orderId };
+        if (!orderId) throw new ApiError('checkout', res.status(), res.url(), ERROR_MSG.ORDER_ID_MISSING);
+
+        return { orderId };
+      } catch (error) {
+        console.log(`checkout | attempt ${attempt} failed`);
+        if (attempt === 3) throw error;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+
+    throw new Error('checkout failed after 3 attempts');
   }
 
   async cancelOrder(basicToken: string, orderId: string, orderCode: string): Promise<void> {

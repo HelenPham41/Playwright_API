@@ -94,14 +94,18 @@ export class PickPayloadBuilder {
     return { q: JSON.stringify({ warehouseCode: this.pick.warehouseCode, type: 'OTL', isUsed: false }) };
   }
 
+  getCurrentTicketBody() {
+    return { warehouseCode: this.pick.warehouseCode };
+  }
+
   useBasketBody(subTicketId: number, otlCode: string) {
     return { basketCode: otlCode, ticketId: subTicketId, warehouseCode: this.pick.warehouseCode };
   }
 
-  pickItemBody(subTicketId: string, sku: string, quantity: number, locationCode: string) {
+  pickItemBody(subTicketId: string, sku: string, quantity: number, productName:string, locationCode: string) {
     return {
       warehouseCode: this.pick.warehouseCode,
-      name: '',
+      name: productName,
       ticketId: Number(subTicketId),
       sku,
       pickedQuantity: quantity,

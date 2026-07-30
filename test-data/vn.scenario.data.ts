@@ -3,7 +3,7 @@ import type { ScenarioData } from '../configs/types.js';
 export const VN_SCENARIO_DATA: ScenarioData = {
   // Product
   sku: 'MEDX.Y4XP61PG',
-  productName: 'Tinh dầu đuổi muỗi và côn trùng, khử khuẩn Thảo Nguyên hương sả chanh – Nhà Thuốc Helios',
+  productName: 'Tinh dầu đuổi muỗi và côn trùng, khử khuẩn Thảo Nguyên hương sả chanh',
   price: 1084400,
   quantity: 2,
   type: 'NORMAL',

@@ -5,6 +5,7 @@ import { PackService } from '../services/pack.service.js';
 import { OrderService } from '../services/order.service.js';
 import type { CountryConfig } from '../configs/types.js';
 import { getCountryConfig } from '../configs/country.factory.js';
+import { getScenarioData } from '../test-data/scenario.data.factory.js';
 import { ApiError, assertStatus } from '../errors/api.error.js';
 import { HTTP_STATUS } from '../constants/status-code.js';
 
@@ -13,6 +14,7 @@ export interface PickResult {
   orderCode: string | undefined;
   zone: string;
   subTicketId: string;
+  productName: string,
   otlCode: string;
   ticketId: string;
   get_sku_codes: any[];
@@ -132,34 +134,43 @@ export class PickFlow {
       const { firstOTL: otlCode } = await this.pickService.getOTL(basicToken);
       console.log(`Step 11 | Get OTL          : otlCode=${otlCode}`);
 
-      // Step 12 — Use Basket
-      await this.pickService.useBasket(basicToken, Number(subTicketId), otlCode);
-      console.log('Step 12 | Use Basket       : OK');
-
-      // Step 13 — Check Pick Items
-      const { response: pickItemsRes } = await this.pickService.checkPickItems(basicToken, subTicketId, locationCode, so);
-      if (!pickItemsRes) throw new Error('checkPickItems returned null response');
-      await assertStatus(pickItemsRes, [HTTP_STATUS.OK], 'checkPickItems');
-      console.log('Step 13 | Check Pick Items : OK');
-
-      // Step 14 — Complete Pick
-      await this.pickService.completePick(basicToken, Number(subTicketId));
-      console.log('Step 14 | Complete Pick    : OK');
-
-      // Step 15 — Complete Pick for SO (TH: pick-quantity endpoint not used)
-      if (this.cfg.pick?.minimalFlow) {
-        console.log('Step 15 | Complete Pick SO : SKIPPED (minimalFlow)');
+      // Step 12 — Get Current Ticket (TH only)
+      if (this.cfg.pick?.endpoints.getCurrentTicket) {
+        await this.pickService.getCurrentTicket(basicToken, so);
+        console.log('Step 12 | Get Current Ticket : OK');
       } else {
-        await this.pickService.completePickForSO(basicToken, so);
-        console.log('Step 15 | Complete Pick SO : OK');
+        console.log('Step 12 | Get Current Ticket : SKIPPED (not TH)');
       }
 
-      // Step 16 — Checkout Pick
+      // Step 13 — Use Basket
+      await this.pickService.useBasket(basicToken, Number(subTicketId), otlCode);
+      console.log('Step 13 | Use Basket       : OK');
+
+      // Step 14 — Check Pick Items
+      const { productName } = getScenarioData();
+      const { response: pickItemsRes } = await this.pickService.checkPickItems(basicToken, subTicketId, productName, locationCode, so);
+      if (!pickItemsRes) throw new Error('checkPickItems returned null response');
+      await assertStatus(pickItemsRes, [HTTP_STATUS.OK], 'checkPickItems');
+      console.log('Step 14 | Check Pick Items : OK');
+
+      // Step 15 — Complete Pick
+      await this.pickService.completePick(basicToken, Number(subTicketId));
+      console.log('Step 15 | Complete Pick    : OK');
+
+      // Step 16 — Complete Pick for SO (TH: pick-quantity endpoint not used)
+      if (this.cfg.pick?.minimalFlow) {
+        console.log('Step 16 | Complete Pick SO : SKIPPED (minimalFlow)');
+      } else {
+        await this.pickService.completePickForSO(basicToken, so);
+        console.log('Step 16 | Complete Pick SO : OK');
+      }
+
+      // Step 17 — Checkout Pick
       await this.pickService.checkoutPick(basicToken, zone);
-      console.log('Step 16 | Checkout Pick    : OK');
+      console.log('Step 17 | Checkout Pick    : OK');
 
       console.log(`===== PICK FLOW ${country} END =====`);
-      return { so, orderCode: orderInfo.orderCode, zone, subTicketId, otlCode, ticketId: skuInfo.ticketId, get_sku_codes: skuInfo.get_sku_codes };
+      return { so, orderCode: orderInfo.orderCode, zone, subTicketId, productName, otlCode, ticketId: skuInfo.ticketId, get_sku_codes: skuInfo.get_sku_codes };
 
     } catch (error) {
       if (error instanceof ApiError) {

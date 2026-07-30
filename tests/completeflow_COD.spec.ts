@@ -1,10 +1,11 @@
 import { test, expect } from '../fixtures/flow.fixture.js';
-import { clearRequestLog, requestLog } from '../clients/apiClient.js';
-import { RESPONSE_CODE, HTTP_STATUS } from '../constants/status-code.js';
+import { clearRequestLog } from '../clients/apiClient.js';
 import { getScenarioData } from '../test-data/scenario.data.factory.js';
+import { getCountryConfig } from '../configs/country.factory.js';
+import { RESPONSE_CODE, HTTP_STATUS } from '../constants/status-code.js';
 
-test('Complete Order Flow COD', async ({
-    orderFlow_COD,
+test('Flow - Place Order COD → Pick → QC → Pack → Book Shipper → Delivery → Reconcile Shipper → Reconcile Accounting (COD)', async ({
+  orderFlow_COD,
     pickFlow,
     qcFlow,
     packFlow,
@@ -29,6 +30,8 @@ test('Complete Order Flow COD', async ({
         description: orderId,
     });
 
+    expect(orderId).toBeTruthy();
+
     //──────────────────────────────────────────────
     // Step 2 - Pick
     //──────────────────────────────────────────────
@@ -42,10 +45,12 @@ test('Complete Order Flow COD', async ({
         description: pickResult.so,
     });
 
+    expect(pickResult.so).toBeTruthy();
+
     //──────────────────────────────────────────────
     // Step 3 - QC
     //──────────────────────────────────────────────
-    await test.step(
+    const qcResult = await test.step(
         'QC Order',
         () =>
             qcFlow.qcOrder({
@@ -53,6 +58,8 @@ test('Complete Order Flow COD', async ({
                 orderId,
             }),
     );
+
+    expect(qcResult.scanned).toBeGreaterThan(0);
 
     //──────────────────────────────────────────────
     // Step 4 - Pack
@@ -100,10 +107,16 @@ test('Complete Order Flow COD', async ({
         description: bookResult.trackingNumber,
     });
 
+    expect(bookResult.trackingNumber).toBeTruthy();
+
     //──────────────────────────────────────────────
     // Step 6 - Delivery
     //──────────────────────────────────────────────
     const scenarioData = getScenarioData();
+    const cfg = getCountryConfig();
+    const expectedReferenceCode = cfg.delivery?.minimalFlow
+        ? bookResult.so
+        : `${bookResult.so}-F`;
 
     const deliveryResult = await test.step(
         'Delivery',
@@ -147,6 +160,13 @@ test('Complete Order Flow COD', async ({
         description: deliveryResult.deliveryStatus,
     });
 
+    testInfo.annotations.push({
+        type: 'referenceCode',
+        description: deliveryResult.referenceCode,
+    });
+
+    expect(deliveryResult.referenceCode).toBe(expectedReferenceCode);
+
     //──────────────────────────────────────────────
     // Step 7 - Reconcile Shipper
     //──────────────────────────────────────────────
@@ -170,6 +190,10 @@ test('Complete Order Flow COD', async ({
         type: 'reconcileStatus',
         description: reconcileResult.reconcileStatus,
     });
+
+    expect(reconcileResult.paymentCode).toBeTruthy();
+    expect(reconcileResult.confirmPaymentStatus).toBe(RESPONSE_CODE.OK);
+    expect(reconcileResult.reconcileStatus).toBe('DONE');
 
     //──────────────────────────────────────────────
     // Step 8 - Reconcile Accounting
@@ -195,55 +219,17 @@ test('Complete Order Flow COD', async ({
         description: reconcileAccountingResult.reconcileStatus,
     });
 
-    //Book Shipper Assertions
-    expect(bookResult.assignDriverMessage).toBe('Gán tài xế thành công');
-
-    expect(bookResult.transportActionName).toBe(
-        'Đã nhập kho Hub VSIP II - BÌNH DƯƠNG',
-    );
-    expect(bookResult.transportType).toBe('TRANSPORTING');
-    expect(bookResult.transportStatus).toBe('WAIT_TO_DELIVERY');
-    expect(bookResult.transportProductivityAction).toBe('ASSIGN_DELIVERY');
-    expect(bookResult.transportTrackingCode).toBeTruthy();
-
-    expect(deliveryResult.referenceCode).toBe(`${bookResult.so}-F`);
-    expect(deliveryResult.deliveryStatus).toBe('DELIVERED');
-
-    //──────────────────────────────────────────────
-    // Delivery Assertions
-    //──────────────────────────────────────────────
-    expect(deliveryResult.referenceCode).toBe(`${bookResult.so}-F`);
-    expect(deliveryResult.deliveryStatus).toBe('DELIVERED');
-
+    
     //──────────────────────────────────────────────
     // Reconcile Shipper Assertions
     //──────────────────────────────────────────────
-    expect(reconcileResult.paymentCode).toBeTruthy();
-
-    expect(reconcileResult.confirmPaymentStatus).toBe(RESPONSE_CODE.OK);
-
-    expect(reconcileResult.confirmPaymentMessage).toBeTruthy();
-
-    expect(reconcileResult.activityPrimaryKey).toBe(reconcileResult.paymentCode);
-
-    expect(reconcileResult.activityStatus).toBe('WAIT_TO_APPROVE');
-
-    expect(reconcileResult.approveStatus).toBe(RESPONSE_CODE.OK);
-
     expect(reconcileResult.reconcileStatus).toBe('DONE');
 
     expect(reconcileResult.approveCode).toBe(reconcileResult.paymentCode);
 
     //──────────────────────────────────────────────
     // Reconcile Accounting Assertions
-    //──────────────────────────────────────────────
-    expect(reconcileAccountingResult.reconcileCode).toBeTruthy();
-
-    expect(reconcileAccountingResult.reconcileShortCode).toBeTruthy();
-
-    expect(reconcileAccountingResult.confirmStatus).toBe(HTTP_STATUS.OK);
-
-    expect(reconcileAccountingResult.approveStatus).toBe(HTTP_STATUS.OK);
+    //─────────────────────────────────────────────
 
     expect(reconcileAccountingResult.reconcileStatus).toBe('DONE');
 

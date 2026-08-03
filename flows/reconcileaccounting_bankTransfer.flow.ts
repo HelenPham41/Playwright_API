@@ -140,6 +140,9 @@ export class ReconcileAccountingFlow_BankTransfer {
       //----------------------------------------------------------------------
       // Step 5 - Get Bill Info
       //----------------------------------------------------------------------
+      //Wait 5s before getting bill info to ensure the bill is generated
+      console.log('Wait 5s before get bill info...');
+      await new Promise(r => setTimeout(r, WAIT_5S));
       const billInfo =
         await this.reconcileAccountingService.getBillInfoAccounting(
           basicToken,

@@ -15,6 +15,12 @@ test('Flow - Place Order COD → Pick → QC → Pack → Book Shipper → Deliv
     reconcileAccountingFlow_COD,
 }, testInfo) => {
 
+    // 8-step multi-service E2E flow: order → pick → qc → pack → book shipper →
+    // delivery → reconcile shipper → reconcile accounting. Between the ~25-30
+    // real API calls and the deliberate settling waits (accounting/bill sync,
+    // driver assignment, etc.) this routinely needs more than the 80s default.
+    test.setTimeout(180_000);
+
     clearRequestLog();
 
     //──────────────────────────────────────────────

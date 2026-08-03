@@ -43,7 +43,8 @@ export async function createClient(
 
   return request.newContext({
     baseURL,
-    extraHTTPHeaders: headers
+    extraHTTPHeaders: headers,
+    timeout: 30000,
   });
 
 }

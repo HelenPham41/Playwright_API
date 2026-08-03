@@ -95,7 +95,7 @@ export const KH_CONFIG: CountryConfig = {
   bookShipper: {
     warehouseCode: process.env.LOCATION || 'CAM',
     carrierCode: process.env.Carrier_CODE || 'CAM',
-    hubCode: process.env.HUB_CODE || 'HHUBPHNOMPENH',
+    hubCode: process.env.HUB_CODE || 'HUBPHNOMPENH',
     carrierId: 2,
     carrierName: 'Internal Carrier Thai',
     minimalFlow: true,

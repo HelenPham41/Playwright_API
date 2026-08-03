@@ -7,6 +7,10 @@ import { HTTP_STATUS } from '../constants/status-code.js';
 // wait durations
 const WAIT_3S = 3000;
 const WAIT_8S = 8000;
+const WAIT_2S = 2000;
+
+// accounting sync between Reconcile Shipper and Reconcile Accounting can lag briefly
+const MAX_ORDER_LOOKUP_ATTEMPTS = 5;
 
 export interface ReconcileAccountingInput {
   orderId: number;
@@ -65,26 +69,44 @@ export class ReconcileAccountingFlow_COD {
       const totalOrder = reconcile?.totalOrder ?? 0;
 
       //----------------------------------------------------------------------
-      // Step 2 - Get Reconcile Orders
+      // Step 2 - Get Reconcile Orders (poll — accounting sync after Reconcile
+      // Shipper can lag a few seconds before the order shows up here)
       //----------------------------------------------------------------------
-      const order =
-        await this.reconcileAccountingService.getReconcileOrdersAccounting(
-          riderToken,
-          reconcileAccountingCode,
-          totalOrder,
-        );
-
-      console.log('Step 2 | Get Reconcile Orders       : OK');
-
       const expectedReferenceCode = this.cfg.reconcileAccounting?.minimalFlow
         ? input.so
         : `${input.so}-F`;
-      const matchedItem = order?.data?.find(
-        (item: any) => item.referenceCode === expectedReferenceCode,
-      );
 
-      const reconcileDoiSoatKeToanCode = matchedItem?.reconcileCode ?? '';
-      const lineAccountingID = matchedItem?.lineID ?? '';
+      let matchedItem: any;
+      for (let attempt = 1; attempt <= MAX_ORDER_LOOKUP_ATTEMPTS; attempt++) {
+        const order =
+          await this.reconcileAccountingService.getReconcileOrdersAccounting(
+            riderToken,
+            reconcileAccountingCode,
+            totalOrder,
+          );
+
+        matchedItem = order?.data?.find(
+          (item: any) => item.referenceCode === expectedReferenceCode,
+        );
+
+        if (matchedItem) break;
+
+        console.log(`Step 2 | Get Reconcile Orders       : "${expectedReferenceCode}" not found yet (attempt ${attempt}/${MAX_ORDER_LOOKUP_ATTEMPTS})`);
+        if (attempt < MAX_ORDER_LOOKUP_ATTEMPTS) {
+          await new Promise(r => setTimeout(r, WAIT_2S));
+        }
+      }
+
+      if (!matchedItem) {
+        throw new Error(
+          `Reconcile Accounting: order with referenceCode "${expectedReferenceCode}" not found in reconcile session "${reconcileAccountingCode}" after ${MAX_ORDER_LOOKUP_ATTEMPTS} attempts`,
+        );
+      }
+
+      console.log('Step 2 | Get Reconcile Orders       : OK');
+
+      const reconcileDoiSoatKeToanCode = matchedItem.reconcileCode ?? '';
+      const lineAccountingID = matchedItem.lineID ?? '';
 
       //----------------------------------------------------------------------
       // Step 3 - Select Reconcile Orders

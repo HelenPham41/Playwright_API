@@ -1,33 +1,54 @@
-image: mcr.microsoft.com/playwright:v1.42.1-jammy
+image: mcr.microsoft.com/playwright:v1.58.2-jammy
 
 stages:
   - test
 
 variables:
   TEST_ENV: "stg"
-  RUN_TIMES: "1"
-
+  RUN_TIMES:
+    value: "1"
+    description: "Number of times to repeat the full flow test (enter a number)"
+  OPEN_REPORT: "false"
+  PAYMENT_METHOD:
+    value: "COD"
+    options:
+      - "COD"
+      - "BankTransfer"
+    description: "Payment flow to run for the full end-to-end test: COD or BankTransfer"
+  COUNTRY:
+    value: "VN"
+    options:
+      - "VN"
+      - "TH"
+      - "KH"
+    description: "Country project to run the full end-to-end test against"
 
 run_fullflow_tests:
   stage: test
   tags:
-    - ci-v2
+    - devops-runner
 
   script:
     - "echo Environment: $TEST_ENV"
     - "echo Run times: $RUN_TIMES"
+    - "echo Payment method: $PAYMENT_METHOD"
+    - "echo Country: $COUNTRY"
 
     # Clean old reports
     - "rm -rf playwright-report test-results reports"
 
     - "npm ci"
 
-    - "echo Running Playwright tests on $ENV"
-
-    # Run tests and capture exit code
+    # Pick the full-flow spec matching the requested payment method
     - |
-      echo Starting Playwright tests
-      npx playwright test tests/pack.spec.ts
+      if [ "$PAYMENT_METHOD" = "BankTransfer" ]; then
+        SPEC="tests/completeflow_bankTransfer.spec.ts"
+      else
+        SPEC="tests/completeflow_COD.spec.ts"
+      fi
+      echo Running spec: $SPEC on project: $COUNTRY
+
+      npx playwright test "$SPEC" --project="$COUNTRY"
       EXIT_CODE=$?
 
       echo Playwright exit code: $EXIT_CODE
